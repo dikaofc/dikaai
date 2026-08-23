@@ -75,6 +75,12 @@ class DikaModel(_BASE):
 
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
+        # Guards GPU-layer mutation (resize / train step) so concurrent
+        # threads (Colab background trainer + Phase 2) can't realloc the
+        # same tensors at once -> CUDA corruption / crash.
+        import threading as _threading
+        self._lock = _threading.Lock()
+
         self.embedding = nn.Embedding(vocab_size, embed_dim)
         self.lstm = nn.LSTM(embed_dim, hidden_dim, num_layers=num_layers,
                             batch_first=True)
@@ -180,27 +186,28 @@ class DikaModel(_BASE):
             return
         if new_vocab_size == self.vocab_size:
             return
-        old_size = self.vocab_size
-        with torch.no_grad():
-            # Grow embedding rows.
-            new_emb = nn.Embedding(new_vocab_size, self.embed_dim).to(self.device)
-            copy = min(old_size, new_vocab_size)
-            new_emb.weight[:copy] = self.embedding.weight[:copy]
-            if new_vocab_size > old_size:
-                nn.init.xavier_uniform_(new_emb.weight[copy:])
-            self.embedding = new_emb
+        with self._lock:
+            old_size = self.vocab_size
+            with torch.no_grad():
+                # Grow embedding rows.
+                new_emb = nn.Embedding(new_vocab_size, self.embed_dim).to(self.device)
+                copy = min(old_size, new_vocab_size)
+                new_emb.weight[:copy] = self.embedding.weight[:copy]
+                if new_vocab_size > old_size:
+                    nn.init.xavier_uniform_(new_emb.weight[copy:])
+                self.embedding = new_emb
 
-            # Grow output layer columns.
-            new_fc = nn.Linear(self.hidden_dim, new_vocab_size).to(self.device)
-            new_fc.weight[:copy] = self.fc.weight[:copy]
-            new_fc.bias[:copy] = self.fc.bias[:copy]
-            if new_vocab_size > old_size:
-                nn.init.xavier_uniform_(new_fc.weight[copy:])
-                nn.init.zeros_(new_fc.bias[copy:])
-            self.fc = new_fc
+                # Grow output layer columns.
+                new_fc = nn.Linear(self.hidden_dim, new_vocab_size).to(self.device)
+                new_fc.weight[:copy] = self.fc.weight[:copy]
+                new_fc.bias[:copy] = self.fc.bias[:copy]
+                if new_vocab_size > old_size:
+                    nn.init.xavier_uniform_(new_fc.weight[copy:])
+                    nn.init.zeros_(new_fc.bias[copy:])
+                self.fc = new_fc
 
-        self.vocab_size = new_vocab_size
-        self.optimizer = torch.optim.Adam(self.parameters(), lr=get_lr(self.step))
+            self.vocab_size = new_vocab_size
+            self.optimizer = torch.optim.Adam(self.parameters(), lr=get_lr(self.step))
         print(f"  [MODEL] Resized vocab: {old_size} -> {new_vocab_size}")
 
     # ----------------------------------------------------------------
@@ -218,29 +225,38 @@ class DikaModel(_BASE):
 
     def train_on_batch(self, pairs):
         """Batched next-token training step. pairs -> single (B,L)/(B,) forward.
-        Returns average NLL loss (float). Increments self.step by 1."""
+        Returns average NLL loss (float). Increments self.step by 1.
+
+        NOTE: we compute ONLY the last real position's logits through the FC
+        layer. Computing the full (B, L, vocab) tensor would blow VRAM for a
+        large vocab (e.g. 100k), so we index the LSTM hidden state first.
+        """
         if not TORCH_AVAILABLE or not pairs:
             return 0.0
-        self.train()
-        x, y, real_len = self._collate(pairs)
-        self.optimizer.zero_grad(set_to_none=True)
+        with self._lock:
+            self.train()
+            x, y, real_len = self._collate(pairs)
+            self.optimizer.zero_grad(set_to_none=True)
 
-        logits = self.forward(x)                      # (B, L, V)
-        # Predict the token right after each context (last real position).
-        idx = torch.tensor([max(l - 1, 0) for l in real_len],
-                           dtype=torch.long, device=self.device)
-        batch_idx = torch.arange(x.size(0), device=self.device)
-        last_logits = logits[batch_idx, idx]          # (B, V)
+            emb = self.embedding(x)                       # (B, L, E)
+            out, _ = self.lstm(emb)                       # (B, L, H)
 
-        loss = torch.nn.functional.cross_entropy(last_logits, y)
-        loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.parameters(), 5.0)
+            # Last real position per sequence.
+            idx = torch.tensor([max(l - 1, 0) for l in real_len],
+                               dtype=torch.long, device=self.device)
+            batch_idx = torch.arange(x.size(0), device=self.device)
+            h_last = out[batch_idx, idx]                  # (B, H)
+            last_logits = self.fc(h_last)                 # (B, V)  -- no (B,L,V) alloc
 
-        for g in self.optimizer.param_groups:
-            g['lr'] = get_lr(self.step)
-        self.optimizer.step()
-        self.step += 1
-        return float(loss.item())
+            loss = torch.nn.functional.cross_entropy(last_logits, y)
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(self.parameters(), 5.0)
+
+            for g in self.optimizer.param_groups:
+                g['lr'] = get_lr(self.step)
+            self.optimizer.step()
+            self.step += 1
+            return float(loss.item())
 
     def train_step_chunked(self, input_tokens, target_token, chunk_size=None):
         """Single-sequence shim (used by trainer.train_coding)."""
@@ -295,6 +311,12 @@ class DikaModel(_BASE):
         if TORCH_AVAILABLE and Path(pt_path).exists():
             try:
                 state = torch.load(str(pt_path), map_location=self.device)
+                # Guard: refuse OLD pure-Python checkpoints (keys like
+                # 'W_i'/'embedding' as a list) — those would shrink the model
+                # back to its tiny committed size and ignore the XL config.
+                sd = state.get('state_dict', {})
+                if not any('lstm' in k for k in sd.keys()):
+                    raise ValueError("old-format checkpoint, skipping")
                 # Resize to match checkpoint if needed.
                 self.vocab_size = state['vocab_size']
                 self.embed_dim = state['embed_dim']
@@ -315,10 +337,17 @@ class DikaModel(_BASE):
                 pass
 
         # Fallback: read JSON metadata only (no torch weights).
+        # Reject OLD pure-Python checkpoints (keys 'W_i'/'U_i'/'embedding' as a
+        # list) so a fresh clone starts at the configured XL size instead of
+        # inheriting vocab 1000 from a stale committed file.
         if Path(path).exists():
             try:
                 with open(str(path), 'r') as f:
                     data = json.load(f)
+                if 'W_i' in data or 'U_i' in data or 'b_i' in data:
+                    return False  # old format -> don't poison the model
+                if isinstance(data.get('embedding'), list):
+                    return False
                 self.vocab_size = data.get('vocab_size', self.vocab_size)
                 self.step = data.get('step', 0)
                 return True

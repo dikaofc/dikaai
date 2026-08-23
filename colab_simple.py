@@ -136,14 +136,18 @@ config_content += "TELEGRAM_API_HASH=" + str(TELEGRAM_API_HASH) + "\n"
 config_content += "TELEGRAM_PHONE=" + str(TELEGRAM_PHONE) + "\n"
 config_content += "UPSTASH_REDIS_REST_URL=" + str(UPSTASH_REDIS_URL) + "\n"
 config_content += "UPSTASH_REDIS_REST_TOKEN=" + str(UPSTASH_REDIS_TOKEN) + "\n"
-# GPU XL model sizing (T4)
-config_content += "MAX_VOCAB_SIZE=25000\n"
-config_content += "EMBEDDING_DIM=512\n"
-config_content += "HIDDEN_DIM=1024\n"
-config_content += "NUM_LAYERS=3\n"
-config_content += "CONTEXT_LENGTH=128\n"
-config_content += "CHUNK_SIZE=64\n"
+# GPU MAX model sizing (T4) - upgraded per request
+# 1M context is NOT possible on an LSTM/T4 (would need 100s of GB VRAM and
+# our training sequences are ~hundreds of tokens, so it'd give no benefit).
+# 512 is the practical max window for this architecture on a T4.
+config_content += "MAX_VOCAB_SIZE=50000\n"
+config_content += "EMBEDDING_DIM=768\n"
+config_content += "HIDDEN_DIM=1536\n"
+config_content += "NUM_LAYERS=4\n"
+config_content += "CONTEXT_LENGTH=512\n"
+config_content += "CHUNK_SIZE=128\n"
 config_content += "BATCH_SIZE=128\n"
+config_content += "TRAIN_EVERY_SECONDS=1\n"
 
 config_path = os.path.join('/content/dikaai', 'config.env')
 with open(config_path, 'w') as f:
@@ -318,7 +322,9 @@ def _render_stats_html():
 
 def _stats_display_thread():
     time.sleep(3)
-    while running:
+    # Use globals().get so a slow model load / init (which defines
+    # `running`/`start_time` a few lines later) can never crash this thread.
+    while globals().get('running', True):
         try:
             html = _render_stats_html()
             clear_output(wait=True)

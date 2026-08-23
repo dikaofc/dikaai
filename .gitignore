@@ -47,7 +47,13 @@ dikaai_session.session-journal
 *.db-shm
 *.db-wal
 
-# Training data (commit these for Vercel deployment)
-# model_checkpoints/*.json
-# training_history.csv
-# vocab.json
+# Training data + checkpoints (runtime artifacts, regenerated in Colab)
+model_checkpoints/
+model_checkpoints/*.json
+model_checkpoints/*.pt
+training_history.csv
+vocab.json
+dikaai.db*
+*.session*
+config.env
+.env.local
