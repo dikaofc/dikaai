@@ -330,3 +330,117 @@ MIT License - Free untuk dipakai
 ---
 
 Made with ❤️ by DikaAI
+
+---
+
+## 🔌 Public API
+
+### Quick Start
+
+```bash
+# 1. Start API server
+python main.py api
+
+# 2. Create a token
+curl -X POST http://localhost:8080/v1/auth/token \
+  -H "Authorization: Bearer admin_token" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "my-app", "scopes": ["chat", "agent", "tools"]}'
+# → {"token": "dka_xxx...", "name": "my-app", "scopes": [...]}
+
+# 3. Use the API
+curl -X POST http://localhost:8080/v1/chat/completions \
+  -H "Authorization: Bearer dka_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{"messages": [{"role": "user", "content": "fix error in main.py"}]}'
+```
+
+### OpenAI-Compatible Endpoints
+
+```bash
+# Chat Completions (compatible with Claude Code, Codex, Pi Agent)
+POST /v1/chat/completions
+{
+  "messages": [{"role": "user", "content": "hello"}]
+}
+
+# Completion
+POST /v1/completions
+{
+  "prompt": "write a fibonacci function"
+}
+
+# Coding Agent (plan → code → test → debug)
+POST /v1/agent
+{
+  "task": "fix authentication bug",
+  "max_retries": 3
+}
+
+# List models
+GET /v1/models
+
+# Health check
+GET /v1/health
+```
+
+### Tool Endpoints
+
+```bash
+# Read file
+POST /v1/tools/read    {"path": "main.py"}
+
+# Write file
+POST /v1/tools/write   {"path": "test.py", "content": "print('hello')"}
+
+# Edit file
+POST /v1/tools/edit    {"path": "main.py", "old_text": "foo", "new_text": "bar"}
+
+# Search code
+POST /v1/tools/search  {"pattern": "def ", "path": "."}
+
+# Run command
+POST /v1/tools/run     {"command": "python main.py --test"}
+
+# Git status
+GET /v1/tools/git/status
+```
+
+### Auth Endpoints
+
+```bash
+# Create token
+POST /v1/auth/token    {"name": "my-app", "scopes": ["chat", "agent"]}
+
+# List tokens
+GET  /v1/auth/tokens
+
+# Revoke token
+POST /v1/auth/revoke   {"token": "dka_xxx"}
+```
+
+### Connect to Agent CLIs
+
+```bash
+# Claude Code
+export DIKAAI_API_KEY=dka_xxx
+export DIKAAI_BASE_URL=http://localhost:8080/v1
+
+# Codex
+export OPENAI_API_BASE=http://localhost:8080/v1
+export OPENAI_API_KEY=dka_xxx
+
+# Pi Agent
+export PI_API_URL=http://localhost:8080/v1
+export PI_API_KEY=dka_xxx
+```
+
+### Scopes
+
+| Scope | Access |
+|-------|--------|
+| `chat` | Chat completions, completions |
+| `agent` | Coding agent (plan→code→test→debug) |
+| `tools` | File read/write/edit, search, run commands |
+| `admin` | Token management, full access |
+

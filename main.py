@@ -155,6 +155,20 @@ def main():
             from server.api import start_server
             port = int(sys.argv[2]) if len(sys.argv) > 2 else 8080
             start_server(port)
+        elif cmd == 'token':
+            from server.auth import AuthManager
+            auth = AuthManager()
+            name = sys.argv[2] if len(sys.argv) > 2 else 'api-key'
+            scopes = sys.argv[3].split(',') if len(sys.argv) > 3 else ['chat', 'agent', 'tools']
+            result = auth.create_token(name=name, scopes=scopes)
+            print(f"\n  🔑 API Token Created!")
+            print(f"  Token:   {result['token']}")
+            print(f"  Name:    {result['name']}")
+            print(f"  Scopes:  {result['scopes']}")
+            print(f"\n  Usage:")
+            print(f"    export DIKAAI_API_KEY={result['token'][:20]}...")
+            print(f"    curl -H 'Authorization: Bearer {result['token'][:20]}...' http://localhost:8080/v1/chat/completions")
+            print()
         elif cmd == 'stats':
             show_stats()
         elif cmd == 'index':

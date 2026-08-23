@@ -767,6 +767,28 @@ class handler(BaseHTTPRequestHandler):
         elif path == '/api/health':
             self._send_json({'ok': True})
 
+        # ========================================================
+        # Public API v1 endpoints
+        # ========================================================
+        elif path == '/v1/health':
+            self._send_json({'status': 'ok', 'version': '3.0.0', 'timestamp': time.time()})
+
+        elif path == '/v1/models':
+            self._send_json({'data': [{'id': 'dikaai-v3', 'object': 'model', 'capabilities': ['chat', 'code', 'agent']}]
+            })
+
+        elif path == '/':
+            self._send_json({
+                'name': 'DikaAI API', 'version': '3.0.0',
+                'dashboard': '/api/stats',
+                'endpoints': {
+                    'chat': 'POST /v1/chat/completions',
+                    'agent': 'POST /v1/agent',
+                    'health': 'GET /v1/health',
+                    'models': 'GET /v1/models',
+                },
+            })
+
         else:
             self.send_response(404)
             self.end_headers()
