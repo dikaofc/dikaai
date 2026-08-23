@@ -1,0 +1,39 @@
+[
+  {
+    "task_id": "5e76acbe",
+    "goal": "Fix dashboard",
+    "status": "executing",
+    "priority": 3,
+    "parent_id": "",
+    "subtasks": [],
+    "dependencies": [],
+    "steps": [
+      {
+        "description": "Read file",
+        "done": true,
+        "result": "Read main.py"
+      },
+      {
+        "description": "Find error",
+        "done": false
+      },
+      {
+        "description": "Fix",
+        "done": false
+      },
+      {
+        "description": "Test",
+        "done": false
+      }
+    ],
+    "current_step": 1,
+    "artifacts": [],
+    "errors": [],
+    "result": "",
+    "created_at": 1787503495.6917107,
+    "updated_at": 1787503495.6924453,
+    "completed_at": 0.0,
+    "progress": "1/4",
+    "metadata": {}
+  }
+]

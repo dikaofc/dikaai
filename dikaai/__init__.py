@@ -14,7 +14,7 @@ Quick Start:
     result = engine.process("buat function fibonacci")
 """
 
-__version__ = "3.0.0"
+__version__ = "3.2.0"
 __author__ = "DikaAI"
 
 # Core engine
@@ -58,6 +58,15 @@ from dikaai.coding.smart_reply import get_smart_reply
 # Database
 from dikaai.database import DikaDB
 
+# Core systems (new)
+from dikaai.core.context_quality import ContextQualityEngine, ContextChunk
+from dikaai.core.memory_conflict import MemoryConflictResolver, Fact
+from dikaai.core.trace import TraceSystem, Trace
+from dikaai.core.task_manager import TaskManager, Task, TaskStatus
+from dikaai.core.provenance import ProvenanceSystem, TrustLevel
+from dikaai.security.sandbox import ToolSandbox, Permission
+from dikaai.benchmark.regression import RegressionBenchmark
+
 __all__ = [
     # Engine
     'Engine',
@@ -93,4 +102,12 @@ __all__ = [
     'get_smart_reply',
     # Database
     'DikaDB',
+    # Core systems
+    'ContextQualityEngine', 'ContextChunk',
+    'MemoryConflictResolver', 'Fact',
+    'TraceSystem', 'Trace',
+    'TaskManager', 'Task', 'TaskStatus',
+    'ProvenanceSystem', 'TrustLevel',
+    'ToolSandbox', 'Permission',
+    'RegressionBenchmark',
 ]

@@ -16,13 +16,11 @@ from dikaai.benchmark.evaluator import Evaluator
 from dikaai.benchmark.tasks import get_tasks, get_categories, ALL_TASKS
 from dikaai.benchmark.needle_haystack import NeedleHaystackBenchmark
 from dikaai.benchmark.history import BenchmarkHistory
+from dikaai.benchmark.regression import RegressionBenchmark
 
 __all__ = [
-    'BenchmarkRunner',
-    'Evaluator',
-    'get_tasks',
-    'get_categories',
-    'ALL_TASKS',
-    'NeedleHaystackBenchmark',
-    'BenchmarkHistory',
+    'BenchmarkRunner', 'Evaluator',
+    'get_tasks', 'get_categories', 'ALL_TASKS',
+    'NeedleHaystackBenchmark', 'BenchmarkHistory',
+    'RegressionBenchmark',
 ]

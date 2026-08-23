@@ -9,6 +9,14 @@ Memory integration:
   - SemanticMemory: facts and knowledge (subject → predicate → object)
   - ConversationMemory: short-term conversation buffer
   - CodingMemory: error → solution database
+
+New core systems:
+  - ContextQualityEngine: relevance, freshness, dedup scoring
+  - MemoryConflictResolver: contradictory fact detection + auto-update
+  - TraceSystem: full audit trail for debugging
+  - TaskManager: multi-step task orchestration
+  - ProvenanceSystem: source tracking + trust levels
+  - ToolSandbox: permission levels + path guards
 """
 
 import time
@@ -28,6 +36,14 @@ from dikaai.tools.terminal import TerminalTools
 from dikaai.tools.git_tools import GitTools
 from dikaai.coding.validator import Validator as ResponseValidator
 from dikaai.coding.observer import Observer
+
+# New core systems
+from dikaai.core.context_quality import ContextQualityEngine, ContextChunk
+from dikaai.core.memory_conflict import MemoryConflictResolver
+from dikaai.core.trace import TraceSystem
+from dikaai.core.task_manager import TaskManager, TaskStatus
+from dikaai.core.provenance import ProvenanceSystem, TrustLevel
+from dikaai.security.sandbox import ToolSandbox, Permission, ToolRequest
 
 
 class Engine:
@@ -56,62 +72,106 @@ class Engine:
         self.terminal = TerminalTools(workspace)
         self.git = GitTools(workspace)
 
+        # New core systems
+        self.context_quality = ContextQualityEngine(max_tokens=4000)
+        self.memory_conflict = MemoryConflictResolver()
+        self.trace_system = TraceSystem()
+        self.task_manager = TaskManager()
+        self.provenance = ProvenanceSystem()
+        self.sandbox = ToolSandbox(workspace, Permission.EXECUTE)
+
         # Stats
         self.total = 0
         self.successful = 0
 
     def process(self, message: str, model=None, tokenizer=None) -> dict:
-        """Process user message through full pipeline with memory integration."""
+        """Process user message through full pipeline with memory + trace + provenance."""
         start = time.time()
         self.total += 1
+
+        # 0. Start trace for debugging
+        trace = self.trace_system.start_trace(message)
 
         # 1. Context Management (dual: tracker + long-context)
         ctx = self.context.process_message(message)
         intent = ctx['intent']
         topic = ctx['topic']
         topic_name = topic.get('topic', 'general')
+        trace.add_event('intent', message, intent, metadata={'topic': topic_name})
 
         # 2. Long-context processing (L0-L6 memory)
         self.long_context.process_message(message, topic_name)
 
         # 3. Memory Retrieval (all memory types) → build unified memory context
         memory_ctx = self._build_memory_context(message, topic_name)
+        trace.add_event('memory', message, len(str(memory_ctx)),
+                        metadata={'episodes': bool(memory_ctx.get('episodes')),
+                                  'semantic': bool(memory_ctx.get('semantic'))})
 
-        # 4. Route (with memory context awareness)
+        # 4. Context Quality Engine - optimize what we send to model
+        chunks = self._memory_to_chunks(memory_ctx, message)
+        optimized = self.context_quality.score_chunks(chunks, message)
+        trace.add_event('context_quality', len(chunks), len(optimized),
+                        metadata={'before': len(chunks), 'after': len(optimized)})
+
+        # 5. Route (with memory context awareness)
         effective = intent.get('context', message) if intent.get('resolved') else message
         route = self._route(effective)
+        trace.add_event('route', message, route)
 
-        # 5. Execute (with full memory context)
+        # 6. Execute (with full memory context)
+        exec_start = time.time()
         if route == 'code':
             result = self._exec_code(message, model, tokenizer, memory_ctx)
         elif route == 'tool':
-            result = self._exec_tool(message, memory_ctx)
+            # Check sandbox permissions for tool execution
+            tool_req = ToolRequest(tool='terminal', action='execute',
+                                   command=message, permission=Permission.EXECUTE)
+            allowed, reason = self.sandbox.check_permission(tool_req)
+            if not allowed:
+                result = {'response': f'🔒 {reason}', 'success': False}
+            else:
+                result = self._exec_tool(message, memory_ctx)
         elif route == 'search':
             result = self._exec_search(message, memory_ctx)
         elif route == 'reason':
             result = self._exec_reason(message, model, tokenizer, memory_ctx)
         else:
             result = self._exec_chat(message, memory_ctx)
+        exec_duration = (time.time() - exec_start) * 1000
+        trace.add_event('execute', message, result.get('response', '')[:100],
+                        duration_ms=exec_duration, metadata={'route': route})
 
-        # 6. Validate
+        # 7. Validate
         validation = self.validator.validate(result['response'], message, self.context.state)
         self.observer.log_validation(validation.passed, validation.issues)
+        trace.add_event('validate', None, validation.passed,
+                        metadata={'issues': validation.issues})
 
-        # 7. Record outcome in episodic memory
+        # 8. Record outcome in episodic memory + provenance
         self._record_episode(message, result, route, memory_ctx)
+        if result.get('success'):
+            self.provenance.track(
+                content=result['response'][:200],
+                source='tool_output' if route == 'tool' else 'model_inference',
+                confidence=0.9 if route == 'tool' else 0.6,
+            )
 
-        # 8. Extract facts from response into semantic memory
-        self._extract_facts(message, result['response'], topic_name)
+        # 9. Extract facts with conflict resolution
+        self._extract_facts_with_conflict(message, result['response'], topic_name)
 
-        # 9. Update all state
+        # 10. Update all state
         self.context.update_after_response(message, result['response'])
         self.long_context.process_response(result['response'], topic_name)
         self.memory.add('user', message)
         self.memory.add('assistant', result['response'])
 
+        # 11. Complete trace
         elapsed = time.time() - start
         if result.get('success', True):
             self.successful += 1
+        trace.complete(result['response'], route, result.get('success', True))
+        self.trace_system.save_trace(trace)
 
         return {
             'response': result['response'],
@@ -121,6 +181,7 @@ class Engine:
             'topic': topic_name,
             'intent': intent.get('intent', ''),
             'validation': validation.to_dict(),
+            'trace_id': trace.trace_id[:8],
             'memory_used': {
                 'episodes': len(memory_ctx.get('episodes', '')) > 0,
                 'semantic': len(memory_ctx.get('semantic', '')) > 0,
@@ -128,6 +189,32 @@ class Engine:
                 'coding': len(memory_ctx.get('coding', '')) > 0,
             },
         }
+
+    # ================================================================
+    # MEMORY → CHUNKS (for Context Quality Engine)
+    # ================================================================
+
+    def _memory_to_chunks(self, memory_ctx: dict, query: str) -> list:
+        """Convert memory context to ContextChunk objects for quality scoring."""
+        chunks = []
+        now = time.time()
+        sources = {
+            'episodes': ('memory', 0.7),
+            'semantic': ('rag', 0.8),
+            'coding': ('tool', 0.9),
+            'hierarchical': ('project', 0.6),
+        }
+        for key, (source, authority) in sources.items():
+            text = memory_ctx.get(key, '')
+            if text and len(text) > 5:
+                chunks.append(ContextChunk(
+                    content=text[:2000],
+                    source=source,
+                    timestamp=now,
+                    authority=authority,
+                    importance=0.7,
+                ))
+        return chunks
 
     # ================================================================
     # MEMORY CONTEXT BUILDER
@@ -481,6 +568,31 @@ class Engine:
             tags=[route, language],
         )
 
+    def _extract_facts_with_conflict(self, message, response, topic):
+        """Extract facts with conflict detection and resolution."""
+        import re
+        # Pattern: "X is Y" or "X adalah Y"
+        for match in re.finditer(
+            r'(\w[\w\s]*?)\s+(?:is|adalah|merupakan|uses?|implements?|supports?)\s+(.+?)[.!]',
+            response, re.IGNORECASE
+        ):
+            subject = match.group(1).strip()
+            obj = match.group(2).strip()
+            if len(subject) > 2 and len(obj) > 2:
+                # Try conflict resolution first
+                result = self.memory_conflict.add_fact(
+                    subject=subject, predicate='is', value=obj,
+                    source='conversation', confidence=0.7,
+                )
+                if result['action'] == 'conflict_resolved':
+                    # Old fact was superseded - update semantic memory too
+                    pass
+                # Also add to semantic memory
+                self.semantic_memory.add_fact(
+                    subject=subject, predicate='is', obj=obj,
+                    source='conversation', tags=[topic],
+                )
+
     def _extract_facts(self, message, response, topic):
         """Extract facts from conversation into semantic memory."""
         # Extract facts from responses (pattern: X is Y, X uses Y, etc.)
@@ -536,4 +648,11 @@ class Engine:
                 'short_term': len(self.memory.messages) if hasattr(self.memory, 'messages') else 0,
                 'coding_memory': self.coding_memory.get_stats(),
             },
+            # New core systems
+            'context_quality': self.context_quality.get_stats(),
+            'memory_conflicts': self.memory_conflict.get_stats(),
+            'traces': self.trace_system.get_stats(),
+            'tasks': self.task_manager.get_stats(),
+            'provenance': self.provenance.get_stats(),
+            'sandbox': self.sandbox.get_stats(),
         }
