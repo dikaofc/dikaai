@@ -11,7 +11,7 @@ Dashboard Vercel: https://dikaai.vercel.app
 # ============================================================
 # STEP 1: Install + Clone (shallow - cepat!)
 # ============================================================
-!pip install telethon aiohttp -q
+!pip install telethon aiohttp nest_asyncio -q
 !git clone --depth 1 https://github.com/dikaofc/dikaai.git /content/dikaai
 %cd /content/dikaai
 
@@ -45,6 +45,8 @@ print(f"🔴 Redis: {UPSTASH_REDIS_URL[:30]}...")
 # STEP 3: RUN DIKAAI
 # ============================================================
 import sys, os, time, signal, threading, asyncio
+import nest_asyncio
+nest_asyncio.apply()
 
 sys.path.insert(0, '/content/dikaai')
 os.chdir('/content/dikaai')
