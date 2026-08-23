@@ -53,13 +53,13 @@ nest_asyncio.apply()
 sys.path.insert(0, '/content/dikaai')
 os.chdir('/content/dikaai')
 
-from database import DikaDB
-from tokenizer import DikaTokenizer
-from model import DikaModel
-from trainer import DikaTrainer
+from dikaai.database import DikaDB
+from dikaai.model.tokenizer import DikaTokenizer
+from dikaai.model.model import DikaModel
+from dikaai.model.trainer import DikaTrainer
 from bot import DikaBot
 from webscraper import DikaWebScraper
-from config import API_ID, API_HASH, PHONE, UPSTASH_REDIS_URL, UPSTASH_REDIS_TOKEN, USE_REDIS
+from dikaai.config import API_ID, API_HASH, PHONE, UPSTASH_REDIS_URL, UPSTASH_REDIS_TOKEN, USE_REDIS
 
 print("\n" + "=" * 55)
 print("  🧠 DikaAi - Google Colab Runner")

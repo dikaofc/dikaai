@@ -2,9 +2,9 @@
 
 import os
 from pathlib import Path
-from rag.vector_db import VectorDB
-from rag.embeddings import embed_text
-from core.config import RAG, DATA_DIR
+from dikaai.rag.vector_db import VectorDB
+from dikaai.rag.embeddings import embed_text
+from dikaai.config import RAG, DATA_DIR
 
 
 class Retriever:

@@ -3,7 +3,7 @@
 import os
 import re
 from pathlib import Path
-from core.config import AGENT, TOOLS
+from dikaai.config import AGENT, TOOLS
 
 
 class FilesystemTools:

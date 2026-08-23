@@ -19,14 +19,14 @@ BASE_DIR = Path(__file__).parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
 # Import config (loads .env.local too)
-from config import (
+from dikaai.config import (
     UPSTASH_REDIS_URL, UPSTASH_REDIS_TOKEN, USE_REDIS,
     DB_PATH, MODEL_DIR, VOCAB_FILE
 )
 
 # Try to import RedisDB
 try:
-    from database import RedisDB, UpstashRedis
+    from dikaai.database import RedisDB, UpstashRedis
 except ImportError:
     RedisDB = None
     UpstashRedis = None
@@ -202,15 +202,15 @@ def _get_recent_messages(limit=15):
 def _generate_reply(text):
     """Generate a smart reply - model + fallback system."""
     sys.path.insert(0, str(BASE_DIR))
-    from smart_reply import get_smart_reply
+    from dikaai.coding.smart_reply import get_smart_reply
 
     model_reply = None
     try:
         model_file = MODEL_DIR / "dikaai_latest.json"
         if model_file.exists():
-            from model import DikaModel
-            from tokenizer import DikaTokenizer
-            from config import CONTEXT_LEN
+            from dikaai.model.model import DikaModel
+            from dikaai.model.tokenizer import DikaTokenizer
+            from dikaai.config import CONTEXT_LEN
 
             model = DikaModel()
             if model.load(model_file):

@@ -10,7 +10,7 @@ import math
 import random
 import json
 from pathlib import Path
-from config import (
+from dikaai.config import (
     VOCAB_SIZE, EMBED_DIM, HIDDEN_DIM, CONTEXT_LEN, CHUNK_SIZE,
     NUM_LAYERS, MODEL_DIR, LR, LR_MIN, LR_WARMUP, LR_DECAY
 )

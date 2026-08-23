@@ -4,7 +4,7 @@ Checks: correctness, relevance, safety, format, repetition, topic drift.
 """
 
 import re
-from core.context import ConversationState, TOPIC_KEYWORDS
+from dikaai.context.tracker import ConversationState, TOPIC_KEYWORDS
 
 
 class ValidationResult:

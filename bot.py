@@ -19,8 +19,8 @@ from telethon.tl.types import (
     Channel,
     Dialog
 )
-from database import DikaDB
-from config import (
+from dikaai.database import DikaDB
+from dikaai.config import (
     API_ID, API_HASH, PHONE, TARGET_ENTITIES,
     AUTO_REPLY_ENABLED, AUTO_REPLY_DELAY, AUTO_REPLY_MIN_LEN,
     TG_CONCURRENT
@@ -308,12 +308,11 @@ class DikaBot:
 
     def _generate_reply(self, text):
         """Generate a smart reply - model + fallback system."""
-        from smart_reply import get_smart_reply
+        from dikaai.coding.smart_reply import get_smart_reply
 
         model_reply = None
         if self.model and self.tokenizer and self.tokenizer._loaded:
-            try:
-                from config import CONTEXT_LEN
+            try:                    from dikaai.config import CONTEXT_LEN
                 tokens = self.tokenizer.encode(text, max_length=CONTEXT_LEN)
                 if len(tokens) >= 1:
                     generated = self.model.generate(

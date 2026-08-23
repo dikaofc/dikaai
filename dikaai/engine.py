@@ -138,7 +138,7 @@ class Engine:
     def _exec_reason(self, message, model, tokenizer):
         if model and tokenizer and tokenizer._loaded:
             try:
-                from config import CONTEXT_LEN
+                from dikaai.config import CONTEXT_LEN
                 tokens = tokenizer.encode(message, max_length=CONTEXT_LEN)
                 gen = model.generate(tokens, max_len=256, temperature=0.5)
                 resp = tokenizer.decode(gen)
@@ -146,11 +146,11 @@ class Engine:
                     return {'response': resp.strip(), 'success': True}
             except Exception:
                 pass
-        from smart_reply import get_smart_reply
+        from dikaai.coding.smart_reply import get_smart_reply
         return {'response': get_smart_reply(message), 'success': True}
 
     def _exec_chat(self, message):
-        from smart_reply import get_smart_reply
+        from dikaai.coding.smart_reply import get_smart_reply
         return {'response': get_smart_reply(message), 'success': True}
 
     def get_stats(self):

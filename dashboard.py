@@ -230,7 +230,7 @@ def _generate_csv():
 
 def _handle_chat(text):
     """Generate a smart reply - model + fallback system."""
-    from smart_reply import get_smart_reply
+    from dikaai.coding.smart_reply import get_smart_reply
 
     model_reply = None
     model = _state.get('model')
@@ -238,7 +238,7 @@ def _handle_chat(text):
 
     if model and tokenizer and tokenizer._loaded:
         try:
-            from config import CONTEXT_LEN
+            from dikaai.config import CONTEXT_LEN
             tokens = tokenizer.encode(text, max_length=CONTEXT_LEN)
             if len(tokens) >= 1:
                 generated = model.generate(tokens, max_len=25, temperature=0.75)

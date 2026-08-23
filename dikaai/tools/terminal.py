@@ -2,7 +2,7 @@
 
 import subprocess
 import os
-from core.config import AGENT
+from dikaai.config import AGENT
 
 
 class TerminalTools:

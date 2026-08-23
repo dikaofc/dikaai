@@ -6,11 +6,11 @@ The core loop:
 
 import time
 import traceback
-from agent.planner import Planner, Step, StepType
-from tools.filesystem import FilesystemTools
-from tools.terminal import TerminalTools
-from tools.git_tools import GitTools
-from memory.coding_memory import CodingMemory
+from dikaai.agent.planner import Planner, Step, StepType
+from dikaai.tools.filesystem import FilesystemTools
+from dikaai.tools.terminal import TerminalTools
+from dikaai.tools.git_tools import GitTools
+from dikaai.memory.coding_memory import CodingMemory
 
 
 class ExecutionResult:
@@ -160,7 +160,7 @@ class Executor:
             elif step.step_type == StepType.THINK:
                 # Use model for reasoning if available
                 if self.model and self.tokenizer and self.tokenizer._loaded:
-                    from config import CONTEXT_LEN
+                    from dikaai.config import CONTEXT_LEN
                     tokens = self.tokenizer.encode(step.description, max_length=CONTEXT_LEN)
                     generated = self.model.generate(tokens, max_len=100, temperature=0.5)
                     response = self.tokenizer.decode(generated)

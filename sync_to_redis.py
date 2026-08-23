@@ -18,7 +18,7 @@ from pathlib import Path
 
 # Load config
 sys.path.insert(0, str(Path(__file__).parent))
-from config import (
+from dikaai.config import (
     DB_PATH, MODEL_DIR, VOCAB_FILE, HISTORY_FILE,
     UPSTASH_REDIS_URL, UPSTASH_REDIS_TOKEN, USE_REDIS
 )

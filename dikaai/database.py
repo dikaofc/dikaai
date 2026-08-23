@@ -12,7 +12,7 @@ import json
 import urllib.request
 import urllib.error
 from pathlib import Path
-from config import DB_PATH, UPSTASH_REDIS_URL, UPSTASH_REDIS_TOKEN, USE_REDIS
+from dikaai.config import DB_PATH, UPSTASH_REDIS_URL, UPSTASH_REDIS_TOKEN, USE_REDIS
 
 
 # ============================================================
@@ -166,7 +166,7 @@ class RedisDB:
         return bool(self.r.exists(self._key(f"msg:{msg_hash}")))
 
     def add_message(self, chat_id, chat_title, sender_name, message, timestamp) -> bool:
-        from config import MIN_MESSAGE_LEN, MAX_MESSAGE_LEN
+        from dikaai.config import MIN_MESSAGE_LEN, MAX_MESSAGE_LEN
         if len(message.strip()) < MIN_MESSAGE_LEN:
             return False
         if len(message) > MAX_MESSAGE_LEN:
@@ -364,7 +364,7 @@ class DikaDB:
             except Exception:
                 pass  # Redis failure is non-fatal
 
-        from config import MIN_MESSAGE_LEN, MAX_MESSAGE_LEN
+        from dikaai.config import MIN_MESSAGE_LEN, MAX_MESSAGE_LEN
 
         # Filter junk
         if len(message.strip()) < MIN_MESSAGE_LEN:

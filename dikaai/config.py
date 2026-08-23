@@ -4,7 +4,15 @@ import json
 import multiprocessing
 from pathlib import Path
 
-BASE_DIR = Path(__file__).parent
+BASE_DIR = Path(__file__).parent.parent
+DATA_DIR = BASE_DIR / "data"
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+(DATA_DIR / "memory").mkdir(exist_ok=True)
+(DATA_DIR / "rag").mkdir(exist_ok=True)
+(DATA_DIR / "conversations").mkdir(exist_ok=True)
+(DATA_DIR / "knowledge").mkdir(exist_ok=True)
+(DATA_DIR / "benchmarks").mkdir(exist_ok=True)
+
 DB_PATH = BASE_DIR / "dikaai.db"
 MODEL_DIR = BASE_DIR / "model_checkpoints"
 CONFIG_FILE = BASE_DIR / "config.env"
@@ -98,3 +106,47 @@ TARGET_ENTITIES = [
 AUTO_REPLY_ENABLED = os.environ.get('AUTO_REPLY', 'true').lower() == 'true'
 AUTO_REPLY_DELAY = float(os.environ.get('AUTO_REPLY_DELAY', '1.5'))
 AUTO_REPLY_MIN_LEN = int(os.environ.get('AUTO_REPLY_MIN_LEN', 20))
+
+# ============================================================
+# CORE SYSTEM SETTINGS
+# ============================================================
+ROUTER = {
+    'chat_max_tokens': 256,
+    'code_max_tokens': 512,
+    'reason_max_tokens': 1024,
+    'temperature_chat': 0.7,
+    'temperature_code': 0.3,
+    'temperature_reason': 0.5,
+}
+
+AGENT = {
+    'max_retries': 5,
+    'max_file_size': 1_000_000,
+    'allowed_extensions': ['.py', '.js', '.ts', '.go', '.rs', '.java',
+                           '.kt', '.sh', '.bash', '.sql', '.json',
+                           '.yaml', '.yml', '.toml', '.md', '.txt',
+                           '.html', '.css'],
+    'blocked_commands': ['rm -rf /', 'mkfs', 'dd if='],
+    'timeout_seconds': 30,
+}
+
+TOOLS = {
+    'search_max_results': 20,
+    'file_read_max_lines': 2000,
+    'git_diff_max_lines': 500,
+}
+
+RAG = {
+    'chunk_size': 500,
+    'chunk_overlap': 50,
+    'embedding_dim': 128,
+    'top_k': 5,
+    'similarity_threshold': 0.3,
+}
+
+MEMORY = {
+    'short_term_limit': 20,
+    'long_term_limit': 1000,
+    'coding_memory_limit': 500,
+    'experience_threshold': 0.7,
+}

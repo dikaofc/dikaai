@@ -16,7 +16,7 @@ import time
 import re
 import html
 import random
-from database import DikaDB
+from dikaai.database import DikaDB
 
 
 class DikaWebScraper:

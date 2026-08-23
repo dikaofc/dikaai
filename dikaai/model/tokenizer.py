@@ -9,7 +9,7 @@ import json
 import re
 from collections import Counter
 from pathlib import Path
-from config import VOCAB_SIZE, VOCAB_FILE
+from dikaai.config import VOCAB_SIZE, VOCAB_FILE
 
 PAD_TOKEN = '<pad>'
 UNK_TOKEN = '<unk>'

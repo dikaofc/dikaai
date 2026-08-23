@@ -2,10 +2,10 @@
 import time
 import random
 import gc
-from model import DikaModel, get_lr
-from tokenizer import DikaTokenizer, _is_noise, _is_indonesian
-from database import DikaDB
-from config import (
+from dikaai.model.model import DikaModel, get_lr
+from dikaai.model.tokenizer import DikaTokenizer, _is_noise, _is_indonesian
+from dikaai.database import DikaDB
+from dikaai.config import (
     BATCH_SIZE, MAX_TRAIN_STEPS, CONTEXT_LEN, CHUNK_SIZE,
     MODEL_DIR, TRAIN_INTERVAL, GRAD_ACCUM, LR, LR_MIN
 )
@@ -226,4 +226,4 @@ class DikaTrainer:
         self.training = False
 
 
-from config import LR_WARMUP
+from dikaai.config import LR_WARMUP

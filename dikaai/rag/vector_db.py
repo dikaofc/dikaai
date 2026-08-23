@@ -2,8 +2,8 @@
 
 import json
 from pathlib import Path
-from rag.embeddings import embed_text, cosine_similarity
-from core.config import RAG, DATA_DIR
+from dikaai.rag.embeddings import embed_text, cosine_similarity
+from dikaai.config import RAG, DATA_DIR
 
 
 class VectorDB:
