@@ -41,8 +41,8 @@ class DikaTrainer:
             print("  [TRAINER] No vocab, will build from DB")
 
     def build_vocab(self):
-        """Rebuild vocabulary from all messages."""
-        messages = self.db.get_all_messages(limit=50000)
+        """Rebuild vocabulary from messages."""
+        messages = self.db.get_all_messages(limit=500)
         if not messages:
             print("  [TRAINER] No messages in DB yet")
             return False
@@ -68,14 +68,7 @@ class DikaTrainer:
             return False
         stats = self.db.get_stats()
         current = stats['total']
-        if current - self._last_msg_count > 5000:
-            print(f"  [TRAINER] {current - self._last_msg_count} new msgs, rebuilding vocab...")
-            self.build_vocab()
-            self._last_msg_count = current
-            return True
-        return False
-
-        if current - self._last_msg_count > 5000:
+        if current - self._last_msg_count > 1000:  # Rebuild more often
             print(f"  [TRAINER] {current - self._last_msg_count} new msgs, rebuilding vocab...")
             self.build_vocab()
             self._last_msg_count = current
@@ -83,16 +76,37 @@ class DikaTrainer:
         return False
 
     def _prepare_batch(self):
-        """Prepare training pairs - pick random messages, no filtering."""
+        """Prepare training pairs - prioritize web data for faster learning."""
         all_msgs = self.db.get_all_messages(limit=500)
         if len(all_msgs) < 5:
             return []
 
-        # Pick random messages - INDONESIAN ONLY
-        indo_msgs = [m for m in all_msgs if _is_indonesian(m)]
-        if len(indo_msgs) < 5:
-            indo_msgs = all_msgs[:50]  # Fallback
-        sampled = random.sample(indo_msgs, min(16, len(indo_msgs)))
+        # Separate web data from chat data
+        web_msgs = []
+        chat_msgs = []
+        for m in all_msgs:
+            if _is_indonesian(m):
+                # Web data markers: typically formal/educational Indonesian
+                if any(w in m.lower() for w in ['tutorial', 'cara', 'belajar', 'panduan', 'penjelasan',
+                    'adalah', 'merupakan', 'contoh', 'menggunakan', 'fungsi', 'manfaat',
+                    'kelebihan', 'kekurangan', 'perbandingan', 'install', 'setup',
+                    'konfigurasi', 'implementasi', 'pengertian', 'tujuan']):
+                    web_msgs.append(m)
+                else:
+                    chat_msgs.append(m)
+
+        # Prioritize: 70% web data, 30% chat data (for faster knowledge acquisition)
+        if web_msgs and chat_msgs:
+            n_web = min(int(24 * 0.7), len(web_msgs))  # 70% web
+            n_chat = min(24 - n_web, len(chat_msgs))   # 30% chat
+            sampled = random.sample(web_msgs, n_web) + random.sample(chat_msgs, n_chat)
+        elif web_msgs:
+            sampled = random.sample(web_msgs, min(24, len(web_msgs)))
+        elif chat_msgs:
+            sampled = random.sample(chat_msgs, min(24, len(chat_msgs)))
+        else:
+            # Fallback: all messages
+            sampled = random.sample(all_msgs, min(24, len(all_msgs)))
 
         pairs = []
         for message in sampled:
@@ -133,8 +147,6 @@ class DikaTrainer:
                 if msg_id != -1:
                     processed_ids.add(msg_id)
             except Exception as e:
-                if count == 0 and epoch <= 2:
-                    print(f"  [TRAINER] Train error: {e}")
                 continue
 
         if processed_ids:

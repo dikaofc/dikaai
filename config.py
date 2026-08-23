@@ -81,7 +81,7 @@ LR = float(os.environ.get('LEARNING_RATE', 0.003))
 LR_MIN = float(os.environ.get('LR_MIN', 0.0005))
 LR_WARMUP = int(os.environ.get('LR_WARMUP', 30))
 LR_DECAY = int(os.environ.get('LR_DECAY', 300))
-TRAIN_INTERVAL = int(os.environ.get('TRAIN_EVERY_SECONDS', 8))  # Faster
+TRAIN_INTERVAL = int(os.environ.get('TRAIN_EVERY_SECONDS', 5))  # Faster
 MAX_TRAIN_STEPS = int(os.environ.get('MAX_TRAIN_STEPS', 500))
 GRAD_ACCUM = int(os.environ.get('GRAD_ACCUM', 4))
 

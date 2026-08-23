@@ -210,10 +210,22 @@ class DikaAi:
                 time.sleep(30)
 
     async def run_all(self):
-        """Run everything AUTOMATICALLY: scrape + train + listen + auto-reply."""
+        """Run everything AUTOMATICALLY: web scrape + train + listen + auto-reply.
+        
+        Fully automatic flow (100% otomatis):
+        1. Start Dashboard (port 8888)
+        2. Web scrape (ambil data dari internet)
+        3. Build vocab dari data
+        4. Start training (background)
+        5. [Optional] Connect Telegram + auto-reply + scrape chat
+        6. Periodic re-scrape (setiap 6 jam)
+        """
         self.running = True
 
-        # Start dashboard
+        # ================================================================
+        # PHASE 1: Start Dashboard
+        # ================================================================
+        print("\n  [SYS] 🚀 Starting DikaAi - Fully Automatic!")
         start_dashboard()
         set_state(
             model=self.trainer.model,
@@ -232,56 +244,81 @@ class DikaAi:
         else:
             print("  [SYS] ⚠️  Redis: Not configured (local only)")
 
-        # Check Telegram config
-        if not API_ID or not API_HASH:
-            print("\n  ❌ Telegram API not configured!")
-            print("  Continuing with training only...")
-            if not self.tokenizer.load():
-                self.trainer.build_vocab()
-            self.trainer.continuous_train()
-            return
+        # Show Telegram status
+        tg_configured = bool(API_ID and API_HASH)
+        if tg_configured:
+            print("  [SYS] ✅ Telegram: Configured")
+        else:
+            print("  [SYS] ⚠️  Telegram: Not configured (web scrape only)")
 
-        # Connect to Telegram
-        if not await self.bot.connect():
-            print("  ❌ Failed to connect. Check config.")
-            return
+        # ================================================================
+        # PHASE 2: Web Scrape (ambil data dari internet)
+        # ================================================================
+        print("\n  [PHASE 1] 🌐 Web scraping dari internet...")
+        self._web_thread = threading.Thread(
+            target=self._web_scrape_loop,
+            daemon=True
+        )
+        self._web_thread.start()
+        # Wait for initial web scrape to finish (max 120s)
+        self._web_thread.join(timeout=120)
+        print("  [PHASE 1] ✅ Web scrape selesai!")
 
-        # Phase 1: Build vocab from existing data (if any)
-        print("\n  [PHASE 1] Building vocab from existing data...")
+        # ================================================================
+        # PHASE 3: Build Vocab dari data
+        # ================================================================
+        print("\n  [PHASE 2] 📖 Building vocab dari data...")
         existing = self.db.get_stats()
         if existing['total'] > 0:
             self.trainer.build_vocab()
-            print(f"  [PHASE 1] ✅ Vocab ready: {self.tokenizer.vocab_size} tokens")
+            print(f"  [PHASE 2] ✅ Vocab ready: {self.tokenizer.vocab_size} tokens dari {existing['total']} messages")
         else:
-            print("  [PHASE 1] No data yet, will build after scrape")
+            print("  [PHASE 2] ⚠️  No data yet, will build after scrape")
 
-        # Phase 2: Start training IMMEDIATELY (if data exists)
-        print("\n  [PHASE 2] Starting training (background)...")
+        # ================================================================
+        # PHASE 4: Start Training (background)
+        # ================================================================
+        print("\n  [PHASE 3] 🧠 Starting training (background)...")
         self.train_thread = threading.Thread(
             target=self._train_loop,
             daemon=True
         )
         self.train_thread.start()
 
-        # Phase 3: Setup auto-reply + real-time listener
-        print("\n  [PHASE 3] Starting auto-reply + listener...")
-        self.bot.setup_auto_reply()
+        # ================================================================
+        # PHASE 5: Connect Telegram (optional)
+        # ================================================================
+        telegram_connected = False
+        if tg_configured:
+            print("\n  [PHASE 4] 📱 Connecting to Telegram...")
+            if await self.bot.connect():
+                telegram_connected = True
+                print("  [PHASE 4] ✅ Telegram connected!")
 
-        # Phase 4: Scrape ALL chats (training runs in parallel!)
-        print("\n  [PHASE 4] Scraping ALL chats (training runs in parallel!)...")
-        await self.bot.scrape_all()
+                # Setup auto-reply
+                print("  [PHASE 4] 👂 Starting auto-reply + listener...")
+                self.bot.setup_auto_reply()
 
-        # Phase 5: Scrape web content in background
-        print("\n  [PHASE 5] Starting web scraper (background)...")
-        self._web_thread = threading.Thread(
-            target=self._web_scrape_loop,
-            daemon=True
-        )
-        self._web_thread.start()
+                # Scrape Telegram chats (training runs in parallel!)
+                print("  [PHASE 4] 📥 Scraping ALL Telegram chats...")
+                await self.bot.scrape_all()
+            else:
+                print("  [PHASE 4] ⚠️  Telegram connection failed, continuing without it...")
+        else:
+            print("\n  [PHASE 4] ⏭️  Skipping Telegram (not configured)")
 
-        # Phase 6: Redis auto-sync (if configured)
+        # ================================================================
+        # PHASE 6: Rebuild vocab (after all scrapes done)
+        # ================================================================
+        print("\n  [PHASE 5] 🔄 Rebuilding vocab dari semua data...")
+        self.trainer.build_vocab()
+        print(f"  [PHASE 5] ✅ Vocab updated: {self.tokenizer.vocab_size} tokens")
+
+        # ================================================================
+        # PHASE 7: Redis auto-sync (if configured)
+        # ================================================================
         if USE_REDIS:
-            print("\n  [PHASE 6] Starting Redis auto-sync (every 60s)...")
+            print("\n  [PHASE 6] 🔴 Starting Redis auto-sync (every 60s)...")
             self._redis_thread = threading.Thread(
                 target=self._redis_sync_loop,
                 daemon=True
@@ -290,31 +327,38 @@ class DikaAi:
         else:
             print("\n  [PHASE 6] Redis not configured, skipping sync")
 
-        # Phase 7: Rebuild vocab after scrape
-        print("\n  [PHASE 7] Rebuilding vocab from new data...")
-        self.trainer.build_vocab()
-        print(f"  [PHASE 7] ✅ Vocab updated: {self.tokenizer.vocab_size} tokens")
-
-        # Phase 8: Periodic re-scrape (every 6 hours)
-        print("\n  [PHASE 8] Periodic re-scrape every 6 hours...")
+        # ================================================================
+        # PHASE 8: Periodic re-scrape (setiap 6 jam)
+        # ================================================================
+        print("\n  [PHASE 7] ⏰ Periodic re-scrape setiap 6 jam...")
+        print("  [SYS] ✅ DikaAi berjalan otomatis! Ctrl+C untuk stop.")
+        print("  [SYS] 🌐 Dashboard: http://localhost:8888")
         scrape_count = 0
 
         while self.running:
             try:
                 await asyncio.sleep(6 * 3600)  # Every 6 hours
                 scrape_count += 1
-                print(f"\n  [RE-SCRAPE #{scrape_count}] Updating from Telegram + Web...")
+                print(f"\n  [RE-SCRAPE #{scrape_count}] 🔄 Updating data...")
                 
-                # Parallel: Telegram + Web scrape
-                tg_task = asyncio.create_task(self.bot.scrape_recent(hours=6))
+                # Web scrape (always)
                 web_task = threading.Thread(target=self._web_scrape_loop, daemon=True)
                 web_task.start()
                 
-                await tg_task
-                web_task.join(timeout=60)
+                # Telegram scrape (if connected)
+                if telegram_connected and self.bot.client:
+                    try:
+                        tg_task = asyncio.create_task(self.bot.scrape_recent(hours=6))
+                        await tg_task
+                    except Exception as e:
+                        print(f"  [RE-SCRAPE] Telegram error: {e}")
                 
-                # Rebuild vocab if needed
+                web_task.join(timeout=120)
+                
+                # Rebuild vocab after re-scrape
                 if self.tokenizer.vocab_size == 0 or not self.tokenizer._loaded:
+                    self.trainer.build_vocab()
+                else:
                     self.trainer.build_vocab()
 
             except asyncio.CancelledError:
@@ -328,7 +372,10 @@ class DikaAi:
         self.running = False
         self.trainer.stop()
         if self.bot.client:
-            self.bot.close()
+            try:
+                self.bot.close()
+            except Exception:
+                pass
         self.model.save()
         self.tokenizer.save()
         print("  DikaAi stopped. Model saved! 💾")

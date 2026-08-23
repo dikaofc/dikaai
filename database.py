@@ -196,6 +196,10 @@ class RedisDB:
         # Add to sorted set (by timestamp)
         self.r.zadd(self._key('msgs'), timestamp, msg_hash)
 
+        # Add to training list (keep last 500 for fast training access)
+        self.r.lpush(self._key('training'), msg_hash)
+        self.r.ltrim(self._key('training'), 0, 499)
+
         # Add to recent list (keep last 100)
         self.r.lpush(self._key('recent'), json.dumps({
             'chat_title': chat_title or '',
@@ -230,15 +234,21 @@ class RedisDB:
         }
 
     def get_all_messages(self, limit=None) -> list:
-        """Get recent messages from Redis list."""
-        msgs = self.r.lrange(self._key('recent'), 0, -1)
+        """Get messages from Redis (fast: recent list only, no hash lookups)."""
         result = []
-        for m in msgs:
-            try:
-                data = json.loads(m) if isinstance(m, str) else {}
-                result.append(data.get('message', ''))
-            except Exception:
-                pass
+        try:
+            msgs = self.r.lrange(self._key('recent'), 0, -1)
+            for m in msgs:
+                try:
+                    data = json.loads(m) if isinstance(m, str) else {}
+                    text = data.get('message', '')
+                    if text:
+                        result.append(text)
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
         if limit:
             return result[:limit]
         return result
@@ -269,20 +279,23 @@ class RedisDB:
 
 class DikaDB:
     def __init__(self):
-        # Auto-detect: use Redis on Vercel, SQLite locally
-        if USE_REDIS:
-            print("  [DB] Using Upstash Redis (Vercel mode)")
-            self._redis = RedisDB()
-            self.conn = None
-            self.lock = threading.Lock()
-            return
-
-        self._redis = None
+        # Always use SQLite for training (fast)
         self.conn = sqlite3.connect(str(DB_PATH), check_same_thread=False)
         self.conn.execute("PRAGMA journal_mode=WAL")
         self.conn.execute("PRAGMA synchronous=NORMAL")
         self.lock = threading.Lock()
         self._setup_tables()
+
+        # Also use Redis for Vercel dashboard (if configured)
+        if USE_REDIS:
+            try:
+                self._redis = RedisDB()
+                print("  [DB] Hybrid: SQLite (training) + Redis (Vercel dashboard)")
+            except Exception:
+                self._redis = None
+                print("  [DB] SQLite only (Redis connection failed)")
+        else:
+            self._redis = None
     
     def _setup_tables(self):
         with self.lock:
@@ -314,8 +327,6 @@ class DikaDB:
     
     def is_duplicate(self, message: str) -> bool:
         """Check if message already exists (anti-dupe)."""
-        if self._redis:
-            return self._redis.is_duplicate(message)
         msg_hash = self._hash(message)
         with self.lock:
             cur = self.conn.execute(
@@ -345,9 +356,13 @@ class DikaDB:
 
     def add_message(self, chat_id: int, chat_title: str,
                     sender_name: str, message: str, timestamp: float) -> bool:
-        """Add message, returns False if duplicate or noise."""
+        """Add message to SQLite (training) + Redis (Vercel dashboard)."""
+        # Also push to Redis for Vercel dashboard
         if self._redis:
-            return self._redis.add_message(chat_id, chat_title, sender_name, message, timestamp)
+            try:
+                self._redis.add_message(chat_id, chat_title, sender_name, message, timestamp)
+            except Exception:
+                pass  # Redis failure is non-fatal
 
         from config import MIN_MESSAGE_LEN, MAX_MESSAGE_LEN
 
@@ -377,8 +392,6 @@ class DikaDB:
     
     def get_unprocessed(self, limit: int = 500) -> list:
         """Get unprocessed messages for training."""
-        if self._redis:
-            return self._redis.get_unprocessed(limit)
         with self.lock:
             cur = self.conn.execute(
                 """SELECT id, message FROM messages 
@@ -390,8 +403,6 @@ class DikaDB:
     
     def mark_processed(self, ids: list):
         """Mark messages as processed."""
-        if self._redis:
-            return self._redis.mark_processed(ids)
         if not ids:
             return
         with self.lock:
@@ -403,9 +414,7 @@ class DikaDB:
             self.conn.commit()
     
     def get_stats(self) -> dict:
-        """Get database stats."""
-        if self._redis:
-            return self._redis.get_stats()
+        """Get database stats from SQLite."""
         with self.lock:
             total = self.conn.execute("SELECT COUNT(*) FROM messages").fetchone()[0]
             processed = self.conn.execute(
@@ -424,9 +433,7 @@ class DikaDB:
             }
     
     def get_all_messages(self, limit: int = None) -> list:
-        """Get all messages as text."""
-        if self._redis:
-            return self._redis.get_all_messages(limit)
+        """Get all messages from SQLite (fast for training)."""
         with self.lock:
             if limit:
                 cur = self.conn.execute(
@@ -441,6 +448,8 @@ class DikaDB:
     
     def close(self):
         if self._redis:
-            self._redis.close()
-            return
+            try:
+                self._redis.close()
+            except Exception:
+                pass
         self.conn.close()
