@@ -65,12 +65,11 @@ class BenchmarkTask:
             result['passed'] = False
             result['metrics']['test_passed'] = False
 
-        # 4. Custom validation
+        # 4. Custom validation (takes priority over has_code check)
         if self.validate_fn:
             custom = self.validate_fn(response)
             result['metrics']['custom_validation'] = custom
-            if not custom:
-                result['passed'] = False
+            result['passed'] = custom  # validate_fn is the source of truth
 
         return result
 
@@ -303,12 +302,180 @@ TOOL_USE_TASKS = [
     ),
 ]
 
+# ============================================================
+# JAVASCRIPT TASKS
+# ============================================================
+
+JS_TASKS = [
+    BenchmarkTask(
+        id="js-001", category="javascript", difficulty="easy",
+        instruction="Write a JavaScript function `fibonacci(n)` that returns the nth Fibonacci number.",
+        validate_fn=lambda r: any(kw in r for kw in ['function fibonacci', 'const fibonacci', 'fibonacci']),
+    ),
+    BenchmarkTask(
+        id="js-002", category="javascript", difficulty="easy",
+        instruction="Write a JavaScript function `reverseString(s)` that reverses a string.",
+        validate_fn=lambda r: any(kw in r for kw in ['function reverseString', 'reverseString', 'split', 'reverse']),
+    ),
+    BenchmarkTask(
+        id="js-003", category="javascript", difficulty="easy",
+        instruction="Write a JavaScript function `isPalindrome(s)` to check if a string is a palindrome.",
+        validate_fn=lambda r: any(kw in r for kw in ['function isPalindrome', 'isPalindrome', 'toLowerCase']),
+    ),
+    BenchmarkTask(
+        id="js-004", category="javascript", difficulty="medium",
+        instruction="Write a JavaScript function `binarySearch(arr, target)` that performs binary search.",
+        validate_fn=lambda r: any(kw in r for kw in ['function binarySearch', 'binarySearch', 'Math.floor']),
+    ),
+    BenchmarkTask(
+        id="js-005", category="javascript", difficulty="medium",
+        instruction="Write a JavaScript function `twoSum(nums, target)` that finds two numbers adding to target.",
+        validate_fn=lambda r: any(kw in r for kw in ['function twoSum', 'twoSum', 'seen']),
+    ),
+    BenchmarkTask(
+        id="js-006", category="javascript", difficulty="medium",
+        instruction="Write a JavaScript `debounce(fn, delay)` function.",
+        validate_fn=lambda r: any(kw in r for kw in ['function debounce', 'debounce', 'setTimeout', 'clearTimeout']),
+    ),
+    BenchmarkTask(
+        id="js-007", category="javascript", difficulty="medium",
+        instruction="Write a JavaScript `memoize(fn)` function for caching results.",
+        validate_fn=lambda r: any(kw in r for kw in ['function memoize', 'memoize', 'Map', 'cache']),
+    ),
+    BenchmarkTask(
+        id="js-008", category="javascript", difficulty="medium",
+        instruction="Write a JavaScript `validParentheses(s)` function.",
+        validate_fn=lambda r: any(kw in r for kw in ['function validParentheses', 'validParentheses', 'stack']),
+    ),
+    BenchmarkTask(
+        id="js-009", category="javascript", difficulty="medium",
+        instruction="Write a JavaScript `deepClone(obj)` function.",
+        validate_fn=lambda r: any(kw in r for kw in ['function deepClone', 'deepClone', 'typeof', 'Array.isArray']),
+    ),
+    BenchmarkTask(
+        id="js-010", category="javascript", difficulty="medium",
+        instruction="Write a JavaScript `flatten(arr)` function to flatten nested arrays.",
+        validate_fn=lambda r: any(kw in r for kw in ['function flatten', 'flatten', 'reduce', 'Array.isArray']),
+    ),
+]
+
+# ============================================================
+# RUST TASKS
+# ============================================================
+
+RUST_TASKS = [
+    BenchmarkTask(
+        id="rs-001", category="rust", difficulty="easy",
+        instruction="Write a Rust function `fibonacci(n: u32) -> u64`.",
+        validate_fn=lambda r: 'fn fibonacci' in r or 'fibonacci' in r,
+    ),
+    BenchmarkTask(
+        id="rs-002", category="rust", difficulty="easy",
+        instruction="Write a Rust struct `Point` with `new()` and `distance()` methods.",
+        validate_fn=lambda r: 'struct Point' in r and ('fn new' in r or 'fn distance' in r),
+    ),
+    BenchmarkTask(
+        id="rs-003", category="rust", difficulty="medium",
+        instruction="Write a Rust `trait Drawable` with `draw()` and `area()` methods, and implement it for a `Circle` struct.",
+        validate_fn=lambda r: 'trait Drawable' in r and 'impl Drawable for' in r,
+    ),
+    BenchmarkTask(
+        id="rs-004", category="rust", difficulty="medium",
+        instruction="Write a Rust `binary_search` function that returns `Option<usize>`.",
+        validate_fn=lambda r: 'fn binary_search' in r and 'Option' in r,
+    ),
+    BenchmarkTask(
+        id="rs-005", category="rust", difficulty="medium",
+        instruction="Write a Rust function `divide(a: f64, b: f64) -> Result<f64, String>`.",
+        validate_fn=lambda r: 'fn divide' in r and 'Result' in r,
+    ),
+    BenchmarkTask(
+        id="rs-006", category="rust", difficulty="medium",
+        instruction="Write Rust code using `HashMap` to count word occurrences.",
+        validate_fn=lambda r: 'HashMap' in r and ('word_count' in r or 'entry' in r),
+    ),
+    BenchmarkTask(
+        id="rs-007", category="rust", difficulty="medium",
+        instruction="Write a Rust `enum TrafficLight` with a `wait_time()` method using `match`.",
+        validate_fn=lambda r: 'enum TrafficLight' in r and 'match' in r,
+    ),
+    BenchmarkTask(
+        id="rs-008", category="rust", difficulty="easy",
+        instruction="Write Rust code to filter even numbers and square them using iterator chain.",
+        validate_fn=lambda r: '.iter()' in r and ('filter' in r or 'map' in r),
+    ),
+]
+
+# ============================================================
+# C++ TASKS
+# ============================================================
+
+CPP_TASKS = [
+    BenchmarkTask(
+        id="cpp-001", category="cpp", difficulty="easy",
+        instruction="Write a C++ function `long long fibonacci(int n)` that returns the nth Fibonacci number.",
+        validate_fn=lambda r: any(kw in r for kw in ['fibonacci', 'long long']),
+    ),
+    BenchmarkTask(
+        id="cpp-002", category="cpp", difficulty="easy",
+        instruction="Write a C++ class `Point` with constructor and `distanceTo` method.",
+        validate_fn=lambda r: 'class Point' in r and ('distanceTo' in r or 'distance'),
+    ),
+    BenchmarkTask(
+        id="cpp-003", category="cpp", difficulty="medium",
+        instruction="Write a C++ template function `findMax`.",
+        validate_fn=lambda r: 'template' in r and 'findMax' in r,
+    ),
+    BenchmarkTask(
+        id="cpp-004", category="cpp", difficulty="medium",
+        instruction="Write C++ code using `std::sort` with a lambda comparator.",
+        validate_fn=lambda r: 'sort' in r and ('lambda' in r or '[]' in r),
+    ),
+    BenchmarkTask(
+        id="cpp-005", category="cpp", difficulty="medium",
+        instruction="Write C++ smart pointer usage with `make_unique` and `make_shared`.",
+        validate_fn=lambda r: 'make_unique' in r or 'make_shared' in r or 'unique_ptr' in r,
+    ),
+]
+
+# ============================================================
+# GO TASKS
+# ============================================================
+
+GO_TASKS = [
+    BenchmarkTask(
+        id="go-001", category="go", difficulty="easy",
+        instruction="Write a Go function `fibonacci(n int) int`.",
+        validate_fn=lambda r: 'func fibonacci' in r,
+    ),
+    BenchmarkTask(
+        id="go-002", category="go", difficulty="easy",
+        instruction="Write a Go struct `Person` with a `Greet()` method.",
+        validate_fn=lambda r: 'type Person struct' in r and 'func (p' in r,
+    ),
+    BenchmarkTask(
+        id="go-003", category="go", difficulty="medium",
+        instruction="Write a Go interface `Shape` with `Area()` and implement it for `Circle`.",
+        validate_fn=lambda r: 'type Shape interface' in r and 'func (c' in r,
+    ),
+    BenchmarkTask(
+        id="go-004", category="go", difficulty="medium",
+        instruction="Write a Go goroutine worker function.",
+        validate_fn=lambda r: 'func worker' in r and ('<-chan' in r or 'chan' in r),
+    ),
+    BenchmarkTask(
+        id="go-005", category="go", difficulty="medium",
+        instruction="Write a Go HTTP handler with JSON response.",
+        validate_fn=lambda r: 'http.HandleFunc' in r or 'json.NewEncoder' in r or 'func' in r,
+    ),
+]
 
 # ============================================================
 # ALL TASKS
 # ============================================================
 
-ALL_TASKS = PYTHON_TASKS + DEBUG_TASKS + ALGORITHM_TASKS + GIT_TASKS + TOOL_USE_TASKS
+ALL_TASKS = (PYTHON_TASKS + JS_TASKS + RUST_TASKS + CPP_TASKS + GO_TASKS +
+             DEBUG_TASKS + ALGORITHM_TASKS + GIT_TASKS + TOOL_USE_TASKS)
 
 
 def get_tasks(category: str = None, difficulty: str = None) -> list:

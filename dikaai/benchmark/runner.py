@@ -107,8 +107,12 @@ class BenchmarkRunner:
         start = time.time()
 
         try:
+            # Create fresh engine per task to avoid state pollution
+            from dikaai.engine import Engine
+            fresh_engine = Engine(workspace=self.workspace)
+
             # Send instruction to engine
-            result = self.engine.process(task.instruction)
+            result = fresh_engine.process(task.instruction)
             response = result.get('response', '')
 
             # Evaluate

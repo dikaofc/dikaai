@@ -117,13 +117,25 @@ class Engine:
     def _route(self, message: str) -> str:
         """Simple routing."""
         text = message.lower()
-        if any(w in text for w in ['fix', 'error', 'bug', 'buat', 'create', 'write', 'edit', 'ubah']):
-            return 'code'
-        if any(w in text for w in ['git', 'install', 'pip', 'run', 'jalankan']):
+        # Git operations (before code, since 'commit' has no code keywords)
+        if any(w in text for w in ['git ', 'git\n', 'commit', 'branch', 'merge', 'stash',
+                                    'diff', 'undo', 'revert', 'reset']):
             return 'tool'
-        if any(w in text for w in ['cari', 'find', 'search']):
+        # Code generation
+        if any(w in text for w in ['fix', 'error', 'bug', 'buat', 'create', 'write', 'edit', 'ubah',
+                                    'function', 'class', 'implement', 'def ', 'fn ', 'struct ',
+                                    'trait ', 'interface ', 'type ']):
+            return 'code'
+        # System tools
+        if any(w in text for w in ['install', 'pip', 'run ', 'jalankan', 'execute',
+                                    'read the file', 'list ', 'version', 'python --version',
+                                    'how many lines', 'contain']):
+            return 'tool'
+        # Search
+        if any(w in text for w in ['cari', 'find', 'search', 'grep']):
             return 'search'
-        if any(w in text for w in ['jelaskan', 'explain', 'kenapa', 'why', 'apa itu']):
+        # Reasoning
+        if any(w in text for w in ['jelaskan', 'explain', 'kenapa', 'why', 'apa itu', 'how does']):
             return 'reason'
         return 'chat'
 
@@ -160,9 +172,27 @@ class Engine:
         return {'response': f"❌ No template match and model too small for code generation", 'success': False}
 
     def _exec_tool(self, message):
-        if 'git' in message.lower():
-            r = self.git.status() if 'status' in message else self.git.log()
-            return {'response': r.get('stdout', 'Done'), 'success': True}
+        text = message.lower()
+        # Git commands - try template first, then execute
+        if 'git' in text or 'commit' in text or 'branch' in text or 'undo' in text:
+            from dikaai.coding.code_templates import match_template
+            template = match_template(message)
+            if template['matched']:
+                return {'response': template['code'], 'success': True}
+            # Actually execute git
+            if 'status' in text:
+                r = self.git.status()
+            elif 'log' in text or 'history' in text:
+                r = self.git.log()
+            else:
+                r = self.git.status()
+            stdout = r.get('stdout', 'Done')
+            return {'response': f"git status output:\n{stdout}", 'success': True}
+        # Try template first for tool queries
+        from dikaai.coding.code_templates import match_template
+        template = match_template(message)
+        if template['matched']:
+            return {'response': template['code'], 'success': True}
         r = self.terminal.run_command(message)
         return {'response': r.get('stdout', r.get('stderr', 'Done')), 'success': True}
 
