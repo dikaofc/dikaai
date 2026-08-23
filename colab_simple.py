@@ -4,6 +4,7 @@ DikaAi - Google Colab Runner
 ========================================
 Copy-paste SEMUA ke SATU cell di Colab.
 Ganti config di bawah, lalu Run!
+Dashboard Vercel: https://dikaai.vercel.app
 ========================================
 """
 
@@ -17,11 +18,16 @@ Ganti config di bawah, lalu Run!
 # ============================================================
 # STEP 2: CONFIG (GANTI INI!)
 # ============================================================
-TELEGRAM_API_ID = 12345678                # Ganti! dari my.telegram.org
+
+# Telegram (wajib) - dari https://my.telegram.org
+TELEGRAM_API_ID = 12345678                # Ganti!
 TELEGRAM_API_HASH = "abc123def456"        # Ganti!
 TELEGRAM_PHONE = "+628123456789"          # Ganti!
-UPSTASH_REDIS_URL = ""                     # Optional: https://xxx.upstash.io
-UPSTASH_REDIS_TOKEN = ""                   # Optional: AXxx...
+
+# Upstash Redis (WAJIB biar dashboard Vercel jalan!)
+# Daftar gratis: https://upstash.com → Create Database → Copy URL + Token
+UPSTASH_REDIS_URL = "https://xxx.upstash.io"   # Ganti!
+UPSTASH_REDIS_TOKEN = "AXxx..."                 # Ganti!
 
 # Simpan ke config.env
 with open('config.env', 'w') as f:
@@ -32,6 +38,8 @@ UPSTASH_REDIS_REST_URL={UPSTASH_REDIS_URL}
 UPSTASH_REDIS_REST_TOKEN={UPSTASH_REDIS_TOKEN}
 """)
 print("✅ Config saved!")
+print(f"📱 Telegram: {TELEGRAM_PHONE}")
+print(f"🔴 Redis: {UPSTASH_REDIS_URL[:30]}...")
 
 # ============================================================
 # STEP 3: RUN DIKAAI
@@ -49,15 +57,21 @@ from bot import DikaBot
 from webscraper import DikaWebScraper
 from config import API_ID, API_HASH, PHONE, UPSTASH_REDIS_URL, UPSTASH_REDIS_TOKEN, USE_REDIS
 
-print("=" * 55)
+print("\n" + "=" * 55)
 print("  🧠 DikaAi - Google Colab Runner")
 print("  ⏱️  Auto-stop: 12 jam")
 print("  🌐 Web scrape → Training → Telegram")
+print("  📊 Dashboard: https://dikaai.vercel.app")
 print("=" * 55)
 
 if not API_ID or not API_HASH:
     print("❌ Telegram API belum dikonfigurasi!")
     raise SystemExit(1)
+
+if not USE_REDIS:
+    print("⚠️  Redis belum dikonfigurasi!")
+    print("   Dashboard Vercel TIDAK akan update.")
+    print("   Isi UPSTASH_REDIS_URL dan UPSTASH_REDIS_TOKEN dulu!")
 
 # Init
 db = DikaDB()
@@ -88,25 +102,32 @@ def web_scrape():
         print(f"  [WEB] Error: {e}")
 
 def redis_sync():
+    """Sync SQLite → Redis setiap 60 detik (biar dashboard Vercel update)"""
     if not USE_REDIS:
+        print("  [REDIS] ⚠️ Skip (not configured)")
         return
     try:
         from sync_to_redis import UpstashRedis, sync_messages, sync_model, sync_vocab
         r = UpstashRedis(UPSTASH_REDIS_URL, UPSTASH_REDIS_TOKEN)
         r.ping()
-        print("  [REDIS] ✅ Connected!")
+        print("  [REDIS] ✅ Connected to Upstash!")
+        print("  [REDIS] 📊 Dashboard: https://dikaai.vercel.app")
         n = 0
         while running:
             time.sleep(60)
             if not running: break
-            sync_messages(r, limit=200)
-            sync_model(r)
-            sync_vocab(r)
-            n += 1
-            if n % 5 == 0:
-                print(f"  [REDIS] ✅ Sync #{n}")
+            try:
+                sync_messages(r, limit=200)
+                sync_model(r)
+                sync_vocab(r)
+                n += 1
+                if n % 5 == 0:
+                    stats = db.get_stats()
+                    print(f"  [REDIS] ✅ Sync #{n} | {stats['total']} msgs → Vercel")
+            except Exception as e:
+                print(f"  [REDIS] ⚠️ Sync error: {e}")
     except Exception as e:
-        print(f"  [REDIS] Error: {e}")
+        print(f"  [REDIS] ❌ Connection failed: {e}")
 
 def train():
     print("  [TRAIN] 🧠 Training started...")
@@ -143,7 +164,8 @@ async def telegram():
             if rem <= 0:
                 running = False
                 break
-            print(f"\n⏰ {rem:.1f}h left | {db.get_stats()['total']} msgs")
+            stats = db.get_stats()
+            print(f"\n⏰ {rem:.1f}h left | {stats['total']} msgs | model step {model.step}")
             await asyncio.sleep(6 * 3600)
             if not running: break
             n += 1
@@ -161,22 +183,19 @@ async def telegram():
 
 # Start threads
 print("\n🚀 Starting all threads...")
-for name, fn in [("Redis", redis_sync), ("Training", train), ("Web", web_scrape)]:
+for name, fn in [("Redis sync", redis_sync), ("Training", train), ("Web scrape", web_scrape)]:
     t = threading.Thread(target=fn, daemon=True)
     t.start()
     print(f"  ✅ {name} thread started")
 
-# Wait for web scrape (priority)
-print("\n⏳ Waiting for web scrape...")
-t_w = [t for t in threading.enumerate() if t.name != threading.current_thread().name]
-
 try:
-    # Rebuild vocab after web scrape
+    print("\n⏳ Waiting for web scrape (priority)...")
     time.sleep(10)
     if db.get_stats()['total'] > 0:
         trainer.build_vocab()
         print(f"✅ Vocab: {tokenizer.vocab_size} tokens")
 
+    print(f"\n📊 Dashboard: https://dikaai.vercel.app")
     asyncio.run(telegram())
 except KeyboardInterrupt:
     pass
@@ -186,5 +205,10 @@ finally:
     tokenizer.save()
     s = db.get_stats()
     print(f"\n{'='*55}")
-    print(f"  📊 Final: {s['total']} msgs | {model.step} steps | {(time.time()-start_time)/3600:.1f}h")
+    print(f"  📊 Final Stats")
+    print(f"  Messages : {s['total']}")
+    print(f"  Model    : step {model.step}")
+    print(f"  Vocab    : {tokenizer.vocab_size} tokens")
+    print(f"  Runtime  : {(time.time()-start_time)/3600:.1f} jam")
+    print(f"  Dashboard: https://dikaai.vercel.app")
     print(f"{'='*55}")
