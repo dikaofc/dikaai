@@ -6,7 +6,7 @@
     "source": "conversation",
     "confidence": 0.7,
     "created_at": 1787503495.6885982,
-    "updated_at": 1787504440.6334684,
+    "updated_at": 1787506496.406839,
     "status": "active",
     "history": [
       {
@@ -31,7 +31,7 @@
     "source": "conversation",
     "confidence": 0.7,
     "created_at": 1787503561.2821786,
-    "updated_at": 1787505290.1936471,
+    "updated_at": 1787506497.2550087,
     "status": "active",
     "history": [],
     "metadata": {}
@@ -43,7 +43,7 @@
     "source": "conversation",
     "confidence": 0.7,
     "created_at": 1787504402.3543954,
-    "updated_at": 1787504440.6345985,
+    "updated_at": 1787506023.003955,
     "status": "active",
     "history": [],
     "metadata": {}
@@ -70,6 +70,49 @@
     "updated_at": 1787505292.6736414,
     "status": "active",
     "history": [],
+    "metadata": {}
+  },
+  {
+    "subject": "python",
+    "predicate": "version",
+    "value": "3.13",
+    "source": "terminal",
+    "confidence": 1.0,
+    "created_at": 1787506263.4679112,
+    "updated_at": 1787506496.7556684,
+    "status": "active",
+    "history": [
+      {
+        "value": "3.11",
+        "superseded_at": 1787506391.0330868,
+        "superseded_by": "3.13",
+        "source": "terminal"
+      },
+      {
+        "value": "3.13",
+        "superseded_at": 1787506447.3851228,
+        "superseded_by": "3.11",
+        "source": "user"
+      },
+      {
+        "value": "3.11",
+        "superseded_at": 1787506447.3875723,
+        "superseded_by": "3.13",
+        "source": "terminal"
+      },
+      {
+        "value": "3.13",
+        "superseded_at": 1787506496.7540565,
+        "superseded_by": "3.11",
+        "source": "user"
+      },
+      {
+        "value": "3.11",
+        "superseded_at": 1787506496.7556684,
+        "superseded_by": "3.13",
+        "source": "terminal"
+      }
+    ],
     "metadata": {}
   }
 ]

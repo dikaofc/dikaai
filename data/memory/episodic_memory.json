@@ -6162,5 +6162,581 @@
       "tool",
       "python"
     ]
+  },
+  {
+    "task": "write fibonacci in python",
+    "plan": [],
+    "code": "def fibonacci(n):\n    \"\"\"Calculate the nth Fibonacci number.\"\"\"\n    if n <= 1:\n        return n\n    a, b = 0, 1\n    for _ in range(2, n + 1):\n        a, b = b, a + b\n    return b\n",
+    "error": "",
+    "fix": "template:fibonacci",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "git status",
+    "plan": [],
+    "code": "",
+    "error": "",
+    "fix": "",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "tool"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "tool",
+      "python"
+    ]
+  },
+  {
+    "task": "write fibonacci in python",
+    "plan": [],
+    "code": "def fibonacci(n):\n    \"\"\"Calculate the nth Fibonacci number.\"\"\"\n    if n <= 1:\n        return n\n    a, b = 0, 1\n    for _ in range(2, n + 1):\n        a, b = b, a + b\n    return b\n",
+    "error": "",
+    "fix": "template:fibonacci",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "git status",
+    "plan": [],
+    "code": "",
+    "error": "",
+    "fix": "",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "tool"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "tool",
+      "python"
+    ]
+  },
+  {
+    "task": "write fibonacci in python",
+    "plan": [],
+    "code": "def fibonacci(n):\n    \"\"\"Calculate the nth Fibonacci number.\"\"\"\n    if n <= 1:\n        return n\n    a, b = 0, 1\n    for _ in range(2, n + 1):\n        a, b = b, a + b\n    return b\n",
+    "error": "",
+    "fix": "template:fibonacci",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "git status",
+    "plan": [],
+    "code": "",
+    "error": "",
+    "fix": "",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "tool"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "tool",
+      "python"
+    ]
+  },
+  {
+    "task": "write fibonacci in python",
+    "plan": [],
+    "code": "def fibonacci(n):\n    \"\"\"Calculate the nth Fibonacci number.\"\"\"\n    if n <= 1:\n        return n\n    a, b = 0, 1\n    for _ in range(2, n + 1):\n        a, b = b, a + b\n    return b\n",
+    "error": "",
+    "fix": "template:fibonacci",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "git status",
+    "plan": [],
+    "code": "",
+    "error": "",
+    "fix": "",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "tool"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "tool",
+      "python"
+    ]
+  },
+  {
+    "task": "write fibonacci in python",
+    "plan": [],
+    "code": "def fibonacci(n):\n    \"\"\"Calculate the nth Fibonacci number.\"\"\"\n    if n <= 1:\n        return n\n    a, b = 0, 1\n    for _ in range(2, n + 1):\n        a, b = b, a + b\n    return b\n",
+    "error": "",
+    "fix": "template:fibonacci",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "git status",
+    "plan": [],
+    "code": "",
+    "error": "",
+    "fix": "",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "tool"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "tool",
+      "python"
+    ]
+  },
+  {
+    "task": "write fibonacci in python",
+    "plan": [],
+    "code": "def fibonacci(n):\n    \"\"\"Calculate the nth Fibonacci number.\"\"\"\n    if n <= 1:\n        return n\n    a, b = 0, 1\n    for _ in range(2, n + 1):\n        a, b = b, a + b\n    return b\n",
+    "error": "",
+    "fix": "template:fibonacci",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "git status",
+    "plan": [],
+    "code": "",
+    "error": "",
+    "fix": "",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "tool"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "tool",
+      "python"
+    ]
+  },
+  {
+    "task": "write fibonacci in python",
+    "plan": [],
+    "code": "def fibonacci(n):\n    \"\"\"Calculate the nth Fibonacci number.\"\"\"\n    if n <= 1:\n        return n\n    a, b = 0, 1\n    for _ in range(2, n + 1):\n        a, b = b, a + b\n    return b\n",
+    "error": "",
+    "fix": "template:fibonacci",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "git status",
+    "plan": [],
+    "code": "",
+    "error": "",
+    "fix": "",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "tool"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "tool",
+      "python"
+    ]
+  },
+  {
+    "task": "write fibonacci in python",
+    "plan": [],
+    "code": "def fibonacci(n):\n    \"\"\"Calculate the nth Fibonacci number.\"\"\"\n    if n <= 1:\n        return n\n    a, b = 0, 1\n    for _ in range(2, n + 1):\n        a, b = b, a + b\n    return b\n",
+    "error": "",
+    "fix": "template:fibonacci",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "git status",
+    "plan": [],
+    "code": "",
+    "error": "",
+    "fix": "",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "tool"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "tool",
+      "python"
+    ]
+  },
+  {
+    "task": "write fibonacci in python",
+    "plan": [],
+    "code": "def fibonacci(n):\n    \"\"\"Calculate the nth Fibonacci number.\"\"\"\n    if n <= 1:\n        return n\n    a, b = 0, 1\n    for _ in range(2, n + 1):\n        a, b = b, a + b\n    return b\n",
+    "error": "",
+    "fix": "template:fibonacci",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "git status",
+    "plan": [],
+    "code": "",
+    "error": "",
+    "fix": "",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "tool"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "tool",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a Python function `fibonacci(n)` that returns the nth Fibonacci number.",
+    "plan": [],
+    "code": "def fibonacci(n):\n    \"\"\"Calculate the nth Fibonacci number.\"\"\"\n    if n <= 1:\n        return n\n    a, b = 0, 1\n    for _ in range(2, n + 1):\n        a, b = b, a + b\n    return b\n",
+    "error": "",
+    "fix": "template:fibonacci",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a Python function `is_palindrome(s)` that checks if a string is a palindrome (case-insensitive).",
+    "plan": [],
+    "code": "def is_palindrome(s):\n    \"\"\"Check if string is a palindrome.\"\"\"\n    s = s.lower().replace(' ', '')\n    return s == s[::-1]\n",
+    "error": "",
+    "fix": "template:is_palindrome",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a Python function `count_vowels(s)` that counts the number of vowels in a string.",
+    "plan": [],
+    "code": "def count_vowels(s):\n    \"\"\"Count vowels in a string.\"\"\"\n    return sum(1 for c in s.lower() if c in 'aeiou')\n",
+    "error": "",
+    "fix": "template:count_vowels",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a Python function `flatten(lst)` that flattens a nested list. Example: flatten([1, [2, 3], [4, [5]]]) should return [1, 2, 3, 4, 5].",
+    "plan": [],
+    "code": "def flatten(lst):\n    \"\"\"Flatten a nested list.\"\"\"\n    result = []\n    for item in lst:\n        if isinstance(item, list):\n            result.extend(flatten(item))\n        else:\n            result.append(item)\n    return result\n",
+    "error": "",
+    "fix": "template:flatten",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a Python function `merge_sort(arr)` that implements merge sort.",
+    "plan": [],
+    "code": "",
+    "error": "",
+    "fix": "",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "tool"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "tool",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a Python function `fibonacci(n)` that returns the nth Fibonacci number.",
+    "plan": [],
+    "code": "def fibonacci(n):\n    \"\"\"Calculate the nth Fibonacci number.\"\"\"\n    if n <= 1:\n        return n\n    a, b = 0, 1\n    for _ in range(2, n + 1):\n        a, b = b, a + b\n    return b\n",
+    "error": "",
+    "fix": "template:fibonacci",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a Python function `is_palindrome(s)` that checks if a string is a palindrome (case-insensitive).",
+    "plan": [],
+    "code": "def is_palindrome(s):\n    \"\"\"Check if string is a palindrome.\"\"\"\n    s = s.lower().replace(' ', '')\n    return s == s[::-1]\n",
+    "error": "",
+    "fix": "template:is_palindrome",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "write fibonacci in python",
+    "plan": [],
+    "code": "def fibonacci(n):\n    \"\"\"Calculate the nth Fibonacci number.\"\"\"\n    if n <= 1:\n        return n\n    a, b = 0, 1\n    for _ in range(2, n + 1):\n        a, b = b, a + b\n    return b\n",
+    "error": "",
+    "fix": "template:fibonacci",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "git status",
+    "plan": [],
+    "code": "",
+    "error": "",
+    "fix": "",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "tool"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "tool",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a Python function `fibonacci(n)` that returns the nth Fibonacci number.",
+    "plan": [],
+    "code": "def fibonacci(n):\n    \"\"\"Calculate the nth Fibonacci number.\"\"\"\n    if n <= 1:\n        return n\n    a, b = 0, 1\n    for _ in range(2, n + 1):\n        a, b = b, a + b\n    return b\n",
+    "error": "",
+    "fix": "template:fibonacci",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a Python function `is_palindrome(s)` that checks if a string is a palindrome (case-insensitive).",
+    "plan": [],
+    "code": "def is_palindrome(s):\n    \"\"\"Check if string is a palindrome.\"\"\"\n    s = s.lower().replace(' ', '')\n    return s == s[::-1]\n",
+    "error": "",
+    "fix": "template:is_palindrome",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a Python function `count_vowels(s)` that counts the number of vowels in a string.",
+    "plan": [],
+    "code": "def count_vowels(s):\n    \"\"\"Count vowels in a string.\"\"\"\n    return sum(1 for c in s.lower() if c in 'aeiou')\n",
+    "error": "",
+    "fix": "template:count_vowels",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a Python function `flatten(lst)` that flattens a nested list. Example: flatten([1, [2, 3], [4, [5]]]) should return [1, 2, 3, 4, 5].",
+    "plan": [],
+    "code": "def flatten(lst):\n    \"\"\"Flatten a nested list.\"\"\"\n    result = []\n    for item in lst:\n        if isinstance(item, list):\n            result.extend(flatten(item))\n        else:\n            result.append(item)\n    return result\n",
+    "error": "",
+    "fix": "template:flatten",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a Python function `merge_sort(arr)` that implements merge sort.",
+    "plan": [],
+    "code": "",
+    "error": "",
+    "fix": "",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "tool"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "tool",
+      "python"
+    ]
   }
 ]
