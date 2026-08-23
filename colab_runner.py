@@ -202,51 +202,66 @@ def signal_handler(sig, frame):
 
 signal.signal(signal.SIGINT, signal_handler)
 
+# ============================================================
+# START ALL THREADS PARALLEL
+# ============================================================
+print("\n[2/6] Starting ALL threads PARALLEL...")
+
 # Start Redis sync thread
 redis_thread = threading.Thread(target=redis_sync_loop, daemon=True)
 redis_thread.start()
+print("  ✅ Redis sync thread started")
 
 # Start training thread
 train_thread = threading.Thread(target=train_loop, daemon=True)
 train_thread.start()
+print("  ✅ Training thread started")
+
+# Start web scrape thread (PRIORITY)
+web_thread = threading.Thread(target=web_scrape_loop, daemon=True)
+web_thread.start()
+print("  ✅ Web scrape thread started (PRIORITY)")
 
 # ============================================================
-# TELEGRAM SCRAPE + BOT
+# WEB SCRAPE + TELEGRAM SCRAPE (PARALLEL)
 # ============================================================
+
+# Import web scraper
+from webscraper import DikaWebScraper
+
+# Web scrape function (runs in thread)
+def web_scrape_loop():
+    """Web scrape dari internet (PRIORITY)"""
+    try:
+        web_scraper = DikaWebScraper(db)
+        web_scraper.scrape_all()
+        print("  [WEB] ✅ Web scrape complete!")
+    except Exception as e:
+        print(f"  [WEB] Error: {e}")
+
+# Telegram scrape function (runs in async)
 async def run_telegram():
-    """Run Telegram scraper + bot"""
+    """Run Telegram scraper + bot (PARALLEL dengan web scrape)"""
     global running
     
-    print("\n[2/5] Connecting to Telegram...")
+    print("\n[3/6] Connecting to Telegram...")
     
     if not await bot.connect():
         print("❌ Failed to connect to Telegram!")
-        print("Continuing with training only...")
+        print("Continuing with training + web scrape only...")
         return
     
     print("✅ Connected to Telegram!")
     
-    # Phase 1: Build vocab
-    print("\n[3/5] Building vocab...")
-    stats = db.get_stats()
-    if stats['total'] > 0:
-        trainer.build_vocab()
-        print(f"  ✅ Vocab ready: {tokenizer.vocab_size} tokens")
-    
-    # Phase 2: Scrape all chats
-    print("\n[4/5] Scraping Telegram chats...")
+    # Phase 1: Scrape all chats PARALLEL
+    print("\n[4/6] Scraping Telegram chats (PARALLEL)...")
     await bot.scrape_all()
     
-    # Phase 3: Rebuild vocab after scrape
-    print("\n[5/5] Rebuilding vocab...")
-    trainer.build_vocab()
-    print(f"  ✅ Vocab updated: {tokenizer.vocab_size} tokens")
-    
-    # Phase 4: Setup auto-reply
-    print("\n[6/6] Starting auto-reply...")
+    # Phase 2: Setup auto-reply
+    print("\n[5/6] Starting auto-reply...")
     bot.setup_auto_reply()
     
-    # Phase 5: Periodic re-scrape (every 6 jam)
+    # Phase 3: Periodic re-scrape (every 6 jam)
     scrape_count = 0
     while running:
         try:
@@ -260,6 +275,7 @@ async def run_telegram():
                 break
             
             hours_remaining = remaining / 3600
+            stats = db.get_stats()
             print(f"\n⏰ {hours_remaining:.1f} jam tersisa | {stats['total']} messages")
             
             # Wait 6 jam
@@ -268,10 +284,18 @@ async def run_telegram():
             if not running:
                 break
             
-            # Re-scrape
+            # Re-scrape PARALLEL
             scrape_count += 1
-            print(f"\n🔄 Re-scrape #{scrape_count}...")
+            print(f"\n🔄 Re-scrape #{scrape_count} (PARALLEL)...")
+            
+            # Web scrape (PRIORITY)
+            web_task = threading.Thread(target=web_scrape_loop, daemon=True)
+            web_task.start()
+            
+            # Telegram scrape PARALLEL
             await bot.scrape_recent(hours=6)
+            
+            web_task.join(timeout=120)
             
             # Rebuild vocab
             trainer.build_vocab()
@@ -283,16 +307,29 @@ async def run_telegram():
             await asyncio.sleep(300)
 
 # ============================================================
-# RUN
+# RUN ALL PARALLEL
 # ============================================================
 print("\n" + "=" * 60)
-print("  🚀 DikaAi Started!")
+print("  🚀 DikaAi Started - ALL PARALLEL!")
 print("  ⏱️  Auto-stop: 12 jam")
 print("  📊 Dashboard: https://dikaai.vercel.app")
 print("  🔄 Sync: Redis setiap 60 detik")
+print("  🌐 Web scrape: PRIORITY")
+print("  📱 Telegram: PARALLEL")
 print("=" * 60)
 
 try:
+    # Wait for web scrape to finish first (PRIORITY)
+    print("\n  [WAIT] Waiting for web scrape to finish (PRIORITY)...")
+    web_thread.join(timeout=180)
+    print("  [WAIT] ✅ Web scrape finished!")
+    
+    # Rebuild vocab after web scrape
+    print("\n  [WAIT] Rebuilding vocab after web scrape...")
+    trainer.build_vocab()
+    print(f"  [WAIT] ✅ Vocab ready: {tokenizer.vocab_size} tokens")
+    
+    # Now run Telegram (PARALLEL)
     asyncio.run(run_telegram())
 except KeyboardInterrupt:
     print("\n⏹️ Stopped by user")

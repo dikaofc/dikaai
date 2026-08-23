@@ -214,10 +214,10 @@ class DikaAi:
         
         Fully automatic flow (100% otomatis):
         1. Start Dashboard (port 8888)
-        2. Web scrape (ambil data dari internet)
+        2. Web scrape PRIORITY (ambil data dari internet)
         3. Build vocab dari data
         4. Start training (background)
-        5. [Optional] Connect Telegram + auto-reply + scrape chat
+        5. [Optional] Connect Telegram + auto-reply + scrape chat (PARALLEL)
         6. Periodic re-scrape (setiap 6 jam)
         """
         self.running = True
@@ -252,16 +252,16 @@ class DikaAi:
             print("  [SYS] ⚠️  Telegram: Not configured (web scrape only)")
 
         # ================================================================
-        # PHASE 2: Web Scrape (ambil data dari internet)
+        # PHASE 2: Web Scrape PRIORITY (ambil data dari internet dulu!)
         # ================================================================
-        print("\n  [PHASE 1] 🌐 Web scraping dari internet...")
+        print("\n  [PHASE 1] 🌐 Web scraping dari internet (PRIORITY)...")
         self._web_thread = threading.Thread(
             target=self._web_scrape_loop,
             daemon=True
         )
         self._web_thread.start()
-        # Wait for initial web scrape to finish (max 120s)
-        self._web_thread.join(timeout=120)
+        # Wait for initial web scrape to finish (max 180s)
+        self._web_thread.join(timeout=180)
         print("  [PHASE 1] ✅ Web scrape selesai!")
 
         # ================================================================
@@ -286,11 +286,11 @@ class DikaAi:
         self.train_thread.start()
 
         # ================================================================
-        # PHASE 5: Connect Telegram (optional)
+        # PHASE 5: Connect Telegram + Scrape PARALLEL (if configured)
         # ================================================================
         telegram_connected = False
         if tg_configured:
-            print("\n  [PHASE 4] 📱 Connecting to Telegram...")
+            print("\n  [PHASE 4] 📱 Connecting to Telegram + Scrape PARALLEL...")
             if await self.bot.connect():
                 telegram_connected = True
                 print("  [PHASE 4] ✅ Telegram connected!")
@@ -299,8 +299,8 @@ class DikaAi:
                 print("  [PHASE 4] 👂 Starting auto-reply + listener...")
                 self.bot.setup_auto_reply()
 
-                # Scrape Telegram chats (training runs in parallel!)
-                print("  [PHASE 4] 📥 Scraping ALL Telegram chats...")
+                # Scrape Telegram chats PARALLEL (training runs in parallel!)
+                print("  [PHASE 4] 📥 Scraping ALL Telegram chats (PARALLEL)...")
                 await self.bot.scrape_all()
             else:
                 print("  [PHASE 4] ⚠️  Telegram connection failed, continuing without it...")
@@ -328,9 +328,9 @@ class DikaAi:
             print("\n  [PHASE 6] Redis not configured, skipping sync")
 
         # ================================================================
-        # PHASE 8: Periodic re-scrape (setiap 6 jam)
+        # PHASE 8: Periodic re-scrape PARALLEL (setiap 6 jam)
         # ================================================================
-        print("\n  [PHASE 7] ⏰ Periodic re-scrape setiap 6 jam...")
+        print("\n  [PHASE 7] ⏰ Periodic re-scrape setiap 6 jam (PARALLEL)...")
         print("  [SYS] ✅ DikaAi berjalan otomatis! Ctrl+C untuk stop.")
         print("  [SYS] 🌐 Dashboard: http://localhost:8888")
         scrape_count = 0
@@ -339,13 +339,13 @@ class DikaAi:
             try:
                 await asyncio.sleep(6 * 3600)  # Every 6 hours
                 scrape_count += 1
-                print(f"\n  [RE-SCRAPE #{scrape_count}] 🔄 Updating data...")
+                print(f"\n  [RE-SCRAPE #{scrape_count}] 🔄 Updating data (PARALLEL)...")
                 
-                # Web scrape (always)
+                # Web scrape (PRIORITY - always runs)
                 web_task = threading.Thread(target=self._web_scrape_loop, daemon=True)
                 web_task.start()
                 
-                # Telegram scrape (if connected)
+                # Telegram scrape PARALLEL (if connected)
                 if telegram_connected and self.bot.client:
                     try:
                         tg_task = asyncio.create_task(self.bot.scrape_recent(hours=6))
