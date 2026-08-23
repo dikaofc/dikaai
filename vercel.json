@@ -1,7 +1,10 @@
 {
   "version": 2,
+  "functions": {
+    "api/server.py": { "runtime": "@vercel/python@3" }
+  },
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/index.py" },
-    { "source": "/v1/(.*)", "destination": "/api/index.py" }
+    { "source": "/api/(.*)", "destination": "/api/server" },
+    { "source": "/v1/(.*)", "destination": "/api/server" }
   ]
 }
