@@ -1,31 +1,37 @@
 #!/usr/bin/env python3
 """
-DikaAI - Google Colab Runner
-========================================
-Setiap jalan ulang:
-  1. Web scrape (Wikipedia, SO, GitHub)
-  2. Build vocab + Training dari web data
-  3. Baru connect Telegram + loop
-Dashboard Vercel: https://dikaai.vercel.app
-========================================
+DikaAI - Google Colab Runner (v2 - BULLETPROOF)
+=============================================
+FIXED: cd /content FIRST (before everything), then clone, then cd into project.
+This prevents "getcwd: cannot access parent directories" errors.
+=============================================
 """
 
 # ============================================================
-# STEP 1: Install + Clone (FIXED - handles existing dir)
+# STEP 0: Fix working directory (CRITICAL!)
+# ============================================================
+import os
+os.chdir('/content')  # <-- FIX: always start from /content
+print(f"✅ CWD: {os.getcwd()}")
+
+# ============================================================
+# STEP 1: Install + Clone
 # ============================================================
 !pip install telethon aiohttp nest_asyncio -q
 
-# Remove old clone if exists, then fresh clone
+# Remove old clone if exists
 !rm -rf /content/dikaai
+
+# Clone fresh
 !git clone --depth 1 https://github.com/dikaofc/dikaai.git /content/dikaai
 
-# Verify directory exists
-import os
+# Verify clone succeeded
 if not os.path.exists('/content/dikaai'):
-    raise FileNotFoundError("Clone failed! Check your internet connection.")
+    raise FileNotFoundError("Clone failed! Check internet connection.")
 
+# NOW cd into project (after clone is verified)
 os.chdir('/content/dikaai')
-print(f"✅ Cloned! CWD: {os.getcwd()}")
+print(f"✅ Project CWD: {os.getcwd()}")
 
 # ============================================================
 # STEP 2: CONFIG (GANTI INI!)
@@ -37,11 +43,11 @@ TELEGRAM_API_HASH = "abc123def456"        # Ganti!
 TELEGRAM_PHONE = "+628123456789"          # Ganti!
 
 # Upstash Redis (WAJIB biar dashboard Vercel jalan!)
-# Daftar gratis: https://upstash.com → Create Database → Copy URL + Token
 UPSTASH_REDIS_URL = "https://xxx.upstash.io"   # Ganti!
 UPSTASH_REDIS_TOKEN = "AXxx..."                 # Ganti!
 
-# Simpan ke config.env (dengan error handling)
+# Simpan ke config.env (dengan full path safety)
+config_path = os.path.join(os.getcwd(), 'config.env')
 config_content = f"""TELEGRAM_API_ID={TELEGRAM_API_ID}
 TELEGRAM_API_HASH={TELEGRAM_API_HASH}
 TELEGRAM_PHONE={TELEGRAM_PHONE}
@@ -49,10 +55,10 @@ UPSTASH_REDIS_REST_URL={UPSTASH_REDIS_URL}
 UPSTASH_REDIS_REST_TOKEN={UPSTASH_REDIS_TOKEN}
 """
 
-with open('config.env', 'w') as f:
+with open(config_path, 'w') as f:
     f.write(config_content)
 
-print("✅ Config saved!")
+print(f"✅ Config saved to {config_path}")
 print(f"📱 Telegram: {TELEGRAM_PHONE}")
 print(f"🔴 Redis: {UPSTASH_REDIS_URL[:30]}...")
 
@@ -95,9 +101,6 @@ model = DikaModel()
 trainer = DikaTrainer(db)
 bot = DikaBot(db, model=model, tokenizer=tokenizer)
 
-# ⚠️ JANGAN load model lama - mulai dari awal!
-# model.load()  # SKIP!
-# tokenizer.load()  # SKIP!
 print("  🆕 Starting FRESH (no old model)")
 
 running = True
@@ -205,11 +208,9 @@ print("\n" + "=" * 55)
 print("  📡 PHASE 1: Web Scrape (dari internet)")
 print("=" * 55)
 
-# Start Redis sync
 redis_t = threading.Thread(target=redis_sync, daemon=True)
 redis_t.start()
 
-# Web scrape - BLOCKING, tunggu selesai
 web_scrape_fn()
 
 # ============================================================
@@ -226,7 +227,6 @@ if stats['total'] > 0:
     trainer.build_vocab()
     print(f"  📖 Vocab: {tokenizer.vocab_size} tokens")
 
-    # Training loop - belajar dari web data
     print("  🏋️ Training 200 epochs dari web data...")
     for ep in range(1, 201):
         if not running:
@@ -259,12 +259,10 @@ print("  🔄 Auto-reply + scrape + training continues")
 print("  ⏱️  Auto-stop: 12 jam")
 print("=" * 55)
 
-# Start training in background
 train_t = threading.Thread(target=train, daemon=True)
 train_t.start()
 print("  ✅ Training thread started (background)")
 
-# Run Telegram loop
 try:
     asyncio.run(telegram_loop())
 except KeyboardInterrupt:
