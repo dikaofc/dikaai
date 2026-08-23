@@ -312,7 +312,8 @@ class DikaBot:
 
         model_reply = None
         if self.model and self.tokenizer and self.tokenizer._loaded:
-            try:                    from dikaai.config import CONTEXT_LEN
+            try:
+                from dikaai.config import CONTEXT_LEN
                 tokens = self.tokenizer.encode(text, max_length=CONTEXT_LEN)
                 if len(tokens) >= 1:
                     generated = self.model.generate(
