@@ -4218,5 +4218,1949 @@
       "code",
       "go"
     ]
+  },
+  {
+    "task": "Write a fibonacci function",
+    "plan": [],
+    "code": "def fibonacci(n):\n    \"\"\"Calculate the nth Fibonacci number.\"\"\"\n    if n <= 1:\n        return n\n    a, b = 0, 1\n    for _ in range(2, n + 1):\n        a, b = b, a + b\n    return b\n",
+    "error": "",
+    "fix": "template:fibonacci",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a binary search in Python",
+    "plan": [],
+    "code": "def binary_search(arr, target):\n    \"\"\"Binary search in sorted array.\"\"\"\n    lo, hi = 0, len(arr) - 1\n    while lo <= hi:\n        mid = (lo + hi) // 2\n        if arr[mid] == target:\n            return mid\n        elif arr[mid] < target:\n            lo = mid + 1\n        else:\n            hi = mid - 1\n    return -1\n",
+    "error": "",
+    "fix": "template:binary_search",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a fibonacci function",
+    "plan": [],
+    "code": "def fibonacci(n):\n    \"\"\"Calculate the nth Fibonacci number.\"\"\"\n    if n <= 1:\n        return n\n    a, b = 0, 1\n    for _ in range(2, n + 1):\n        a, b = b, a + b\n    return b\n",
+    "error": "",
+    "fix": "template:fibonacci",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a Python function `fibonacci(n)` that returns the nth Fibonacci number.",
+    "plan": [],
+    "code": "def fibonacci(n):\n    \"\"\"Calculate the nth Fibonacci number.\"\"\"\n    if n <= 1:\n        return n\n    a, b = 0, 1\n    for _ in range(2, n + 1):\n        a, b = b, a + b\n    return b\n",
+    "error": "",
+    "fix": "template:fibonacci",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a Python function `is_palindrome(s)` that checks if a string is a palindrome (case-insensitive).",
+    "plan": [],
+    "code": "def is_palindrome(s):\n    \"\"\"Check if string is a palindrome.\"\"\"\n    s = s.lower().replace(' ', '')\n    return s == s[::-1]\n",
+    "error": "",
+    "fix": "template:is_palindrome",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a Python function `count_vowels(s)` that counts the number of vowels in a string.",
+    "plan": [],
+    "code": "def count_vowels(s):\n    \"\"\"Count vowels in a string.\"\"\"\n    return sum(1 for c in s.lower() if c in 'aeiou')\n",
+    "error": "",
+    "fix": "template:count_vowels",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a Python function `flatten(lst)` that flattens a nested list. Example: flatten([1, [2, 3], [4, [5]]]) should return [1, 2, 3, 4, 5].",
+    "plan": [],
+    "code": "def flatten(lst):\n    \"\"\"Flatten a nested list.\"\"\"\n    result = []\n    for item in lst:\n        if isinstance(item, list):\n            result.extend(flatten(item))\n        else:\n            result.append(item)\n    return result\n",
+    "error": "",
+    "fix": "template:flatten",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a Python function `merge_sort(arr)` that implements merge sort.",
+    "plan": [],
+    "code": "",
+    "error": "",
+    "fix": "",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "tool"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "tool",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a Python class `Stack` with methods `push(item)`, `pop()`, `peek()`, `is_empty()`, and `size()`.",
+    "plan": [],
+    "code": "class Stack:\n    \"\"\"Stack data structure.\"\"\"\n    def __init__(self):\n        self.items = []\n    def push(self, item):\n        self.items.append(item)\n    def pop(self):\n        if not self.is_empty():\n            return self.items.pop()\n        return None\n    def peek(self):\n        if not self.is_empty():\n            return self.items[-1]\n        return None\n    def is_empty(self):\n        return len(self.items) == 0\n    def size(self):\n        return len(self.items)\n",
+    "error": "",
+    "fix": "template:stack",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a Python function `lcs(s1, s2)` that finds the length of the longest common subsequence of two strings.",
+    "plan": [],
+    "code": "def lcs(s1, s2):\n    \"\"\"Find length of longest common subsequence.\"\"\"\n    m, n = len(s1), len(s2)\n    dp = [[0] * (n + 1) for _ in range(m + 1)]\n    for i in range(1, m + 1):\n        for j in range(1, n + 1):\n            if s1[i-1] == s2[j-1]:\n                dp[i][j] = dp[i-1][j-1] + 1\n            else:\n                dp[i][j] = max(dp[i-1][j], dp[i][j-1])\n    return dp[m][n]\n",
+    "error": "",
+    "fix": "template:lcs",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a Python function `binary_search(arr, target)` that returns the index of target in sorted array, or -1 if not found.",
+    "plan": [],
+    "code": "def binary_search(arr, target):\n    \"\"\"Binary search in sorted array.\"\"\"\n    lo, hi = 0, len(arr) - 1\n    while lo <= hi:\n        mid = (lo + hi) // 2\n        if arr[mid] == target:\n            return mid\n        elif arr[mid] < target:\n            lo = mid + 1\n        else:\n            hi = mid - 1\n    return -1\n",
+    "error": "",
+    "fix": "template:binary_search",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a Python function `factorial(n)` that returns the factorial of n.",
+    "plan": [],
+    "code": "def factorial(n):\n    \"\"\"Calculate factorial of n.\"\"\"\n    if n <= 1:\n        return 1\n    result = 1\n    for i in range(2, n + 1):\n        result *= i\n    return result\n",
+    "error": "",
+    "fix": "template:factorial",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a Python function `bubble_sort(arr)` that sorts a list using bubble sort algorithm.",
+    "plan": [],
+    "code": "def bubble_sort(arr):\n    \"\"\"Sort array using bubble sort.\"\"\"\n    n = len(arr)\n    for i in range(n):\n        for j in range(0, n-i-1):\n            if arr[j] > arr[j+1]:\n                arr[j], arr[j+1] = arr[j+1], arr[j]\n    return arr\n",
+    "error": "",
+    "fix": "template:bubble_sort",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a JavaScript function `fibonacci(n)` that returns the nth Fibonacci number.",
+    "plan": [],
+    "code": "function fibonacci(n) {\n    if (n <= 1) return n;\n    let a = 0, b = 1;\n    for (let i = 2; i <= n; i++) {\n        [a, b] = [b, a + b];\n    }\n    return b;\n}\n",
+    "error": "",
+    "fix": "template:js_fibonacci",
+    "success": true,
+    "language": "javascript",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "javascript"
+    ]
+  },
+  {
+    "task": "Write a JavaScript function `reverseString(s)` that reverses a string.",
+    "plan": [],
+    "code": "function reverseString(s) {\n    return s.split('').reverse().join('');\n}\n",
+    "error": "",
+    "fix": "template:js_reverse_string",
+    "success": true,
+    "language": "javascript",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "javascript"
+    ]
+  },
+  {
+    "task": "Write a JavaScript function `isPalindrome(s)` to check if a string is a palindrome.",
+    "plan": [],
+    "code": "function isPalindrome(s) {\n    const cleaned = s.toLowerCase().replace(/\\s/g, '');\n    return cleaned === cleaned.split('').reverse().join('');\n}\n",
+    "error": "",
+    "fix": "template:js_is_palindrome",
+    "success": true,
+    "language": "javascript",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "javascript"
+    ]
+  },
+  {
+    "task": "Write a JavaScript function `binarySearch(arr, target)` that performs binary search.",
+    "plan": [],
+    "code": "function binarySearch(arr, target) {\n    let lo = 0, hi = arr.length - 1;\n    while (lo <= hi) {\n        const mid = Math.floor((lo + hi) / 2);\n        if (arr[mid] === target) return mid;\n        else if (arr[mid] < target) lo = mid + 1;\n        else hi = mid - 1;\n    }\n    return -1;\n}\n",
+    "error": "",
+    "fix": "template:js_binary_search",
+    "success": true,
+    "language": "javascript",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "javascript"
+    ]
+  },
+  {
+    "task": "Write a JavaScript function `twoSum(nums, target)` that finds two numbers adding to target.",
+    "plan": [],
+    "code": "function twoSum(nums, target) {\n    const seen = {};\n    for (let i = 0; i < nums.length; i++) {\n        const complement = target - nums[i];\n        if (complement in seen) return [seen[complement], i];\n        seen[nums[i]] = i;\n    }\n    return [];\n}\n",
+    "error": "",
+    "fix": "template:js_two_sum",
+    "success": true,
+    "language": "javascript",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "javascript"
+    ]
+  },
+  {
+    "task": "Write a JavaScript `debounce(fn, delay)` function.",
+    "plan": [],
+    "code": "function debounce(fn, delay = 300) {\n    let timer;\n    return function (...args) {\n        clearTimeout(timer);\n        timer = setTimeout(() => fn.apply(this, args), delay);\n    };\n}\n",
+    "error": "",
+    "fix": "template:js_debounce",
+    "success": true,
+    "language": "javascript",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "javascript"
+    ]
+  },
+  {
+    "task": "Write a JavaScript `memoize(fn)` function for caching results.",
+    "plan": [],
+    "code": "function memoize(fn) {\n    const cache = new Map();\n    return function (...args) {\n        const key = JSON.stringify(args);\n        if (cache.has(key)) return cache.get(key);\n        const result = fn.apply(this, args);\n        cache.set(key, result);\n        return result;\n    };\n}\n",
+    "error": "",
+    "fix": "template:js_memoize",
+    "success": true,
+    "language": "javascript",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "javascript"
+    ]
+  },
+  {
+    "task": "Write a JavaScript `validParentheses(s)` function.",
+    "plan": [],
+    "code": "function validParentheses(s) {\n    const stack = [];\n    const map = {')': '(', ']': '[', '}': '{'};\n    for (const c of s) {\n        if (c in map) {\n            if (!stack.length || stack[stack.length - 1] !== map[c]) return false;\n            stack.pop();\n        } else {\n            stack.push(c);\n        }\n    }\n    return stack.length === 0;\n}\n",
+    "error": "",
+    "fix": "template:js_valid_parentheses",
+    "success": true,
+    "language": "javascript",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "javascript"
+    ]
+  },
+  {
+    "task": "Write a JavaScript `deepClone(obj)` function.",
+    "plan": [],
+    "code": "function deepClone(obj) {\n    if (obj === null || typeof obj !== 'object') return obj;\n    if (obj instanceof Date) return new Date(obj);\n    if (Array.isArray(obj)) return obj.map(deepClone);\n    const cloned = {};\n    for (const key in obj) {\n        if (obj.hasOwnProperty(key)) {\n            cloned[key] = deepClone(obj[key]);\n        }\n    }\n    return cloned;\n}\n",
+    "error": "",
+    "fix": "template:js_deep_clone",
+    "success": true,
+    "language": "javascript",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "javascript"
+    ]
+  },
+  {
+    "task": "Write a JavaScript `flatten(arr)` function to flatten nested arrays.",
+    "plan": [],
+    "code": "function flatten(arr) {\n    return arr.reduce((acc, val) =>\n        Array.isArray(val) ? acc.concat(flatten(val)) : acc.concat(val), []\n    );\n}\n",
+    "error": "",
+    "fix": "template:js_flatten",
+    "success": true,
+    "language": "javascript",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "javascript"
+    ]
+  },
+  {
+    "task": "buatin code js",
+    "plan": [],
+    "code": "",
+    "error": "",
+    "fix": "",
+    "success": true,
+    "language": "rust",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "rust"
+    ]
+  },
+  {
+    "task": "git status",
+    "plan": [],
+    "code": "",
+    "error": "",
+    "fix": "",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "tool"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "tool",
+      "python"
+    ]
+  },
+  {
+    "task": "kenapa error ini terjadi",
+    "plan": [],
+    "code": "",
+    "error": "",
+    "fix": "",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "git status",
+    "plan": [],
+    "code": "",
+    "error": "",
+    "fix": "",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "tool"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "tool",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a Python function `fibonacci(n)` that returns the nth Fibonacci number.",
+    "plan": [],
+    "code": "def fibonacci(n):\n    \"\"\"Calculate the nth Fibonacci number.\"\"\"\n    if n <= 1:\n        return n\n    a, b = 0, 1\n    for _ in range(2, n + 1):\n        a, b = b, a + b\n    return b\n",
+    "error": "",
+    "fix": "template:fibonacci",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a Python function `is_palindrome(s)` that checks if a string is a palindrome (case-insensitive).",
+    "plan": [],
+    "code": "def is_palindrome(s):\n    \"\"\"Check if string is a palindrome.\"\"\"\n    s = s.lower().replace(' ', '')\n    return s == s[::-1]\n",
+    "error": "",
+    "fix": "template:is_palindrome",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a Python function `count_vowels(s)` that counts the number of vowels in a string.",
+    "plan": [],
+    "code": "def count_vowels(s):\n    \"\"\"Count vowels in a string.\"\"\"\n    return sum(1 for c in s.lower() if c in 'aeiou')\n",
+    "error": "",
+    "fix": "template:count_vowels",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a Python function `flatten(lst)` that flattens a nested list. Example: flatten([1, [2, 3], [4, [5]]]) should return [1, 2, 3, 4, 5].",
+    "plan": [],
+    "code": "def flatten(lst):\n    \"\"\"Flatten a nested list.\"\"\"\n    result = []\n    for item in lst:\n        if isinstance(item, list):\n            result.extend(flatten(item))\n        else:\n            result.append(item)\n    return result\n",
+    "error": "",
+    "fix": "template:flatten",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a Python function `merge_sort(arr)` that implements merge sort.",
+    "plan": [],
+    "code": "",
+    "error": "",
+    "fix": "",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "tool"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "tool",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a Python class `Stack` with methods `push(item)`, `pop()`, `peek()`, `is_empty()`, and `size()`.",
+    "plan": [],
+    "code": "class Stack:\n    \"\"\"Stack data structure.\"\"\"\n    def __init__(self):\n        self.items = []\n    def push(self, item):\n        self.items.append(item)\n    def pop(self):\n        if not self.is_empty():\n            return self.items.pop()\n        return None\n    def peek(self):\n        if not self.is_empty():\n            return self.items[-1]\n        return None\n    def is_empty(self):\n        return len(self.items) == 0\n    def size(self):\n        return len(self.items)\n",
+    "error": "",
+    "fix": "template:stack",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a Python function `lcs(s1, s2)` that finds the length of the longest common subsequence of two strings.",
+    "plan": [],
+    "code": "def lcs(s1, s2):\n    \"\"\"Find length of longest common subsequence.\"\"\"\n    m, n = len(s1), len(s2)\n    dp = [[0] * (n + 1) for _ in range(m + 1)]\n    for i in range(1, m + 1):\n        for j in range(1, n + 1):\n            if s1[i-1] == s2[j-1]:\n                dp[i][j] = dp[i-1][j-1] + 1\n            else:\n                dp[i][j] = max(dp[i-1][j], dp[i][j-1])\n    return dp[m][n]\n",
+    "error": "",
+    "fix": "template:lcs",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a Python function `binary_search(arr, target)` that returns the index of target in sorted array, or -1 if not found.",
+    "plan": [],
+    "code": "def binary_search(arr, target):\n    \"\"\"Binary search in sorted array.\"\"\"\n    lo, hi = 0, len(arr) - 1\n    while lo <= hi:\n        mid = (lo + hi) // 2\n        if arr[mid] == target:\n            return mid\n        elif arr[mid] < target:\n            lo = mid + 1\n        else:\n            hi = mid - 1\n    return -1\n",
+    "error": "",
+    "fix": "template:binary_search",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a Python function `factorial(n)` that returns the factorial of n.",
+    "plan": [],
+    "code": "def factorial(n):\n    \"\"\"Calculate factorial of n.\"\"\"\n    if n <= 1:\n        return 1\n    result = 1\n    for i in range(2, n + 1):\n        result *= i\n    return result\n",
+    "error": "",
+    "fix": "template:factorial",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a Python function `bubble_sort(arr)` that sorts a list using bubble sort algorithm.",
+    "plan": [],
+    "code": "def bubble_sort(arr):\n    \"\"\"Sort array using bubble sort.\"\"\"\n    n = len(arr)\n    for i in range(n):\n        for j in range(0, n-i-1):\n            if arr[j] > arr[j+1]:\n                arr[j], arr[j+1] = arr[j+1], arr[j]\n    return arr\n",
+    "error": "",
+    "fix": "template:bubble_sort",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a JavaScript function `fibonacci(n)` that returns the nth Fibonacci number.",
+    "plan": [],
+    "code": "function fibonacci(n) {\n    if (n <= 1) return n;\n    let a = 0, b = 1;\n    for (let i = 2; i <= n; i++) {\n        [a, b] = [b, a + b];\n    }\n    return b;\n}\n",
+    "error": "",
+    "fix": "template:js_fibonacci",
+    "success": true,
+    "language": "javascript",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "javascript"
+    ]
+  },
+  {
+    "task": "Write a JavaScript function `reverseString(s)` that reverses a string.",
+    "plan": [],
+    "code": "function reverseString(s) {\n    return s.split('').reverse().join('');\n}\n",
+    "error": "",
+    "fix": "template:js_reverse_string",
+    "success": true,
+    "language": "javascript",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "javascript"
+    ]
+  },
+  {
+    "task": "Write a JavaScript function `isPalindrome(s)` to check if a string is a palindrome.",
+    "plan": [],
+    "code": "function isPalindrome(s) {\n    const cleaned = s.toLowerCase().replace(/\\s/g, '');\n    return cleaned === cleaned.split('').reverse().join('');\n}\n",
+    "error": "",
+    "fix": "template:js_is_palindrome",
+    "success": true,
+    "language": "javascript",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "javascript"
+    ]
+  },
+  {
+    "task": "Write a JavaScript function `binarySearch(arr, target)` that performs binary search.",
+    "plan": [],
+    "code": "function binarySearch(arr, target) {\n    let lo = 0, hi = arr.length - 1;\n    while (lo <= hi) {\n        const mid = Math.floor((lo + hi) / 2);\n        if (arr[mid] === target) return mid;\n        else if (arr[mid] < target) lo = mid + 1;\n        else hi = mid - 1;\n    }\n    return -1;\n}\n",
+    "error": "",
+    "fix": "template:js_binary_search",
+    "success": true,
+    "language": "javascript",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "javascript"
+    ]
+  },
+  {
+    "task": "Write a JavaScript function `twoSum(nums, target)` that finds two numbers adding to target.",
+    "plan": [],
+    "code": "function twoSum(nums, target) {\n    const seen = {};\n    for (let i = 0; i < nums.length; i++) {\n        const complement = target - nums[i];\n        if (complement in seen) return [seen[complement], i];\n        seen[nums[i]] = i;\n    }\n    return [];\n}\n",
+    "error": "",
+    "fix": "template:js_two_sum",
+    "success": true,
+    "language": "javascript",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "javascript"
+    ]
+  },
+  {
+    "task": "Write a JavaScript `debounce(fn, delay)` function.",
+    "plan": [],
+    "code": "function debounce(fn, delay = 300) {\n    let timer;\n    return function (...args) {\n        clearTimeout(timer);\n        timer = setTimeout(() => fn.apply(this, args), delay);\n    };\n}\n",
+    "error": "",
+    "fix": "template:js_debounce",
+    "success": true,
+    "language": "javascript",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "javascript"
+    ]
+  },
+  {
+    "task": "Write a JavaScript `memoize(fn)` function for caching results.",
+    "plan": [],
+    "code": "function memoize(fn) {\n    const cache = new Map();\n    return function (...args) {\n        const key = JSON.stringify(args);\n        if (cache.has(key)) return cache.get(key);\n        const result = fn.apply(this, args);\n        cache.set(key, result);\n        return result;\n    };\n}\n",
+    "error": "",
+    "fix": "template:js_memoize",
+    "success": true,
+    "language": "javascript",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "javascript"
+    ]
+  },
+  {
+    "task": "Write a JavaScript `validParentheses(s)` function.",
+    "plan": [],
+    "code": "function validParentheses(s) {\n    const stack = [];\n    const map = {')': '(', ']': '[', '}': '{'};\n    for (const c of s) {\n        if (c in map) {\n            if (!stack.length || stack[stack.length - 1] !== map[c]) return false;\n            stack.pop();\n        } else {\n            stack.push(c);\n        }\n    }\n    return stack.length === 0;\n}\n",
+    "error": "",
+    "fix": "template:js_valid_parentheses",
+    "success": true,
+    "language": "javascript",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "javascript"
+    ]
+  },
+  {
+    "task": "Write a JavaScript `deepClone(obj)` function.",
+    "plan": [],
+    "code": "function deepClone(obj) {\n    if (obj === null || typeof obj !== 'object') return obj;\n    if (obj instanceof Date) return new Date(obj);\n    if (Array.isArray(obj)) return obj.map(deepClone);\n    const cloned = {};\n    for (const key in obj) {\n        if (obj.hasOwnProperty(key)) {\n            cloned[key] = deepClone(obj[key]);\n        }\n    }\n    return cloned;\n}\n",
+    "error": "",
+    "fix": "template:js_deep_clone",
+    "success": true,
+    "language": "javascript",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "javascript"
+    ]
+  },
+  {
+    "task": "Write a JavaScript `flatten(arr)` function to flatten nested arrays.",
+    "plan": [],
+    "code": "function flatten(arr) {\n    return arr.reduce((acc, val) =>\n        Array.isArray(val) ? acc.concat(flatten(val)) : acc.concat(val), []\n    );\n}\n",
+    "error": "",
+    "fix": "template:js_flatten",
+    "success": true,
+    "language": "javascript",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "javascript"
+    ]
+  },
+  {
+    "task": "Write a JavaScript `throttle(fn, limit)` function that limits function calls.",
+    "plan": [],
+    "code": "function throttle(fn, limit) {\n    let lastCall = 0;\n    return function (...args) {\n        const now = Date.now();\n        if (now - lastCall >= limit) {\n            lastCall = now;\n            return fn.apply(this, args);\n        }\n    };\n}\n",
+    "error": "",
+    "fix": "template:js_throttle",
+    "success": true,
+    "language": "javascript",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "javascript"
+    ]
+  },
+  {
+    "task": "Write a JavaScript `curry(fn)` function that curries a function.",
+    "plan": [],
+    "code": "function curry(fn) {\n    return function curried(...args) {\n        if (args.length >= fn.length) {\n            return fn.apply(this, args);\n        }\n        return function (...args2) {\n            return curried.apply(this, args.concat(args2));\n        };\n    };\n}\n",
+    "error": "",
+    "fix": "template:js_curry",
+    "success": true,
+    "language": "javascript",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "javascript"
+    ]
+  },
+  {
+    "task": "Write a JavaScript `mergeSort(arr)` function using merge sort algorithm.",
+    "plan": [],
+    "code": "",
+    "error": "",
+    "fix": "",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "tool"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "tool",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a JavaScript `lru_cache(capacity)` class with get and put methods.",
+    "plan": [],
+    "code": "function memoize(fn) {\n    const cache = new Map();\n    return function (...args) {\n        const key = JSON.stringify(args);\n        if (cache.has(key)) return cache.get(key);\n        const result = fn.apply(this, args);\n        cache.set(key, result);\n        return result;\n    };\n}\n",
+    "error": "",
+    "fix": "template:js_memoize",
+    "success": true,
+    "language": "javascript",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "javascript"
+    ]
+  },
+  {
+    "task": "Write a JavaScript `groupBy(arr, keyFn)` function that groups array elements.",
+    "plan": [],
+    "code": "function groupBy(arr, keyFn) {\n    return arr.reduce((groups, item) => {\n        const key = keyFn(item);\n        (groups[key] = groups[key] || []).push(item);\n        return groups;\n    }, {});\n}\n",
+    "error": "",
+    "fix": "template:js_array_group_by",
+    "success": true,
+    "language": "javascript",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "javascript"
+    ]
+  },
+  {
+    "task": "Write a JavaScript async `retry(fn, retries, delay)` function with exponential backoff.",
+    "plan": [],
+    "code": "async function retry(fn, retries = 3, delay = 1000) {\n    for (let i = 0; i < retries; i++) {\n        try {\n            return await fn();\n        } catch (err) {\n            if (i === retries - 1) throw err;\n            await new Promise(r => setTimeout(r, delay * Math.pow(2, i)));\n        }\n    }\n}\n",
+    "error": "",
+    "fix": "template:js_async_retry",
+    "success": true,
+    "language": "javascript",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "javascript"
+    ]
+  },
+  {
+    "task": "Write a JavaScript `pipe(...fns)` function that composes functions left to right.",
+    "plan": [],
+    "code": "",
+    "error": "",
+    "fix": "",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a JavaScript `EventEmitter` class with on, emit, and off methods.",
+    "plan": [],
+    "code": "class Person {\n    constructor(name, age) {\n        this.name = name;\n        this.age = age;\n    }\n    greet() {\n        return `Hi, I'm ${this.name}, ${this.age} years old.`;\n    }\n    static create(name, age) {\n        return new Person(name, age);\n    }\n}\n",
+    "error": "",
+    "fix": "template:js_class_person",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a JavaScript `chunk(arr, size)` function that splits array into chunks.",
+    "plan": [],
+    "code": "function chunk(arr, size) {\n    const chunks = [];\n    for (let i = 0; i < arr.length; i += size) {\n        chunks.push(arr.slice(i, i + size));\n    }\n    return chunks;\n}\n",
+    "error": "",
+    "fix": "template:js_chunk",
+    "success": true,
+    "language": "javascript",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "javascript"
+    ]
+  },
+  {
+    "task": "Write a JavaScript `debouncedFn` with cancel and flush methods.",
+    "plan": [],
+    "code": "function debounce(fn, delay = 300) {\n    let timer;\n    return function (...args) {\n        clearTimeout(timer);\n        timer = setTimeout(() => fn.apply(this, args), delay);\n    };\n}\n",
+    "error": "",
+    "fix": "template:js_debounce",
+    "success": true,
+    "language": "javascript",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "javascript"
+    ]
+  },
+  {
+    "task": "Write a Rust function `fibonacci(n: u32) -> u64`.",
+    "plan": [],
+    "code": "fn fibonacci(n: u32) -> u64 {\n    if n <= 1 { return n as u64; }\n    let (mut a, mut b) = (0u64, 1u64);\n    for _ in 2..=n {\n        let temp = b;\n        b = a + b;\n        a = temp;\n    }\n    b\n}\n",
+    "error": "",
+    "fix": "template:rust_fibonacci",
+    "success": true,
+    "language": "rust",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "rust"
+    ]
+  },
+  {
+    "task": "Write a Rust struct `Point` with `new()` and `distance()` methods.",
+    "plan": [],
+    "code": "struct Point {\n    x: f64,\n    y: f64,\n}\n\nimpl Point {\n    fn new(x: f64, y: f64) -> Self {\n        Point { x, y }\n    }\n\n    fn distance(&self, other: &Point) -> f64 {\n        ((self.x - other.x).powi(2) + (self.y - other.y).powi(2)).sqrt()\n    }\n\n    fn midpoint(&self, other: &Point) -> Point {\n        Point::new((self.x + other.x) / 2.0, (self.y + other.y) / 2.0)\n    }\n}\n",
+    "error": "",
+    "fix": "template:rust_struct",
+    "success": true,
+    "language": "rust",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "rust"
+    ]
+  },
+  {
+    "task": "Write a Rust `trait Drawable` with `draw()` and `area()` methods, and implement it for a `Circle` struct.",
+    "plan": [],
+    "code": "trait Drawable {\n    fn draw(&self) -> String;\n    fn area(&self) -> f64;\n}\n\nstruct Circle {\n    radius: f64,\n}\n\nimpl Drawable for Circle {\n    fn draw(&self) -> String {\n        format!(\"Drawing circle with radius {}\", self.radius)\n    }\n    fn area(&self) -> f64 {\n        std::f64::consts::PI * self.radius * self.radius\n    }\n}\n\nstruct Rectangle {\n    width: f64,\n    height: f64,\n}\n\nimpl Drawable for Rectangle {\n    fn draw(&self) -> String {\n        format!(\"Drawing rectangle {}x{}\", self.wid",
+    "error": "",
+    "fix": "template:rust_trait",
+    "success": true,
+    "language": "rust",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "rust"
+    ]
+  },
+  {
+    "task": "Write a Rust `binary_search` function that returns `Option<usize>`.",
+    "plan": [],
+    "code": "fn binary_search(arr: &[i32], target: i32) -> Option<usize> {\n    let mut lo = 0;\n    let mut hi = arr.len();\n    while lo < hi {\n        let mid = lo + (hi - lo) / 2;\n        match arr[mid].cmp(&target) {\n            std::cmp::Ordering::Equal => return Some(mid),\n            std::cmp::Ordering::Less => lo = mid + 1,\n            std::cmp::Ordering::Greater => hi = mid,\n        }\n    }\n    None\n}\n",
+    "error": "",
+    "fix": "template:rust_binary_search",
+    "success": true,
+    "language": "rust",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "rust"
+    ]
+  },
+  {
+    "task": "Write a Rust function `divide(a: f64, b: f64) -> Result<f64, String>`.",
+    "plan": [],
+    "code": "fn divide(a: f64, b: f64) -> Result<f64, String> {\n    if b == 0.0 {\n        Err(\"Cannot divide by zero\".to_string())\n    } else {\n        Ok(a / b)\n    }\n}\n\nfn find_first_even(numbers: &[i32]) -> Option<&i32> {\n    numbers.iter().find(|&&n| n % 2 == 0)\n}\n",
+    "error": "",
+    "fix": "template:rust_option_result",
+    "success": true,
+    "language": "rust",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "rust"
+    ]
+  },
+  {
+    "task": "Write Rust code using `HashMap` to count word occurrences.",
+    "plan": [],
+    "code": "use std::collections::HashMap;\n\nfn word_count(text: &str) -> HashMap<String, usize> {\n    let mut counts = HashMap::new();\n    for word in text.split_whitespace() {\n        let word = word.to_lowercase();\n        *counts.entry(word).or_insert(0) += 1;\n    }\n    counts\n}\n",
+    "error": "",
+    "fix": "template:rust_hashmap",
+    "success": true,
+    "language": "rust",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "rust"
+    ]
+  },
+  {
+    "task": "Write a Rust `enum TrafficLight` with a `wait_time()` method using `match`.",
+    "plan": [],
+    "code": "enum TrafficLight {\n    Red,\n    Yellow,\n    Green,\n}\n\nimpl TrafficLight {\n    fn wait_time(&self) -> u32 {\n        match self {\n            TrafficLight::Red => 60,\n            TrafficLight::Yellow => 5,\n            TrafficLight::Green => 45,\n        }\n    }\n\n    fn next(&self) -> TrafficLight {\n        match self {\n            TrafficLight::Red => TrafficLight::Green,\n            TrafficLight::Green => TrafficLight::Yellow,\n            TrafficLight::Yellow => TrafficLight::Red,\n        }\n    }",
+    "error": "",
+    "fix": "template:rust_enum_match",
+    "success": true,
+    "language": "rust",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "rust"
+    ]
+  },
+  {
+    "task": "Write Rust code to filter even numbers and square them using iterator chain.",
+    "plan": [],
+    "code": "fn main() {\n    let nums = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];\n\n    let evens_sum: i32 = nums.iter()\n        .filter(|&&x| x % 2 == 0)\n        .sum();\n\n    let squared: Vec<i32> = nums.iter()\n        .map(|&x| x * x)\n        .collect();\n\n    println!(\"Evens sum: {}\", evens_sum);\n    println!(\"Squared: {:?}\", squared);\n}\n",
+    "error": "",
+    "fix": "template:rust_iterator",
+    "success": true,
+    "language": "rust",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "rust"
+    ]
+  },
+  {
+    "task": "Write a Rust `sort_vec(vec: &mut Vec<i32>)` function using quicksort with mutable references.",
+    "plan": [],
+    "code": "fn main() {\n    let mut nums = vec![3, 1, 4, 1, 5, 9, 2, 6];\n    nums.sort();\n    println!(\"Sorted: {:?}\", nums);\n\n    let doubled: Vec<i32> = nums.iter().map(|x| x * 2).collect();\n    println!(\"Doubled: {:?}\", doubled);\n\n    let sum: i32 = nums.iter().sum();\n    println!(\"Sum: {}\", sum);\n}\n",
+    "error": "",
+    "fix": "template:rust_vector",
+    "success": true,
+    "language": "rust",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "rust"
+    ]
+  },
+  {
+    "task": "Write a Rust generic `max_value<T: PartialOrd>(a: T, b: T) -> T` function.",
+    "plan": [],
+    "code": "fn max_value<T: PartialOrd>(a: T, b: T) -> T {\n    if a >= b { a } else { b }\n}\n",
+    "error": "",
+    "fix": "template:rust_generic_max",
+    "success": true,
+    "language": "rust",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "rust"
+    ]
+  },
+  {
+    "task": "Write a Rust `impl Drop` for a custom `Database` struct that prints on drop.",
+    "plan": [],
+    "code": "struct Point {\n    x: f64,\n    y: f64,\n}\n\nimpl Point {\n    fn new(x: f64, y: f64) -> Self {\n        Point { x, y }\n    }\n\n    fn distance(&self, other: &Point) -> f64 {\n        ((self.x - other.x).powi(2) + (self.y - other.y).powi(2)).sqrt()\n    }\n\n    fn midpoint(&self, other: &Point) -> Point {\n        Point::new((self.x + other.x) / 2.0, (self.y + other.y) / 2.0)\n    }\n}\n",
+    "error": "",
+    "fix": "template:rust_struct",
+    "success": true,
+    "language": "rust",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "rust"
+    ]
+  },
+  {
+    "task": "Write a Rust function using `Option` and `map`/`and_then` chaining.",
+    "plan": [],
+    "code": "fn divide(a: f64, b: f64) -> Result<f64, String> {\n    if b == 0.0 {\n        Err(\"Cannot divide by zero\".to_string())\n    } else {\n        Ok(a / b)\n    }\n}\n\nfn find_first_even(numbers: &[i32]) -> Option<&i32> {\n    numbers.iter().find(|&&n| n % 2 == 0)\n}\n",
+    "error": "",
+    "fix": "template:rust_option_result",
+    "success": true,
+    "language": "rust",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "rust"
+    ]
+  },
+  {
+    "task": "Write a Rust `thread::spawn` example that creates a thread and joins it.",
+    "plan": [],
+    "code": "use std::thread;\n\nfn main() {\n    let handles: Vec<_> = (0..5).map(|i| {\n        thread::spawn(move || {\n            println!(\"Thread {} started\", i);\n            thread::sleep(std::time::Duration::from_millis(100));\n            println!(\"Thread {} finished\", i);\n            i * i\n        })\n    }).collect();\n\n    let results: Vec<_> = handles.into_iter()\n        .map(|h| h.join().unwrap())\n        .collect();\n\n    println!(\"Results: {:?}\", results);\n}\n",
+    "error": "",
+    "fix": "template:rust_thread",
+    "success": true,
+    "language": "rust",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "rust"
+    ]
+  },
+  {
+    "task": "Write a Rust `impl Display` for a `Point` struct.",
+    "plan": [],
+    "code": "struct Point {\n    x: f64,\n    y: f64,\n}\n\nimpl Point {\n    fn new(x: f64, y: f64) -> Self {\n        Point { x, y }\n    }\n\n    fn distance(&self, other: &Point) -> f64 {\n        ((self.x - other.x).powi(2) + (self.y - other.y).powi(2)).sqrt()\n    }\n\n    fn midpoint(&self, other: &Point) -> Point {\n        Point::new((self.x + other.x) / 2.0, (self.y + other.y) / 2.0)\n    }\n}\n",
+    "error": "",
+    "fix": "template:rust_struct",
+    "success": true,
+    "language": "rust",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "rust"
+    ]
+  },
+  {
+    "task": "Write Rust code using `Vec::iter().enumerate()` to find index of max element.",
+    "plan": [],
+    "code": "fn main() {\n    let mut nums = vec![3, 1, 4, 1, 5, 9, 2, 6];\n    nums.sort();\n    println!(\"Sorted: {:?}\", nums);\n\n    let doubled: Vec<i32> = nums.iter().map(|x| x * 2).collect();\n    println!(\"Doubled: {:?}\", doubled);\n\n    let sum: i32 = nums.iter().sum();\n    println!(\"Sum: {}\", sum);\n}\n",
+    "error": "",
+    "fix": "template:rust_vector",
+    "success": true,
+    "language": "rust",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "rust"
+    ]
+  },
+  {
+    "task": "Write a C++ function `long long fibonacci(int n)` that returns the nth Fibonacci number.",
+    "plan": [],
+    "code": "long long fibonacci(int n) {\n    if (n <= 1) return n;\n    long long a = 0, b = 1;\n    for (int i = 2; i <= n; i++) {\n        long long temp = b;\n        b = a + b;\n        a = temp;\n    }\n    return b;\n}\n",
+    "error": "",
+    "fix": "template:cpp_fibonacci",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a C++ class `Point` with constructor and `distanceTo` method.",
+    "plan": [],
+    "code": "class Point {\nprivate:\n    double x, y;\npublic:\n    Point(double x = 0, double y = 0) : x(x), y(y) {}\n    double getX() const { return x; }\n    double getY() const { return y; }\n    double distanceTo(const Point& other) const {\n        double dx = x - other.x;\n        double dy = y - other.y;\n        return std::sqrt(dx * dx + dy * dy);\n    }\n};\n",
+    "error": "",
+    "fix": "template:cpp_class",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a C++ template function `findMax`.",
+    "plan": [],
+    "code": "template <typename T>\nT findMax(const std::vector<T>& vec) {\n    if (vec.empty()) throw std::runtime_error(\"Empty vector\");\n    T maxVal = vec[0];\n    for (size_t i = 1; i < vec.size(); i++) {\n        if (vec[i] > maxVal) maxVal = vec[i];\n    }\n    return maxVal;\n}\n",
+    "error": "",
+    "fix": "template:cpp_template_function",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write C++ code using `std::sort` with a lambda comparator.",
+    "plan": [],
+    "code": "void processVector(std::vector<int>& nums) {\n    // Lambda for sorting\n    std::sort(nums.begin(), nums.end(), [](int a, int b) {\n        return a > b;  // Descending\n    });\n\n    // Lambda for filtering\n    auto it = std::remove_if(nums.begin(), nums.end(), [](int n) {\n        return n < 0;\n    });\n    nums.erase(it, nums.end());\n\n    // Lambda for transform\n    std::transform(nums.begin(), nums.end(), nums.begin(), [](int n) {\n        return n * 2;\n    });\n}\n",
+    "error": "",
+    "fix": "template:cpp_lambda",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write C++ smart pointer usage with `make_unique` and `make_shared`.",
+    "plan": [],
+    "code": "#include <memory>\n\nclass Resource {\npublic:\n    void doWork() { /* ... */ }\n};\n\nvoid useResource() {\n    auto ptr = std::make_unique<Resource>();\n    ptr->doWork();\n\n    auto shared = std::make_shared<Resource>();\n    shared->doWork();\n}\n",
+    "error": "",
+    "fix": "template:cpp_smart_pointer",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write C++ `std::vector` usage with `push_back`, `erase`, and `std::find`.",
+    "plan": [],
+    "code": "#include <vector>\n#include <algorithm>\n\nvoid vectorOps(std::vector<int>& nums) {\n    nums.push_back(42);\n    auto it = std::find(nums.begin(), nums.end(), 42);\n    if (it != nums.end()) nums.erase(it);\n    std::sort(nums.begin(), nums.end());\n}\n",
+    "error": "",
+    "fix": "template:cpp_vector_ops",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write C++ `std::map` usage to count word occurrences.",
+    "plan": [],
+    "code": "#include <map>\n#include <string>\n\nstd::map<std::string, int> wordCount(const std::string& text) {\n    std::map<std::string, int> counts;\n    std::string word;\n    for (char c : text) {\n        if (c == ' ') {\n            if (!word.empty()) {\n                counts[word]++;\n                word.clear();\n            }\n        } else {\n            word += c;\n        }\n    }\n    if (!word.empty()) counts[word]++;\n    return counts;\n}\n",
+    "error": "",
+    "fix": "template:cpp_map",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write C++ RAII pattern with a `FileGuard` class that opens and closes a file.",
+    "plan": [],
+    "code": "class Point {\nprivate:\n    double x, y;\npublic:\n    Point(double x = 0, double y = 0) : x(x), y(y) {}\n    double getX() const { return x; }\n    double getY() const { return y; }\n    double distanceTo(const Point& other) const {\n        double dx = x - other.x;\n        double dy = y - other.y;\n        return std::sqrt(dx * dx + dy * dy);\n    }\n};\n",
+    "error": "",
+    "fix": "template:cpp_class",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write C++ `std::unique_ptr` with a custom deleter.",
+    "plan": [],
+    "code": "#include <memory>\n\nclass Resource {\npublic:\n    void doWork() { /* ... */ }\n};\n\nvoid useResource() {\n    auto ptr = std::make_unique<Resource>();\n    ptr->doWork();\n\n    auto shared = std::make_shared<Resource>();\n    shared->doWork();\n}\n",
+    "error": "",
+    "fix": "template:cpp_smart_pointer",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write C++ move constructor and move assignment operator for a `Buffer` class.",
+    "plan": [],
+    "code": "class Point {\nprivate:\n    double x, y;\npublic:\n    Point(double x = 0, double y = 0) : x(x), y(y) {}\n    double getX() const { return x; }\n    double getY() const { return y; }\n    double distanceTo(const Point& other) const {\n        double dx = x - other.x;\n        double dy = y - other.y;\n        return std::sqrt(dx * dx + dy * dy);\n    }\n};\n",
+    "error": "",
+    "fix": "template:cpp_class",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a Go function `fibonacci(n int) int`.",
+    "plan": [],
+    "code": "func fibonacci(n int) int {\n    if n <= 1 {\n        return n\n    }\n    a, b := 0, 1\n    for i := 2; i <= n; i++ {\n        a, b = b, a+b\n    }\n    return b\n}\n",
+    "error": "",
+    "fix": "template:go_fibonacci",
+    "success": true,
+    "language": "go",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "go"
+    ]
+  },
+  {
+    "task": "Write a Go struct `Person` with a `Greet()` method.",
+    "plan": [],
+    "code": "type Person struct {\n    Name string\n    Age  int\n}\n\nfunc NewPerson(name string, age int) *Person {\n    return &Person{Name: name, Age: age}\n}\n\nfunc (p *Person) Greet() string {\n    return fmt.Sprintf(\"Hi, I'm %s, %d years old\", p.Name, p.Age)\n}\n",
+    "error": "",
+    "fix": "template:go_struct",
+    "success": true,
+    "language": "go",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "go"
+    ]
+  },
+  {
+    "task": "Write a Go interface `Shape` with `Area()` and implement it for `Circle`.",
+    "plan": [],
+    "code": "type Shape interface {\n    Area() float64\n    Perimeter() float64\n}\n\ntype Circle struct {\n    Radius float64\n}\n\nfunc (c Circle) Area() float64 {\n    return math.Pi * c.Radius * c.Radius\n}\n\nfunc (c Circle) Perimeter() float64 {\n    return 2 * math.Pi * c.Radius\n}\n",
+    "error": "",
+    "fix": "template:go_interface",
+    "success": true,
+    "language": "go",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "go"
+    ]
+  },
+  {
+    "task": "Write a Go goroutine worker function.",
+    "plan": [],
+    "code": "func worker(id int, jobs <-chan int, results chan<- int) {\n    for j := range jobs {\n        fmt.Printf(\"Worker %d processing job %d\\n\", id, j)\n        time.Sleep(time.Second)\n        results <- j * 2\n    }\n}\n\nfunc main() {\n    jobs := make(chan int, 100)\n    results := make(chan int, 100)\n\n    for w := 1; w <= 3; w++ {\n        go worker(w, jobs, results)\n    }\n\n    for j := 1; j <= 9; j++ {\n        jobs <- j\n    }\n    close(jobs)\n\n    for a := 1; a <= 9; a++ {\n        <-results\n    }\n}\n",
+    "error": "",
+    "fix": "template:go_goroutine",
+    "success": true,
+    "language": "go",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "go"
+    ]
+  },
+  {
+    "task": "Write a Go HTTP handler with JSON response.",
+    "plan": [],
+    "code": "import (\n    \"encoding/json\"\n    \"fmt\"\n)\n\ntype Config struct {\n    Host    string   `json:\"host\"`\n    Port    int      `json:\"port\"`\n    Debug   bool     `json:\"debug,omitempty\"`\n    Tags    []string `json:\"tags,omitempty\"`\n}\n\nfunc loadConfig(data []byte) (*Config, error) {\n    var cfg Config\n    if err := json.Unmarshal(data, &cfg); err != nil {\n        return nil, fmt.Errorf(\"parse error: %w\", err)\n    }\n    return &cfg, nil\n}\n\nfunc saveConfig(cfg *Config) ([]byte, error) {\n    return json.Mar",
+    "error": "",
+    "fix": "template:go_json_marshal",
+    "success": true,
+    "language": "go",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "go"
+    ]
+  },
+  {
+    "task": "Write a Go function using `select` with multiple channels.",
+    "plan": [],
+    "code": "func worker(id int, jobs <-chan int, results chan<- int) {\n    for j := range jobs {\n        fmt.Printf(\"Worker %d processing job %d\\n\", id, j)\n        time.Sleep(time.Second)\n        results <- j * 2\n    }\n}\n\nfunc main() {\n    jobs := make(chan int, 100)\n    results := make(chan int, 100)\n\n    for w := 1; w <= 3; w++ {\n        go worker(w, jobs, results)\n    }\n\n    for j := 1; j <= 9; j++ {\n        jobs <- j\n    }\n    close(jobs)\n\n    for a := 1; a <= 9; a++ {\n        <-results\n    }\n}\n",
+    "error": "",
+    "fix": "template:go_goroutine",
+    "success": true,
+    "language": "go",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "go"
+    ]
+  },
+  {
+    "task": "Write a Go function that returns an error with `fmt.Errorf`.",
+    "plan": [],
+    "code": "",
+    "error": "",
+    "fix": "",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a Go `sync.Mutex` example to protect shared state.",
+    "plan": [],
+    "code": "type SafeCounter struct {\n    mu sync.Mutex\n    v  map[string]int\n}\n\nfunc (c *SafeCounter) Inc(key string) {\n    c.mu.Lock()\n    defer c.mu.Unlock()\n    c.v[key]++\n}\n\nfunc (c *SafeCounter) Value(key string) int {\n    c.mu.Lock()\n    defer c.mu.Unlock()\n    return c.v[key]\n}\n",
+    "error": "",
+    "fix": "template:go_mutex",
+    "success": true,
+    "language": "go",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "go"
+    ]
+  },
+  {
+    "task": "Write a Go function using `defer` to close a file.",
+    "plan": [],
+    "code": "func readFile(path string) ([]byte, error) {\n    f, err := os.Open(path)\n    if err != nil {\n        return nil, err\n    }\n    defer f.Close()\n    return io.ReadAll(f)\n}\n",
+    "error": "",
+    "fix": "template:go_defer",
+    "success": true,
+    "language": "go",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "go"
+    ]
+  },
+  {
+    "task": "Write a Go function using `context.Context` with timeout.",
+    "plan": [],
+    "code": "func fetchWithTimeout(url string) ([]byte, error) {\n    ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)\n    defer cancel()\n    req, err := http.NewRequestWithContext(ctx, \"GET\", url, nil)\n    if err != nil { return nil, err }\n    resp, err := http.DefaultClient.Do(req)\n    if err != nil { return nil, err }\n    defer resp.Body.Close()\n    return io.ReadAll(resp.Body)\n}\n",
+    "error": "",
+    "fix": "template:go_context",
+    "success": true,
+    "language": "go",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "go"
+    ]
+  },
+  {
+    "task": "Fix this Python function that should return the sum of a list:\n```python\ndef sum_list(nums):\n    total = 0\n    for n in nums:\n        total == n  # Bug here\n    return total\n```",
+    "plan": [],
+    "code": "def sum_list(nums):\n    total = 0\n    for n in nums:\n        total += n  # Fixed: was == instead of +=\n    return total\n",
+    "error": "",
+    "fix": "template:fix_sum_list",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Fix this function that checks if a number is even:\n```python\ndef is_even(n):\n    return n % 2 == 1  # Bug here\n```",
+    "plan": [],
+    "code": "def is_even(n):\n    return n % 2 == 0  # Fixed: was == 1 instead of == 0\n",
+    "error": "",
+    "fix": "template:fix_is_even",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Fix this binary search that has an off-by-one error:\n```python\ndef binary_search(arr, target):\n    lo, hi = 0, len(arr)\n    while lo < hi:\n        mid = (lo + hi) // 2\n        if arr[mid] == target:\n ",
+    "plan": [],
+    "code": "def binary_search(arr, target):\n    lo, hi = 0, len(arr)\n    while lo < hi:\n        mid = (lo + hi) // 2\n        if arr[mid] == target:\n            return mid\n        elif arr[mid] < target:\n            lo = mid + 1  # Fixed: was lo = mid (infinite loop)\n        else:\n            hi = mid\n    return -1\n",
+    "error": "",
+    "fix": "template:fix_binary_search_offbyone",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Fix this function that reverses a string - it's missing the return statement:\n```python\ndef reverse_string(s):\n    result = ''\n    for c in s:\n        result = c + result\n    # Bug: missing return\n```",
+    "plan": [],
+    "code": "def reverse_string(s):\n    result = ''\n    for c in s:\n        result = c + result\n    return result  # Fixed: added missing return\n",
+    "error": "",
+    "fix": "template:fix_reverse_string",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Fix this recursive Fibonacci function that has exponential time complexity - make it efficient:\n```python\ndef fibonacci(n):\n    if n <= 1:\n        return n\n    return fibonacci(n-1) + fibonacci(n-2)\n`",
+    "plan": [],
+    "code": "def fibonacci(n, memo={}):\n    if n in memo:\n        return memo[n]\n    if n <= 1:\n        return n\n    memo[n] = fibonacci(n-1, memo) + fibonacci(n-2, memo)\n    return memo[n]\n",
+    "error": "",
+    "fix": "template:fix_recursive_fib",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a function `two_sum(nums, target)` that returns indices of two numbers that add up to target.",
+    "plan": [],
+    "code": "def two_sum(nums, target):\n    \"\"\"Find two indices where values sum to target.\"\"\"\n    seen = {}\n    for i, num in enumerate(nums):\n        complement = target - num\n        if complement in seen:\n            return [seen[complement], i]\n        seen[num] = i\n    return []\n",
+    "error": "",
+    "fix": "template:two_sum",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a function `valid_parentheses(s)` that checks if a string of brackets is valid.",
+    "plan": [],
+    "code": "def valid_parentheses(s):\n    \"\"\"Check if string of brackets is valid.\"\"\"\n    stack = []\n    mapping = {')': '(', ']': '[', '}': '{'}\n    for char in s:\n        if char in mapping:\n            if not stack or stack[-1] != mapping[char]:\n                return False\n            stack.pop()\n        else:\n            stack.append(char)\n    return len(stack) == 0\n",
+    "error": "",
+    "fix": "template:valid_parentheses",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a function `max_subarray(nums)` that finds the contiguous subarray with the largest sum (Kadane's algorithm).",
+    "plan": [],
+    "code": "def max_subarray(arr):\n    \"\"\"Find contiguous subarray with largest sum (Kadane's).\"\"\"\n    max_sum = current_sum = arr[0]\n    for num in arr[1:]:\n        current_sum = max(num, current_sum + num)\n        max_sum = max(max_sum, current_sum)\n    return max_sum\n",
+    "error": "",
+    "fix": "template:max_subarray",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a function `edit_distance(s1, s2)` that computes the minimum edit distance between two strings.",
+    "plan": [],
+    "code": "def edit_distance(s1, s2):\n    \"\"\"Compute minimum edit distance between two strings.\"\"\"\n    m, n = len(s1), len(s2)\n    dp = [[0] * (n + 1) for _ in range(m + 1)]\n    for i in range(m + 1):\n        dp[i][0] = i\n    for j in range(n + 1):\n        dp[0][j] = j\n    for i in range(1, m + 1):\n        for j in range(1, n + 1):\n            if s1[i-1] == s2[j-1]:\n                dp[i][j] = dp[i-1][j-1]\n            else:\n                dp[i][j] = 1 + min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1])\n    return ",
+    "error": "",
+    "fix": "template:edit_distance",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Write a function `knapsack(weights, values, capacity)` that solves the 0/1 knapsack problem.",
+    "plan": [],
+    "code": "def knapsack(weights, values, capacity):\n    \"\"\"0/1 Knapsack problem.\"\"\"\n    n = len(weights)\n    dp = [[0] * (capacity + 1) for _ in range(n + 1)]\n    for i in range(1, n + 1):\n        for w in range(capacity + 1):\n            dp[i][w] = dp[i-1][w]\n            if weights[i-1] <= w:\n                dp[i][w] = max(dp[i][w], dp[i-1][w-weights[i-1]] + values[i-1])\n    return dp[n][capacity]\n",
+    "error": "",
+    "fix": "template:knapsack",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "What command shows the current git status?",
+    "plan": [],
+    "code": "",
+    "error": "",
+    "fix": "",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "tool"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "tool",
+      "python"
+    ]
+  },
+  {
+    "task": "How do you create a new git branch called 'feature' and switch to it?",
+    "plan": [],
+    "code": "",
+    "error": "",
+    "fix": "",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "tool"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "tool",
+      "python"
+    ]
+  },
+  {
+    "task": "How do you undo the last commit but keep the changes in your working directory?",
+    "plan": [],
+    "code": "",
+    "error": "",
+    "fix": "",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "tool"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "tool",
+      "python"
+    ]
+  },
+  {
+    "task": "Read the file config.py and tell me how many lines it has.",
+    "plan": [],
+    "code": "",
+    "error": "",
+    "fix": "",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "tool"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "tool",
+      "python"
+    ]
+  },
+  {
+    "task": "Search for all Python files that contain 'class' keyword.",
+    "plan": [],
+    "code": "grep -r 'class ' --include='*.py' .  - Search for 'class' in all Python files.\n",
+    "error": "",
+    "fix": "template:search_python_class",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
+  },
+  {
+    "task": "Run 'python --version' and tell me the Python version.",
+    "plan": [],
+    "code": "",
+    "error": "",
+    "fix": "",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "tool"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "tool",
+      "python"
+    ]
   }
 ]

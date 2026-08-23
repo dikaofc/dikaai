@@ -56,5 +56,35 @@
     "tags": [
       "coding"
     ]
+  },
+  {
+    "subject": "Python",
+    "predicate": "is",
+    "object": "bahasa pemrograman tingkat tinggi yang dibuat oleh Guido van Rossum tahun 1991",
+    "confidence": 1.0,
+    "source": "conversation",
+    "tags": [
+      "coding"
+    ]
+  },
+  {
+    "subject": "JavaScript",
+    "predicate": "is",
+    "object": "bahasa pemrograman yang berjalan di browser dan server (Node",
+    "confidence": 1.0,
+    "source": "conversation",
+    "tags": [
+      "coding"
+    ]
+  },
+  {
+    "subject": "Docker",
+    "predicate": "is",
+    "object": "platform containerization yang mengemas aplikasi beserta dependencies-nya",
+    "confidence": 1.0,
+    "source": "conversation",
+    "tags": [
+      "tools"
+    ]
   }
 ]

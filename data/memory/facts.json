@@ -2,11 +2,11 @@
   {
     "subject": "Python",
     "predicate": "is",
-    "value": "3.13",
-    "source": "terminal",
-    "confidence": 1.0,
+    "value": "bahasa pemrograman tingkat tinggi yang dibuat oleh Guido van Rossum tahun 1991",
+    "source": "conversation",
+    "confidence": 0.7,
     "created_at": 1787503495.6885982,
-    "updated_at": 1787503495.6893337,
+    "updated_at": 1787504440.6334684,
     "status": "active",
     "history": [
       {
@@ -14,6 +14,12 @@
         "superseded_at": 1787503495.6893337,
         "superseded_by": "3.13",
         "source": "terminal"
+      },
+      {
+        "value": "3.13",
+        "superseded_at": 1787504402.3218381,
+        "superseded_by": "bahasa pemrograman tingkat tinggi yang dibuat oleh Guido van Rossum tahun 1991",
+        "source": "conversation"
       }
     ],
     "metadata": {}
@@ -25,7 +31,43 @@
     "source": "conversation",
     "confidence": 0.7,
     "created_at": 1787503561.2821786,
-    "updated_at": 1787503561.2821786,
+    "updated_at": 1787505290.1936471,
+    "status": "active",
+    "history": [],
+    "metadata": {}
+  },
+  {
+    "subject": "JavaScript",
+    "predicate": "is",
+    "value": "bahasa pemrograman yang berjalan di browser dan server (Node",
+    "source": "conversation",
+    "confidence": 0.7,
+    "created_at": 1787504402.3543954,
+    "updated_at": 1787504440.6345985,
+    "status": "active",
+    "history": [],
+    "metadata": {}
+  },
+  {
+    "subject": "Docker",
+    "predicate": "is",
+    "value": "platform containerization yang mengemas aplikasi beserta dependencies-nya",
+    "source": "conversation",
+    "confidence": 0.7,
+    "created_at": 1787504402.3741543,
+    "updated_at": 1787504440.6402688,
+    "status": "active",
+    "history": [],
+    "metadata": {}
+  },
+  {
+    "subject": "Check if string of brackets",
+    "predicate": "is",
+    "value": "valid",
+    "source": "conversation",
+    "confidence": 0.7,
+    "created_at": 1787505292.6736414,
+    "updated_at": 1787505292.6736414,
     "status": "active",
     "history": [],
     "metadata": {}
