@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-DikaAi - Google Colab Runner
+DikaAI - Google Colab Runner
 ========================================
 Setiap jalan ulang:
   1. Web scrape (Wikipedia, SO, GitHub)
@@ -11,11 +11,21 @@ Dashboard Vercel: https://dikaai.vercel.app
 """
 
 # ============================================================
-# STEP 1: Install + Clone
+# STEP 1: Install + Clone (FIXED - handles existing dir)
 # ============================================================
 !pip install telethon aiohttp nest_asyncio -q
+
+# Remove old clone if exists, then fresh clone
+!rm -rf /content/dikaai
 !git clone --depth 1 https://github.com/dikaofc/dikaai.git /content/dikaai
-%cd /content/dikaai
+
+# Verify directory exists
+import os
+if not os.path.exists('/content/dikaai'):
+    raise FileNotFoundError("Clone failed! Check your internet connection.")
+
+os.chdir('/content/dikaai')
+print(f"✅ Cloned! CWD: {os.getcwd()}")
 
 # ============================================================
 # STEP 2: CONFIG (GANTI INI!)
@@ -31,14 +41,17 @@ TELEGRAM_PHONE = "+628123456789"          # Ganti!
 UPSTASH_REDIS_URL = "https://xxx.upstash.io"   # Ganti!
 UPSTASH_REDIS_TOKEN = "AXxx..."                 # Ganti!
 
-# Simpan ke config.env
-with open('config.env', 'w') as f:
-    f.write(f"""TELEGRAM_API_ID={TELEGRAM_API_ID}
+# Simpan ke config.env (dengan error handling)
+config_content = f"""TELEGRAM_API_ID={TELEGRAM_API_ID}
 TELEGRAM_API_HASH={TELEGRAM_API_HASH}
 TELEGRAM_PHONE={TELEGRAM_PHONE}
 UPSTASH_REDIS_REST_URL={UPSTASH_REDIS_URL}
 UPSTASH_REDIS_REST_TOKEN={UPSTASH_REDIS_TOKEN}
-""")
+"""
+
+with open('config.env', 'w') as f:
+    f.write(config_content)
+
 print("✅ Config saved!")
 print(f"📱 Telegram: {TELEGRAM_PHONE}")
 print(f"🔴 Redis: {UPSTASH_REDIS_URL[:30]}...")
@@ -46,7 +59,7 @@ print(f"🔴 Redis: {UPSTASH_REDIS_URL[:30]}...")
 # ============================================================
 # STEP 3: RUN DIKAAI
 # ============================================================
-import sys, os, time, signal, threading, asyncio
+import sys, time, signal, threading, asyncio
 import nest_asyncio
 nest_asyncio.apply()
 
@@ -62,7 +75,7 @@ from webscraper import DikaWebScraper
 from dikaai.config import API_ID, API_HASH, PHONE, UPSTASH_REDIS_URL, UPSTASH_REDIS_TOKEN, USE_REDIS
 
 print("\n" + "=" * 55)
-print("  🧠 DikaAi - Google Colab Runner")
+print("  🧠 DikaAI - Google Colab Runner")
 print("  ⏱️  Auto-stop: 12 jam")
 print("  🔄 Flow: Web Scrape → Train → Telegram Loop")
 print("  📊 Dashboard: https://dikaai.vercel.app")
