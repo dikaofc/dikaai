@@ -31,9 +31,19 @@ os.chdir('/content')
 print(f"[0] CWD: {os.getcwd()}")
 
 # ============================================================
-# STEP 1: INSTALL + CLONE (CLEAN)
+# STEP 1: MOUNT GOOGLE DRIVE + INSTALL + CLONE
 # ============================================================
-print("\n[1] Installing dependencies + cloning repo...")
+print("\n[1] Mounting Google Drive + installing dependencies...")
+
+# Mount Google Drive for session persistence
+_gdrive_mounted = False
+try:
+    from google.colab import drive
+    drive.mount('/content/drive', force_remount=False)
+    _gdrive_mounted = True
+    print("    Google Drive mounted!")
+except Exception:
+    print("    Google Drive not available (not Colab?)")
 
 # Install packages
 os.system('pip install telethon aiohttp nest_asyncio -q')
@@ -58,6 +68,21 @@ if not os.path.exists('/content/dikaai/main.py'):
 os.chdir('/content/dikaai')
 sys.path.insert(0, '/content/dikaai')
 print(f"    Project CWD: {os.getcwd()}")
+
+# Restore Telegram session from Google Drive (skip re-login!)
+SESSION_FILE = 'dikaai_session.session'
+SESSION_DRIVE_PATH = '/content/drive/MyDrive/dikaai_sessions/'
+
+if _gdrive_mounted:
+    os.makedirs(SESSION_DRIVE_PATH, exist_ok=True)
+    saved_session = os.path.join(SESSION_DRIVE_PATH, SESSION_FILE)
+    local_session = os.path.join('/content/dikaai', SESSION_FILE)
+    if os.path.exists(saved_session):
+        import shutil as _shutil
+        _shutil.copy2(saved_session, local_session)
+        print(f"    Session restored from Google Drive!")
+    else:
+        print("    No saved session found (first time - will need login)")
 
 # Clear ALL Python bytecode cache
 for root, dirs, files in os.walk('/content/dikaai'):
@@ -541,6 +566,18 @@ async def telegram_loop():
     print("Telegram connected!")
     _live_stats['telegram_connected'] = True
     _live_stats['threads']['telegram'] = 'on'
+
+    # Save session to Google Drive (skip re-login next time!)
+    if _gdrive_mounted:
+        try:
+            src = os.path.join('/content/dikaai', SESSION_FILE)
+            dst = os.path.join(SESSION_DRIVE_PATH, SESSION_FILE)
+            if os.path.exists(src):
+                import shutil as _shutil
+                _shutil.copy2(src, dst)
+                print(f"  Session saved to Google Drive!")
+        except Exception as e:
+            print(f"  Session save failed: {e}")
 
     # Initial scrape of ALL chats
     print("\nScraping ALL Telegram chats...")
