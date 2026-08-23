@@ -6,12 +6,16 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).parent.parent
 DATA_DIR = BASE_DIR / "data"
-DATA_DIR.mkdir(parents=True, exist_ok=True)
-(DATA_DIR / "memory").mkdir(exist_ok=True)
-(DATA_DIR / "rag").mkdir(exist_ok=True)
-(DATA_DIR / "conversations").mkdir(exist_ok=True)
-(DATA_DIR / "knowledge").mkdir(exist_ok=True)
-(DATA_DIR / "benchmarks").mkdir(exist_ok=True)
+# Vercel: skip mkdir (read-only filesystem)
+try:
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    (DATA_DIR / "memory").mkdir(exist_ok=True)
+    (DATA_DIR / "rag").mkdir(exist_ok=True)
+    (DATA_DIR / "conversations").mkdir(exist_ok=True)
+    (DATA_DIR / "knowledge").mkdir(exist_ok=True)
+    (DATA_DIR / "benchmarks").mkdir(exist_ok=True)
+except OSError:
+    pass  # Vercel read-only filesystem
 
 DB_PATH = BASE_DIR / "dikaai.db"
 MODEL_DIR = BASE_DIR / "model_checkpoints"

@@ -280,7 +280,12 @@ class RedisDB:
 class DikaDB:
     def __init__(self):
         # Always use SQLite for training (fast)
-        self.conn = sqlite3.connect(str(DB_PATH), check_same_thread=False)
+        # Vercel: skip if read-only filesystem
+        try:
+            self.conn = sqlite3.connect(str(DB_PATH), check_same_thread=False)
+        except (sqlite3.OperationalError, OSError):
+            # Vercel read-only - use in-memory
+            self.conn = sqlite3.connect(':memory:', check_same_thread=False)
         self.conn.execute("PRAGMA journal_mode=WAL")
         self.conn.execute("PRAGMA synchronous=NORMAL")
         self.lock = threading.Lock()

@@ -795,6 +795,55 @@ class LinkedList {
     }, {});
 }""",
     },
+    "js_throttle": {
+        "pattern": r"throttle|throttle.*function|js.*throttle",
+        "code": """function throttle(fn, limit) {
+    let lastCall = 0;
+    return function (...args) {
+        const now = Date.now();
+        if (now - lastCall >= limit) {
+            lastCall = now;
+            return fn.apply(this, args);
+        }
+    };
+}""",
+    },
+    "js_curry": {
+        "pattern": r"curry|curry.*function|currying",
+        "code": """function curry(fn) {
+    return function curried(...args) {
+        if (args.length >= fn.length) {
+            return fn.apply(this, args);
+        }
+        return function (...args2) {
+            return curried.apply(this, args.concat(args2));
+        };
+    };
+}""",
+    },
+    "js_async_retry": {
+        "pattern": r"async.*retry|retry.*async|exponential.*backoff",
+        "code": """async function retry(fn, retries = 3, delay = 1000) {
+    for (let i = 0; i < retries; i++) {
+        try {
+            return await fn();
+        } catch (err) {
+            if (i === retries - 1) throw err;
+            await new Promise(r => setTimeout(r, delay * Math.pow(2, i)));
+        }
+    }
+}""",
+    },
+    "js_chunk": {
+        "pattern": r"chunk|split.*array|chunk.*array",
+        "code": """function chunk(arr, size) {
+    const chunks = [];
+    for (let i = 0; i < arr.length; i += size) {
+        chunks.push(arr.slice(i, i + size));
+    }
+    return chunks;
+}""",
+    },
 }
 
 
@@ -1098,6 +1147,12 @@ fn main() {
     println!("Results: {:?}", results);
 }""",
     },
+    "rust_generic_max": {
+        "pattern": r"rust.*generic.*max|rust.*max.*generic|generic.*PartialOrd",
+        "code": """fn max_value<T: PartialOrd>(a: T, b: T) -> T {
+    if a >= b { a } else { b }
+}""",
+    },
 }
 
 
@@ -1286,6 +1341,35 @@ public:
     ~Buffer() { delete[] data; }
 };""",
     },
+    "cpp_vector_ops": {
+        "pattern": r"c\+\+.*vector.*push|cpp.*vector.*erase|vector.*operations",
+        "code": """#include <vector>
+#include <algorithm>
+
+void vectorOps(std::vector<int>& nums) {
+    nums.push_back(42);
+    auto it = std::find(nums.begin(), nums.end(), 42);
+    if (it != nums.end()) nums.erase(it);
+    std::sort(nums.begin(), nums.end());
+}""",
+    },
+    "cpp_raii_file": {
+        "pattern": r"c\+\+.*raii|cpp.*raii|raii.*file|file.*guard",
+        "code": """class FileGuard {
+    FILE* f;
+public:
+    FileGuard(const char* path, const char* mode) : f(fopen(path, mode)) {}
+    ~FileGuard() { if (f) fclose(f); }
+    FILE* get() const { return f; }
+    // Prevent copy
+    FileGuard(const FileGuard&) = delete;
+    FileGuard& operator=(const FileGuard&) = delete;
+};""",
+    },
+    "cpp_unique_ptr_deleter": {
+        "pattern": r"c\+\+.*unique.*deleter|cpp.*custom.*deleter|raii.*deleter",
+        "code": """auto ptr = std::unique_ptr<FILE, decltype(&fclose)>(fopen(path, "r"), fclose);""",
+    },
 }
 
 
@@ -1466,6 +1550,58 @@ func loadConfig(data []byte) (*Config, error) {
 
 func saveConfig(cfg *Config) ([]byte, error) {
     return json.MarshalIndent(cfg, "", "  ")
+}""",
+    },
+    "go_error_handling": {
+        "pattern": r"go.*error.*handle|golang.*error.*return|go.*fmt.*Errorf",
+        "code": """func divide(a, b float64) (float64, error) {
+    if b == 0 {
+        return 0, fmt.Errorf("cannot divide by zero")
+    }
+    return a / b, nil
+}""",
+    },
+    "go_mutex": {
+        "pattern": r"go.*mutex|golang.*mutex|sync.*Mutex",
+        "code": """type SafeCounter struct {
+    mu sync.Mutex
+    v  map[string]int
+}
+
+func (c *SafeCounter) Inc(key string) {
+    c.mu.Lock()
+    defer c.mu.Unlock()
+    c.v[key]++
+}
+
+func (c *SafeCounter) Value(key string) int {
+    c.mu.Lock()
+    defer c.mu.Unlock()
+    return c.v[key]
+}""",
+    },
+    "go_defer": {
+        "pattern": r"go.*defer|golang.*defer|defer.*close",
+        "code": """func readFile(path string) ([]byte, error) {
+    f, err := os.Open(path)
+    if err != nil {
+        return nil, err
+    }
+    defer f.Close()
+    return io.ReadAll(f)
+}""",
+    },
+    "go_context": {
+        "pattern": r"go.*context.*timeout|golang.*context|context.*WithTimeout",
+        "code": """func fetchWithTimeout(url string) ([]byte, error) {
+    ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+    defer cancel()
+    req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+    if err != nil { return nil, err }
+    resp, err := http.DefaultClient.Do(req)
+    if err != nil { return nil, err }
+    defer resp.Body.Close()
+    return io.ReadAll(resp.Body)
 }""",
     },
 }

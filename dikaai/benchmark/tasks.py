@@ -357,6 +357,57 @@ JS_TASKS = [
         instruction="Write a JavaScript `flatten(arr)` function to flatten nested arrays.",
         validate_fn=lambda r: any(kw in r for kw in ['function flatten', 'flatten', 'reduce', 'Array.isArray']),
     ),
+    # Advanced JS tasks
+    BenchmarkTask(
+        id="js-011", category="javascript", difficulty="medium",
+        instruction="Write a JavaScript `throttle(fn, limit)` function that limits function calls.",
+        validate_fn=lambda r: any(kw in r for kw in ['function throttle', 'throttle', 'Date.now', 'lastCall']),
+    ),
+    BenchmarkTask(
+        id="js-012", category="javascript", difficulty="medium",
+        instruction="Write a JavaScript `curry(fn)` function that curries a function.",
+        validate_fn=lambda r: any(kw in r for kw in ['function curry', 'curry', 'length']),
+    ),
+    BenchmarkTask(
+        id="js-013", category="javascript", difficulty="hard",
+        instruction="Write a JavaScript `mergeSort(arr)` function using merge sort algorithm.",
+        validate_fn=lambda r: any(kw in r for kw in ['function mergeSort', 'mergeSort', 'merge', 'slice']),
+    ),
+    BenchmarkTask(
+        id="js-014", category="javascript", difficulty="hard",
+        instruction="Write a JavaScript `lru_cache(capacity)` class with get and put methods.",
+        validate_fn=lambda r: any(kw in r for kw in ['class', 'LRU', 'get', 'put', 'Map', 'capacity']),
+    ),
+    BenchmarkTask(
+        id="js-015", category="javascript", difficulty="medium",
+        instruction="Write a JavaScript `groupBy(arr, keyFn)` function that groups array elements.",
+        validate_fn=lambda r: any(kw in r for kw in ['function groupBy', 'groupBy', 'reduce']),
+    ),
+    BenchmarkTask(
+        id="js-016", category="javascript", difficulty="hard",
+        instruction="Write a JavaScript async `retry(fn, retries, delay)` function with exponential backoff.",
+        validate_fn=lambda r: any(kw in r for kw in ['function retry', 'retry', 'async', 'await', 'delay']),
+    ),
+    BenchmarkTask(
+        id="js-017", category="javascript", difficulty="medium",
+        instruction="Write a JavaScript `pipe(...fns)` function that composes functions left to right.",
+        validate_fn=lambda r: any(kw in r for kw in ['function pipe', 'pipe', 'reduce', 'acc']),
+    ),
+    BenchmarkTask(
+        id="js-018", category="javascript", difficulty="hard",
+        instruction="Write a JavaScript `EventEmitter` class with on, emit, and off methods.",
+        validate_fn=lambda r: any(kw in r for kw in ['class EventEmitter', 'EventEmitter', 'on', 'emit', 'off']),
+    ),
+    BenchmarkTask(
+        id="js-019", category="javascript", difficulty="medium",
+        instruction="Write a JavaScript `chunk(arr, size)` function that splits array into chunks.",
+        validate_fn=lambda r: any(kw in r for kw in ['function chunk', 'chunk', 'slice']),
+    ),
+    BenchmarkTask(
+        id="js-020", category="javascript", difficulty="hard",
+        instruction="Write a JavaScript `debouncedFn` with cancel and flush methods.",
+        validate_fn=lambda r: any(kw in r for kw in ['cancel', 'flush', 'debounce', 'timeout']),
+    ),
 ]
 
 # ============================================================
@@ -404,6 +455,42 @@ RUST_TASKS = [
         instruction="Write Rust code to filter even numbers and square them using iterator chain.",
         validate_fn=lambda r: '.iter()' in r and ('filter' in r or 'map' in r),
     ),
+    # Advanced Rust tasks
+    BenchmarkTask(
+        id="rs-009", category="rust", difficulty="hard",
+        instruction="Write a Rust `sort_vec(vec: &mut Vec<i32>)` function using quicksort with mutable references.",
+        validate_fn=lambda r: 'fn sort_vec' in r and ('&mut' in r or 'mut' in r),
+    ),
+    BenchmarkTask(
+        id="rs-010", category="rust", difficulty="hard",
+        instruction="Write a Rust generic `max_value<T: PartialOrd>(a: T, b: T) -> T` function.",
+        validate_fn=lambda r: 'fn max_value' in r and ('PartialOrd' in r or 'Ord' in r),
+    ),
+    BenchmarkTask(
+        id="rs-011", category="rust", difficulty="medium",
+        instruction="Write a Rust `impl Drop` for a custom `Database` struct that prints on drop.",
+        validate_fn=lambda r: 'impl Drop' in r and 'fn drop' in r,
+    ),
+    BenchmarkTask(
+        id="rs-012", category="rust", difficulty="medium",
+        instruction="Write a Rust function using `Option` and `map`/`and_then` chaining.",
+        validate_fn=lambda r: 'Option' in r and ('map' in r or 'and_then' in r),
+    ),
+    BenchmarkTask(
+        id="rs-013", category="rust", difficulty="hard",
+        instruction="Write a Rust `thread::spawn` example that creates a thread and joins it.",
+        validate_fn=lambda r: 'thread::spawn' in r and ('join' in r or 'handle' in r),
+    ),
+    BenchmarkTask(
+        id="rs-014", category="rust", difficulty="medium",
+        instruction="Write a Rust `impl Display` for a `Point` struct.",
+        validate_fn=lambda r: 'impl fmt::Display' in r or ('impl Display' in r and 'fn fmt' in r),
+    ),
+    BenchmarkTask(
+        id="rs-015", category="rust", difficulty="hard",
+        instruction="Write Rust code using `Vec::iter().enumerate()` to find index of max element.",
+        validate_fn=lambda r: 'enumerate' in r and ('max_by' in r or 'max()' in r or 'iter()' in r),
+    ),
 ]
 
 # ============================================================
@@ -436,6 +523,32 @@ CPP_TASKS = [
         instruction="Write C++ smart pointer usage with `make_unique` and `make_shared`.",
         validate_fn=lambda r: 'make_unique' in r or 'make_shared' in r or 'unique_ptr' in r,
     ),
+    # Advanced C++ tasks
+    BenchmarkTask(
+        id="cpp-006", category="cpp", difficulty="hard",
+        instruction="Write C++ `std::vector` usage with `push_back`, `erase`, and `std::find`.",
+        validate_fn=lambda r: 'vector' in r and ('push_back' in r or 'erase' in r or 'find' in r),
+    ),
+    BenchmarkTask(
+        id="cpp-007", category="cpp", difficulty="medium",
+        instruction="Write C++ `std::map` usage to count word occurrences.",
+        validate_fn=lambda r: 'map' in r and ('count' in r or 'insert' in r or 'operator[]' in r),
+    ),
+    BenchmarkTask(
+        id="cpp-008", category="cpp", difficulty="hard",
+        instruction="Write C++ RAII pattern with a `FileGuard` class that opens and closes a file.",
+        validate_fn=lambda r: 'class FileGuard' in r and ('open' in r or 'close' in r or '~FileGuard' in r),
+    ),
+    BenchmarkTask(
+        id="cpp-009", category="cpp", difficulty="medium",
+        instruction="Write C++ `std::unique_ptr` with a custom deleter.",
+        validate_fn=lambda r: 'unique_ptr' in r and ('deleter' in r or 'delete' in r or 'lambda' in r),
+    ),
+    BenchmarkTask(
+        id="cpp-010", category="cpp", difficulty="hard",
+        instruction="Write C++ move constructor and move assignment operator for a `Buffer` class.",
+        validate_fn=lambda r: 'Buffer' in r and ('move' in r or '&&' in r or 'noexcept' in r),
+    ),
 ]
 
 # ============================================================
@@ -467,6 +580,32 @@ GO_TASKS = [
         id="go-005", category="go", difficulty="medium",
         instruction="Write a Go HTTP handler with JSON response.",
         validate_fn=lambda r: 'http.HandleFunc' in r or 'json.NewEncoder' in r or 'func' in r,
+    ),
+    # Advanced Go tasks
+    BenchmarkTask(
+        id="go-006", category="go", difficulty="hard",
+        instruction="Write a Go function using `select` with multiple channels.",
+        validate_fn=lambda r: 'select' in r and ('case' in r or 'chan' in r),
+    ),
+    BenchmarkTask(
+        id="go-007", category="go", difficulty="medium",
+        instruction="Write a Go function that returns an error with `fmt.Errorf`.",
+        validate_fn=lambda r: 'error' in r and ('fmt.Errorf' in r or 'return nil' in r),
+    ),
+    BenchmarkTask(
+        id="go-008", category="go", difficulty="hard",
+        instruction="Write a Go `sync.Mutex` example to protect shared state.",
+        validate_fn=lambda r: 'Mutex' in r and ('Lock' in r or 'Unlock' in r),
+    ),
+    BenchmarkTask(
+        id="go-009", category="go", difficulty="medium",
+        instruction="Write a Go function using `defer` to close a file.",
+        validate_fn=lambda r: 'defer' in r and ('Close' in r or 'close' in r),
+    ),
+    BenchmarkTask(
+        id="go-010", category="go", difficulty="hard",
+        instruction="Write a Go function using `context.Context` with timeout.",
+        validate_fn=lambda r: 'context' in r and ('WithTimeout' in r or 'WithCancel' in r or 'Done()' in r),
     ),
 ]
 
