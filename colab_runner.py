@@ -4,55 +4,14 @@ DikaAi - Google Colab Runner
 Jalan di Colab 12 jam, auto-sync ke Redis, dashboard di Vercel.
 
 Usage di Colab:
-    1. Copy cell 1 (install)
-    2. Copy cell 2 (config)
-    3. Copy cell 3 (run)
+    1. Copy paste semua ke satu cell
+    2. Isi config (API_ID, REDIS_URL)
+    3. Click Run
 """
 
 # ============================================================
-# CELL 1: Install Dependencies (run sekali aja)
+# IMPORTS (Paling atas!)
 # ============================================================
-"""
-!pip install telethon aiohttp -q
-!git clone https://github.com/dikaofc/dikaai.git /content/dikaai
-%cd /content/dikaai
-"""
-
-# ============================================================
-# CELL 2: Setup Config (isi dulu sebelum run)
-# ============================================================
-"""
-# ============================================
-# ISI DATA LU DISINI!
-# ============================================
-
-# Telegram API (dari my.telegram.org)
-TELEGRAM_API_ID = 12345678        # Ganti!
-TELEGRAM_API_HASH = "abc123def456" # Ganti!
-TELEGRAM_PHONE = "+628123456789"   # Ganti!
-
-# Upstash Redis (dari upstash.com)
-UPSTASH_REDIS_URL = "https://xxx.upstash.io"  # Ganti!
-UPSTASH_REDIS_TOKEN = "AXxx..."               # Ganti!
-
-# Simpan ke config.env
-with open('config.env', 'w') as f:
-    f.write(f'''TELEGRAM_API_ID={TELEGRAM_API_ID}
-TELEGRAM_API_HASH={TELEGRAM_API_HASH}
-TELEGRAM_PHONE={TELEGRAM_PHONE}
-UPSTASH_REDIS_REST_URL={UPSTASH_REDIS_URL}
-UPSTASH_REDIS_REST_TOKEN={UPSTASH_REDIS_TOKEN}
-''')
-
-print("✅ Config saved!")
-print(f"📱 Telegram: {TELEGRAM_PHONE}")
-print(f"🔴 Redis: {UPSTASH_REDIS_URL[:30]}...")
-"""
-
-# ============================================================
-# CELL 3: Run DikaAi (auto 12 jam)
-# ============================================================
-"""
 import sys
 import os
 import time
@@ -71,6 +30,7 @@ from tokenizer import DikaTokenizer
 from model import DikaModel
 from trainer import DikaTrainer
 from bot import DikaBot
+from webscraper import DikaWebScraper
 from config import API_ID, API_HASH, PHONE
 from sync_to_redis import UpstashRedis, sync_messages, sync_model, sync_vocab
 from config import UPSTASH_REDIS_URL, UPSTASH_REDIS_TOKEN, USE_REDIS
@@ -90,7 +50,7 @@ print("=" * 60)
 # ============================================================
 if not API_ID or not API_HASH:
     print("❌ ERROR: Telegram API belum dikonfigurasi!")
-    print("Jalankan Cell 2 dulu!")
+    print("Isi config dulu sebelum run!")
     raise SystemExit(1)
 
 print(f"📱 Telegram: {PHONE}")
@@ -99,7 +59,7 @@ print(f"🔴 Redis: {'✅ Connected' if USE_REDIS else '❌ Not configured'}")
 # ============================================================
 # INITIALIZE COMPONENTS
 # ============================================================
-print("\n[1/5] Initializing components...")
+print("\n[1/6] Initializing components...")
 
 db = DikaDB()
 tokenizer = DikaTokenizer()
@@ -119,20 +79,46 @@ else:
     print("  ⚠️ No vocab, will build from data")
 
 # ============================================================
-# SYNC TO REDIS FUNCTION
+# GLOBAL VARIABLES
+# ============================================================
+running = True
+start_time = time.time()
+max_runtime = 12 * 3600  # 12 jam
+
+def signal_handler(sig, frame):
+    global running
+    print("\n⏹️ Stopping DikaAi...")
+    running = False
+
+signal.signal(signal.SIGINT, signal_handler)
+
+# ============================================================
+# WEB SCRAPE FUNCTION (PRIORITY)
+# ============================================================
+def web_scrape_loop():
+    """Web scrape dari internet (PRIORITY)"""
+    try:
+        web_scraper = DikaWebScraper(db)
+        web_scraper.scrape_all()
+        print("  [WEB] ✅ Web scrape complete!")
+    except Exception as e:
+        print(f"  [WEB] Error: {e}")
+
+# ============================================================
+# REDIS SYNC FUNCTION
 # ============================================================
 def redis_sync_loop():
     """Background thread: sync SQLite → Redis every 60s"""
     if not USE_REDIS:
-        print("  ⚠️ Redis not configured, skipping sync")
+        print("  [REDIS] ⚠️ Redis not configured, skipping sync")
         return
     
     try:
         r = UpstashRedis(UPSTASH_REDIS_URL, UPSTASH_REDIS_TOKEN)
         r.ping()
-        print("  ✅ Redis connected!")
+        print("  [REDIS] ✅ Redis connected!")
     except Exception as e:
-        print(f"  ❌ Redis connection failed: {e}")
+        print(f"  [REDIS] ❌ Redis connection failed: {e}")
         return
     
     sync_count = 0
@@ -160,13 +146,13 @@ def redis_sync_loop():
 # ============================================================
 def train_loop():
     """Background thread: continuous training"""
-    print("  🧠 Training started...")
+    print("  [TRAIN] 🧠 Training started...")
     
     # Build vocab first
     stats = db.get_stats()
     if stats['total'] > 0:
         trainer.build_vocab()
-        print(f"  ✅ Vocab ready: {tokenizer.vocab_size} tokens")
+        print(f"  [TRAIN] ✅ Vocab ready: {tokenizer.vocab_size} tokens")
     
     epoch = 0
     while running:
@@ -175,7 +161,7 @@ def train_loop():
             loss, count = trainer.train_one_epoch()
             
             if count > 0:
-                print(f"  [Ep {epoch:3d}] loss={loss:.4f} steps={count} total={model.step}")
+                print(f"  [TRAIN] [Ep {epoch:3d}] loss={loss:.4f} steps={count} total={model.step}")
                 
                 # Save every 50 steps
                 if model.step % 50 == 0:
@@ -189,57 +175,8 @@ def train_loop():
             time.sleep(10)
 
 # ============================================================
-# MAIN RUNNER
+# TELEGRAM SCRAPE FUNCTION (PARALLEL)
 # ============================================================
-running = True
-start_time = time.time()
-max_runtime = 12 * 3600  # 12 jam
-
-def signal_handler(sig, frame):
-    global running
-    print("\n⏹️ Stopping DikaAi...")
-    running = False
-
-signal.signal(signal.SIGINT, signal_handler)
-
-# ============================================================
-# START ALL THREADS PARALLEL
-# ============================================================
-print("\n[2/6] Starting ALL threads PARALLEL...")
-
-# Start Redis sync thread
-redis_thread = threading.Thread(target=redis_sync_loop, daemon=True)
-redis_thread.start()
-print("  ✅ Redis sync thread started")
-
-# Start training thread
-train_thread = threading.Thread(target=train_loop, daemon=True)
-train_thread.start()
-print("  ✅ Training thread started")
-
-# Start web scrape thread (PRIORITY)
-web_thread = threading.Thread(target=web_scrape_loop, daemon=True)
-web_thread.start()
-print("  ✅ Web scrape thread started (PRIORITY)")
-
-# ============================================================
-# WEB SCRAPE + TELEGRAM SCRAPE (PARALLEL)
-# ============================================================
-
-# Import web scraper
-from webscraper import DikaWebScraper
-
-# Web scrape function (runs in thread)
-def web_scrape_loop():
-    """Web scrape dari internet (PRIORITY)"""
-    try:
-        web_scraper = DikaWebScraper(db)
-        web_scraper.scrape_all()
-        print("  [WEB] ✅ Web scrape complete!")
-    except Exception as e:
-        print(f"  [WEB] Error: {e}")
-
-# Telegram scrape function (runs in async)
 async def run_telegram():
     """Run Telegram scraper + bot (PARALLEL dengan web scrape)"""
     global running
@@ -307,6 +244,26 @@ async def run_telegram():
             await asyncio.sleep(300)
 
 # ============================================================
+# START ALL THREADS PARALLEL
+# ============================================================
+print("\n[2/6] Starting ALL threads PARALLEL...")
+
+# Start Redis sync thread
+redis_thread = threading.Thread(target=redis_sync_loop, daemon=True)
+redis_thread.start()
+print("  ✅ Redis sync thread started")
+
+# Start training thread
+train_thread = threading.Thread(target=train_loop, daemon=True)
+train_thread.start()
+print("  ✅ Training thread started")
+
+# Start web scrape thread (PRIORITY)
+web_thread = threading.Thread(target=web_scrape_loop, daemon=True)
+web_thread.start()
+print("  ✅ Web scrape thread started (PRIORITY)")
+
+# ============================================================
 # RUN ALL PARALLEL
 # ============================================================
 print("\n" + "=" * 60)
@@ -350,38 +307,3 @@ finally:
     print("=" * 60)
     print("  ✅ Data saved! Check dashboard di Vercel.")
     print("=" * 60)
-"""
-
-# ============================================================
-# QUICK COPY-PASTE VERSION (Satu Cell Aja)
-# ============================================================
-"""
-# ============================================
-# 🧠 DikaAi - Google Colab Runner
-# ============================================
-# Copy paste ini ke Colab, isi config, lalu run!
-
-# STEP 1: Install
-!pip install telethon aiohttp -q
-!git clone https://github.com/dikaofc/dikaai.git /content/dikaai
-%cd /content/dikaai
-
-# STEP 2: Config (GANTI INI!)
-TELEGRAM_API_ID = 12345678
-TELEGRAM_API_HASH = "abc123def456"
-TELEGRAM_PHONE = "+628123456789"
-UPSTASH_REDIS_URL = "https://xxx.upstash.io"
-UPSTASH_REDIS_TOKEN = "AXxx..."
-
-# Simpan config
-with open('config.env', 'w') as f:
-    f.write(f'''TELEGRAM_API_ID={TELEGRAM_API_ID}
-TELEGRAM_API_HASH={TELEGRAM_API_HASH}
-TELEGRAM_PHONE={TELEGRAM_PHONE}
-UPSTASH_REDIS_REST_URL={UPSTASH_REDIS_URL}
-UPSTASH_REDIS_REST_TOKEN={UPSTASH_REDIS_TOKEN}
-''')
-
-# STEP 3: Run!
-exec(open('colab_runner.py').read())
-"""
