@@ -109,7 +109,7 @@ def redis_sync():
         print("  [REDIS] ⚠️ Skip (not configured)")
         return
     try:
-        from sync_to_redis import UpstashRedis, sync_messages, sync_model, sync_vocab
+        from sync_to_redis import UpstashRedis, sync_messages, sync_model, sync_vocab, sync_training_history
         r = UpstashRedis(UPSTASH_REDIS_URL, UPSTASH_REDIS_TOKEN)
         r.ping()
         print("  [REDIS] ✅ Connected to Upstash!")
@@ -122,6 +122,7 @@ def redis_sync():
                 sync_messages(r, limit=200)
                 sync_model(r)
                 sync_vocab(r)
+                sync_training_history(r)
                 n += 1
                 if n % 5 == 0:
                     stats = db.get_stats()
