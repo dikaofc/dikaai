@@ -33,6 +33,15 @@ if not os.path.exists('/content/dikaai'):
 os.chdir('/content/dikaai')
 print(f"✅ Project CWD: {os.getcwd()}")
 
+# Clear ALL Python bytecode cache (prevents stale .pyc errors)
+import shutil
+for root, dirs, files in os.walk('/content/dikaai'):
+    for d in dirs:
+        if d == '__pycache__':
+            shutil.rmtree(os.path.join(root, d), ignore_errors=True)
+import importlib
+importlib.invalidate_caches()
+
 # ============================================================
 # STEP 2: CONFIG (GANTI INI!)
 # ============================================================
