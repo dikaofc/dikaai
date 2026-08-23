@@ -28,16 +28,22 @@ from dikaai.model.trainer import DikaTrainer
 
 # Context & Memory
 from dikaai.context.tracker import ContextManager, ConversationState
+from dikaai.context.long_context import LongContextManager
 from dikaai.memory.short_term import ConversationMemory
 from dikaai.memory.coding_memory import CodingMemory
+from dikaai.memory.hierarchical import HierarchicalMemory
+from dikaai.memory.episodic import EpisodicMemory
+from dikaai.memory.semantic import SemanticMemory
 
 # RAG
 from dikaai.rag.retriever import Retriever
 from dikaai.rag.vector_db import VectorDB
+from dikaai.rag.reranker import Reranker
 
 # Agent
 from dikaai.agent.planner import Planner
 from dikaai.agent.executor import Executor
+from dikaai.agent.reasoning import ReasoningEngine
 
 # Tools
 from dikaai.tools.filesystem import FilesystemTools
@@ -63,14 +69,20 @@ __all__ = [
     # Context & Memory
     'ContextManager',
     'ConversationState',
+    'LongContextManager',
     'ConversationMemory',
     'CodingMemory',
+    'HierarchicalMemory',
+    'EpisodicMemory',
+    'SemanticMemory',
     # RAG
     'Retriever',
     'VectorDB',
+    'Reranker',
     # Agent
     'Planner',
     'Executor',
+    'ReasoningEngine',
     # Tools
     'FilesystemTools',
     'TerminalTools',

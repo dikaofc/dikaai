@@ -9,9 +9,13 @@ Components:
 from dikaai.memory.short_term import ConversationMemory
 from dikaai.memory.coding_memory import CodingMemory
 from dikaai.memory.hierarchical import HierarchicalMemory
+from dikaai.memory.episodic import EpisodicMemory
+from dikaai.memory.semantic import SemanticMemory
 
 __all__ = [
     'ConversationMemory',
     'CodingMemory',
     'HierarchicalMemory',
+    'EpisodicMemory',
+    'SemanticMemory',
 ]

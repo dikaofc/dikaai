@@ -9,6 +9,7 @@ Components:
 
 from dikaai.agent.planner import Planner, Step, StepType
 from dikaai.agent.executor import Executor, ExecutionResult
+from dikaai.agent.reasoning import ReasoningEngine, ReasoningChain
 
 __all__ = [
     'Planner',
@@ -16,4 +17,6 @@ __all__ = [
     'StepType',
     'Executor',
     'ExecutionResult',
+    'ReasoningEngine',
+    'ReasoningChain',
 ]
