@@ -222,6 +222,82 @@ class DikaTrainer:
         print(f"  Training stopped at step {self.model.step}")
         print("=" * 55)
 
+    def train_coding(self, epochs: int = 100, max_pairs: int = 200):
+        """Train on coding dataset (instruction → code)."""
+        from dikaai.training.coding_dataset import CodingDataset
+        
+        dataset = CodingDataset()
+        pairs = dataset.get_training_pairs(max_pairs=max_pairs)
+        
+        if not pairs:
+            print("  [TRAINER] No coding pairs available")
+            return 0.0, 0
+        
+        # Build vocab from coding corpus
+        corpus = dataset.get_text_corpus()
+        self.tokenizer.build_vocab(corpus)
+        self.tokenizer.save()
+        
+        # Recreate model if vocab changed
+        if self.model.vocab_size != self.tokenizer.vocab_size:
+            self.model = DikaModel(vocab_size=self.tokenizer.vocab_size)
+        
+        print(f"  [TRAINER] Coding dataset: {len(pairs)} pairs, {self.tokenizer.vocab_size} tokens")
+        
+        total_loss = 0.0
+        total_steps = 0
+        
+        for ep in range(1, epochs + 1):
+            random.shuffle(pairs)
+            epoch_loss = 0.0
+            epoch_count = 0
+            
+            for pair in pairs:
+                # Train on input (instruction)
+                input_text = pair['input']
+                target_text = pair['target']
+                
+                # Combine input + target as sequence
+                full_text = input_text + " → " + target_text
+                tokens = self.tokenizer.encode(full_text, max_length=CONTEXT_LEN)
+                real = [t for t in tokens if t != 0]
+                
+                if len(real) < 3:
+                    continue
+                
+                # Train: predict each token given previous tokens
+                for i in range(1, min(len(real), 20)):
+                    context = real[:i]
+                    target = real[i]
+                    padded = context + [0] * (CONTEXT_LEN - len(context))
+                    padded = padded[:CONTEXT_LEN]
+                    
+                    try:
+                        loss = self.model.train_step_chunked(padded, target)
+                        epoch_loss += loss
+                        epoch_count += 1
+                    except Exception:
+                        pass
+            
+            if epoch_count > 0:
+                avg = epoch_loss / epoch_count
+                total_loss += epoch_loss
+                total_steps += epoch_count
+                
+                if ep % 10 == 0 or ep == 1:
+                    print(f"  [CODE Ep {ep:3d}/{epochs}] loss={avg:.4f} steps={epoch_count} total={self.model.step}")
+                
+                if ep % 25 == 0:
+                    self.model.save()
+                    self.tokenizer.save()
+        
+        self.model.save()
+        self.tokenizer.save()
+        
+        avg = total_loss / max(total_steps, 1)
+        print(f"  [TRAINER] Coding training done! avg_loss={avg:.4f}, steps={self.model.step}")
+        return avg, total_steps
+
     def stop(self):
         self.training = False
 

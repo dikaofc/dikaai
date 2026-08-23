@@ -1,0 +1,10 @@
+[
+  {
+    "subject": "DikaAI",
+    "predicate": "uses",
+    "object": "LSTM model",
+    "confidence": 1.0,
+    "source": "audit",
+    "tags": []
+  }
+]

@@ -35,7 +35,10 @@ class DikaAIChat:
 
     def clear(self):
         self.history = []
-        self.engine.context.state = __import__('dikaai.context.tracker', fromlist=['ConversationState']).ConversationState()
+        from dikaai.context.tracker import ConversationState
+        self.engine.context.state = ConversationState()
+        # Reset long-context memory too
+        self.engine.long_context = __import__('dikaai.context.long_context', fromlist=['LongContextManager']).LongContextManager()
 
     def stats(self):
         return self.engine.get_stats()

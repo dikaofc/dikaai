@@ -1,0 +1,28 @@
+[
+  {
+    "task": "fix import error",
+    "plan": [],
+    "code": "",
+    "error": "ModuleNotFoundError",
+    "fix": "pip install requests",
+    "success": true,
+    "language": "python",
+    "tools_used": [],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": []
+  },
+  {
+    "task": "fix import error",
+    "plan": [],
+    "code": "",
+    "error": "ModuleNotFoundError",
+    "fix": "pip install",
+    "success": true,
+    "language": "",
+    "tools_used": [],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": []
+  }
+]
