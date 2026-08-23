@@ -65,6 +65,26 @@ os.chdir('/content/dikaai')
 sys.path.insert(0, '/content/dikaai')
 print("    Project CWD: " + os.getcwd())
 
+# ============================================================
+# SELF-HEAL: ensure webscraper.py has the latest API (max_workers).
+# git clone sometimes fetches a stale CDN copy; force-pull the canonical
+# file via raw URL so the constructor signature is correct.
+# ============================================================
+try:
+    import urllib.request
+    _ws_url = "https://raw.githubusercontent.com/dikaofc/dikaai/main/webscraper.py"
+    _ws_path = os.path.join('/content/dikaai', 'webscraper.py')
+    _req = urllib.request.Request(_ws_url, headers={'User-Agent': 'colab'})
+    _ws_code = urllib.request.urlopen(_req, timeout=30).read().decode('utf-8')
+    if 'max_workers' in _ws_code:
+        with open(_ws_path, 'w', encoding='utf-8') as _f:
+            _f.write(_ws_code)
+        print("    webscraper.py self-healed (latest version)")
+    else:
+        print("    webscraper.py kept (remote also lacked max_workers)")
+except Exception as _e:
+    print("    webscraper.py self-heal skipped: " + str(_e))
+
 # Restore Telegram session from Google Drive
 SESSION_FILE = 'dikaai_session.session'
 SESSION_DRIVE_PATH = '/content/drive/MyDrive/dikaai_sessions/'
@@ -414,6 +434,12 @@ def training_thread():
             if model.step % 50 == 0:
                 model.save()
                 tokenizer.save()
+            # Mark messages as processed for dashboard (every 100 epochs)
+            if ep % 100 == 0:
+                try:
+                    db.mark_all_processed()
+                except Exception:
+                    pass
         except Exception as e:
             print("  [TRAIN] Error: " + str(e))
             time.sleep(1)
@@ -451,9 +477,18 @@ redis_t.start()
 _live_stats['threads']['redis'] = 'on'
 print("  Redis sync thread started!")
 
-# Web scrape ALL 180+ sources in parallel
+# Web scrape ALL 180+ sources in parallel.
+# Be robust to the clone having an OLD DikaWebScraper (no max_workers kwarg).
+import inspect
+_scraper_kwargs = {}
 try:
-    scraper = DikaWebScraper(db, max_workers=8)
+    _params = inspect.signature(DikaWebScraper.__init__).parameters
+    if 'max_workers' in _params:
+        _scraper_kwargs['max_workers'] = 8
+except Exception:
+    pass
+try:
+    scraper = DikaWebScraper(db, **_scraper_kwargs)
     scraper.scrape_all()
 except Exception as e:
     print("  [WEB] Error: " + str(e))
@@ -475,10 +510,15 @@ print("\n" + "=" * 60)
 print("  PHASE 2: Training dari Web Data (500 epochs)")
 print("=" * 60)
 
-if stats['total'] > 0:
+# Always build vocab from whatever data exists (web + any prior DB),
+# so a web-scrape failure can never silently skip training.
+try:
     trainer.build_vocab()
     print("  Vocab: " + str(tokenizer.vocab_size) + " tokens")
+except Exception as e:
+    print("  [TRAIN] Vocab build skipped: " + str(e))
 
+if stats['total'] > 0:
     print("  Training 500 epochs (max speed)...")
     for ep in range(1, 501):
         if not running:
@@ -497,9 +537,14 @@ if stats['total'] > 0:
 
     model.save()
     tokenizer.save()
+    # Mark all messages as processed for dashboard
+    try:
+        db.mark_all_processed()
+    except Exception:
+        pass
     print("  Training done! Model step: " + str(model.step))
 else:
-    print("  No web data, skipping training")
+    print("  No web data yet -> background thread will train on Telegram data")
 
 # ============================================================
 # PHASE 3: BENCHMARK

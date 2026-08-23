@@ -50,13 +50,11 @@ class DikaTrainer:
         self.tokenizer.build_vocab(messages)
         self.tokenizer.save()
 
-        # Check if vocab size changed - need to recreate model
+        # Check if vocab size changed - resize model IN PLACE
+        # (avoid creating new instance, which breaks external references)
         if self.model.vocab_size != self.tokenizer.vocab_size:
-            old_step = self.model.step
-            print(f"  [TRAINER] Vocab changed {self.model.vocab_size}→{self.tokenizer.vocab_size}, recreating model...")
-            self.model = DikaModel(vocab_size=self.tokenizer.vocab_size)
-            # Keep old step count for continuity
-            self.model.step = old_step
+            print(f"  [TRAINER] Vocab changed {self.model.vocab_size}→{self.tokenizer.vocab_size}, resizing model...")
+            self.model.resize_vocab(self.tokenizer.vocab_size)
 
         print(f"  [TRAINER] Built vocab: {self.tokenizer.vocab_size} tokens from {len(messages)} messages")
         return True

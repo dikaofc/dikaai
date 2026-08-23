@@ -17,6 +17,12 @@ ENV/
 # Vercel
 .vercel/
 
+# Node / Next.js (build artifacts — never commit)
+node_modules/
+.next/
+next-env.d.ts
+
+
 # IDE
 .vscode/
 .idea/

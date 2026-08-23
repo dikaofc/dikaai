@@ -212,6 +212,47 @@ class DikaModel:
     def _invalidate_transpose(self):
         self._transpose_cache.clear()
 
+    def resize_vocab(self, new_vocab_size):
+        """Resize embedding and output layers in-place for new vocab size.
+        Keeps existing weights for tokens that still exist.
+        This avoids creating a new model instance (which would break references)."""
+        if new_vocab_size == self.vocab_size:
+            return
+
+        old_size = self.vocab_size
+        embed_dim = self.embed_dim
+        hidden_dim = self.hidden_dim
+
+        # Resize embedding: keep old rows, add new random rows
+        old_embed = self.embedding
+        self.embedding = _randn(new_vocab_size, embed_dim)
+        copy_size = min(old_size, new_vocab_size)
+        for i in range(copy_size):
+            for j in range(embed_dim):
+                self.embedding[i][j] = old_embed[i][j]
+
+        # Resize output layer: keep old columns, add new random columns
+        old_W_out = self.W_out
+        self.W_out = _randn(hidden_dim, new_vocab_size)
+        copy_cols = min(old_size, new_vocab_size)
+        for i in range(hidden_dim):
+            for j in range(copy_cols):
+                self.W_out[i][j] = old_W_out[i][j]
+
+        # Resize output bias
+        old_b_out = self.b_out
+        self.b_out = [0.0] * new_vocab_size
+        for i in range(copy_cols):
+            self.b_out[i] = old_b_out[i]
+
+        self.vocab_size = new_vocab_size
+
+        # Reset Adam state for resized layers
+        self._init_adam()
+        self._invalidate_transpose()
+
+        print(f"  [MODEL] Resized vocab: {old_size} -> {new_vocab_size}")
+
     def _init_adam(self):
         """Initialize Adam optimizer moments."""
         self.adam_m = {}

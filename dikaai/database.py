@@ -417,6 +417,12 @@ class DikaDB:
                 ids
             )
             self.conn.commit()
+
+    def mark_all_processed(self):
+        """Mark all messages as processed (for dashboard display)."""
+        with self.lock:
+            self.conn.execute("UPDATE messages SET processed = 1 WHERE processed = 0")
+            self.conn.commit()
     
     def get_stats(self) -> dict:
         """Get database stats from SQLite."""
