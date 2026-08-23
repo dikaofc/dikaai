@@ -605,7 +605,7 @@ class WebHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         path = urlparse(self.path).path
 
-        if path == '/':
+        if path == '/' or path == '/index.html':
             self._html(CHAT_HTML)
             return
 
@@ -622,16 +622,8 @@ class WebHandler(BaseHTTPRequestHandler):
             self._json({'status': 'ok', 'version': '3.1.0'})
             return
 
-        if path == '/':
-            self._json({
-                'name': 'DikaAI Web',
-                'endpoints': {
-                    '/': 'Chat UI',
-                    '/api/chat': 'POST - Send message',
-                    '/api/stats': 'GET - Engine stats',
-                    '/api/history': 'GET - Chat history',
-                },
-            })
+        if path == '/v1/models':
+            self._json({'data': [{'id': 'dikaai-v3', 'object': 'model', 'capabilities': ['chat', 'code', 'agent', 'tools']}]})
             return
 
         self._json({'error': 'Not found'}, 404)
