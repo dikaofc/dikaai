@@ -9,10 +9,10 @@ Dashboard Vercel: https://dikaai.vercel.app
 """
 
 # ============================================================
-# STEP 1: Install + Clone
+# STEP 1: Install + Clone (shallow - cepat!)
 # ============================================================
 !pip install telethon aiohttp -q
-!git clone https://github.com/dikaofc/dikaai.git /content/dikaai
+!git clone --depth 1 https://github.com/dikaofc/dikaai.git /content/dikaai
 %cd /content/dikaai
 
 # ============================================================
