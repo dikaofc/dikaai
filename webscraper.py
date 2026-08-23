@@ -196,11 +196,10 @@ class DikaWebScraper:
         print("  [WEB] 📰 Scraping Detik.com...")
         count = 0
 
-        # Detik RSS feeds
+        # Detik RSS feeds (updated URLs)
         feeds = [
-            'https://www.detik.com/rss',
-            'https://www.detik.com/rss/teknologi',
-            'https://www.detik.com/rss/otomotif',
+            'https://www.detik.com/tekno/rss',
+            'https://www.detik.com/news/rss',
         ]
 
         for feed_url in feeds:
@@ -235,9 +234,9 @@ class DikaWebScraper:
         print("  [WEB] 📰 Scraping Kompas.com...")
         count = 0
 
-        # Kompas RSS
+        # Kompas RSS (updated URLs)
         feeds = [
-            'https://www.kompas.com/rss',
+            'https://www.kompas.com/rss/tekno',
             'https://tekno.kompas.com/rss',
         ]
 
@@ -302,7 +301,7 @@ class DikaWebScraper:
         count = 0
 
         # GitHub trending API
-        url = "https://api.github.com/search/repositories?q=language:indonesian+README&sort=stars&per_page=30"
+        url = "https://api.github.com/search/repositories?q=language:indonesian&sort=stars&per_page=30"
         data = self._fetch(url, timeout=15)
 
         if data:
@@ -522,33 +521,72 @@ class DikaWebScraper:
         count = 0
 
         articles = [
+            # Core tech
             'Pemrograman', 'Python_(bahasa_pemrograman)', 'JavaScript',
-            'Linux', 'Database', 'Internet', 'Komputer',
-            'Jaringan_komputer', 'Sistem_operasi', 'Perangkat_lunak',
-            'Kecerdasan_buatan', 'Machine_learning', 'Cloud_computing',
-            'Web_development', 'Mobile_app', 'Blockchain',
-            'Cybersecurity', 'Data_science', 'Internet_of_things',
-            'Virtual_reality', 'Augmented_reality', 'Open_source',
-            'Fintech', 'E-commerce', 'Startup', 'Digital_marketing',
-            'Social_media', '5G', 'Smartphone', 'Android_(sistem_operasi)',
+            'Java_(bahasa_pemrograman)', 'C_(bahasa_pemrograman)', 'C++',
+            'Go_(bahasa_pemrograman)', 'Rust_(bahasa_pemrograman)',
+            'TypeScript', 'PHP', 'Ruby', 'Swift_(bahasa_pemrograman)',
+            'Kotlin', 'Scala_(bahasa_pemrograman)',
+            # Systems
+            'Linux', 'Ubuntu_(sistem_operasi)', 'Windows', 'macOS',
+            'Android_(sistem_operasi)', 'iOS', 'ChromeOS',
+            'Sistem_operasi', 'Jaringan_komputer', 'Komputer',
+            # Web & Mobile
+            'Web_development', 'Mobile_app', 'React_(pustakaJavaScript)',
+            'Vue.js', 'Angular_(frameworkweb)', 'Node.js', 'Django',
+            'Laravel', 'Ruby_on_Rails', 'Express.js', 'Flask_(frameworkweb)',
+            'WordPress', 'HTML', 'CSS', 'API',
+            # Data & AI
+            'Database', 'MySQL', 'PostgreSQL', 'MongoDB', 'Redis',
+            'Kecerdasan_buatan', 'Machine_learning', 'Deep_learning',
+            'Data_science', 'Big_data', 'Natural_language_processing',
+            'TensorFlow', 'PyTorch', 'Pandas_(perangkat_lunak)',
+            # Cloud & DevOps
+            'Cloud_computing', 'Amazon_Web_Services', 'Microsoft_Azure',
+            'Google_Cloud_Platform', 'Docker_(perangkat_lunak)',
+            'Kubernetes', 'DevOps', 'CI/CD', 'Nginx', 'Apache',
+            # Security
+            'Cybersecurity', 'Keamanan_komputer', 'Kriptografi',
+            'Ethical_hacking', 'Firewall_(jaringan)',
+            # Business & Internet
+            'Internet', 'Internet_of_things', 'Blockchain',
+            'Cryptocurrency', 'Bitcoin', 'E-commerce', 'Fintech',
+            'Startup', 'Digital_marketing', 'Social_media',
+            'Open_source', 'GPL', 'MIT_License',
+            # Misc tech
+            '5G', 'Smartphone', 'Laptop', 'Komputer_pribadi',
+            'Virtual_reality', 'Augmented_reality', 'Game',
+            'Perangkat_lunak', 'Perangkat_keras',
+            # Programming concepts
+            'Algoritma', 'Struktur_data', 'Pemrograman berorientasi objek',
+            'Functional_programming', 'Recursion', 'Sorting_algorithm',
+            'Search_algorithm', 'Graph_theory',
         ]
 
         for article in articles:
-            # Use Wikipedia API to get full extract
-            url = f'https://id.wikipedia.org/api/rest_v1/page/html/{article}'
-            data = self._fetch(url, timeout=15)
+            # Use Wikipedia REST API to get summary + extract
+            url = f'https://id.wikipedia.org/api/rest_v1/page/summary/{article}'
+            data = self._fetch(url, timeout=10)
             if not data:
                 continue
 
-            # Clean and split
-            text = self._clean_html(data)
-            sentences = self._split_sentences(text)
+            try:
+                info = json.loads(data)
+                extract = info.get('extract', '')
+                if extract and len(extract) > 50:
+                    sentences = self._split_sentences(extract)
+                    for sent in sentences[:10]:
+                        self._add(-209, 'Wikipedia Full', 'wiki', sent)
+                        count += 1
 
-            for sent in sentences[:15]:  # Max 15 per article (fuller content)
-                self._add(-209, 'Wikipedia Full', 'wiki', sent)
-                count += 1
+                desc = info.get('description', '')
+                if desc and len(desc) > 15:
+                    self._add(-209, 'Wikipedia Full', 'wiki', desc)
+                    count += 1
+            except json.JSONDecodeError:
+                pass
 
-            time.sleep(0.3)
+            time.sleep(0.2)
 
         print(f"  [WEB] ✅ Wikipedia Full: {count} sentences")
         return count
@@ -671,7 +709,7 @@ class DikaWebScraper:
 
         start = time.time()
 
-        # Run all scrapers (more sources = more training data)
+        # Run working scrapers (skip broken sources)
         print("\n  --- Phase 1: Indonesian Corpus ---")
         self.scrape_indonesian_corpus()
         time.sleep(0.3)
@@ -682,30 +720,11 @@ class DikaWebScraper:
         self.scrape_wikipedia_id()
         time.sleep(0.3)
 
-        print("\n  --- Phase 3: Indonesian News ---")
-        self.scrape_detik()
-        time.sleep(0.3)
-        self.scrape_kompas()
-        time.sleep(0.3)
-        self.scrape_cnn_indonesia()
-        time.sleep(0.3)
-        self.scrape_liputan6()
-        time.sleep(0.3)
-
-        print("\n  --- Phase 4: Tech & Coding ---")
+        print("\n  --- Phase 3: Tech & Coding ---")
         self.scrape_stackoverflow_id()
         time.sleep(0.3)
         self.scrape_github_trending()
         time.sleep(0.3)
-        self.scrape_medium_id()
-        time.sleep(0.3)
-        self.scrape_jalantikus()
-        time.sleep(0.3)
-
-        print("\n  --- Phase 5: Search & Forum ---")
-        self.scrape_duckduckgo()
-        time.sleep(0.3)
-        self.scrape_kaskus()
 
         elapsed = time.time() - start
 

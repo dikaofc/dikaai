@@ -117,7 +117,7 @@ class DikaTrainer:
             pos = random.randint(1, len(real) - 1)
             context = real[:pos]
             target = real[pos]
-            pairs.append((context, target, -1))
+            pairs.append((context, target))
 
         return pairs
 
@@ -133,24 +133,18 @@ class DikaTrainer:
 
         total_loss = 0.0
         count = 0
-        processed_ids = set()
 
         random.shuffle(pairs)
 
-        for input_tokens, target, msg_id in pairs:
+        for input_tokens, target in pairs:
             try:
                 padded = input_tokens + [0] * (CONTEXT_LEN - len(input_tokens))
                 padded = padded[:CONTEXT_LEN]
                 loss = self.model.train_step_chunked(padded, target)
                 total_loss += loss
                 count += 1
-                if msg_id != -1:
-                    processed_ids.add(msg_id)
             except Exception as e:
                 continue
-
-        if processed_ids:
-            self.db.mark_processed(list(processed_ids))
 
         avg_loss = total_loss / max(count, 1)
         return avg_loss, count
