@@ -97,16 +97,15 @@ class DikaTrainer:
 
         # Prioritize: 70% web data, 30% chat data (for faster knowledge acquisition)
         if web_msgs and chat_msgs:
-            n_web = min(int(24 * 0.7), len(web_msgs))  # 70% web
-            n_chat = min(24 - n_web, len(chat_msgs))   # 30% chat
+            n_web = min(int(32 * 0.7), len(web_msgs))  # 70% web
+            n_chat = min(32 - n_web, len(chat_msgs))   # 30% chat
             sampled = random.sample(web_msgs, n_web) + random.sample(chat_msgs, n_chat)
         elif web_msgs:
-            sampled = random.sample(web_msgs, min(24, len(web_msgs)))
+            sampled = random.sample(web_msgs, min(32, len(web_msgs)))
         elif chat_msgs:
-            sampled = random.sample(chat_msgs, min(24, len(chat_msgs)))
+            sampled = random.sample(chat_msgs, min(32, len(chat_msgs)))
         else:
-            # Fallback: all messages
-            sampled = random.sample(all_msgs, min(24, len(all_msgs)))
+            sampled = random.sample(all_msgs, min(32, len(all_msgs)))
 
         pairs = []
         for message in sampled:

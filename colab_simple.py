@@ -214,14 +214,15 @@ if stats['total'] > 0:
     print(f"  📖 Vocab: {tokenizer.vocab_size} tokens")
 
     # Training loop - belajar dari web data
-    print("  🏋️ Training 50 epochs dari web data...")
-    for ep in range(1, 51):
+    print("  🏋️ Training 200 epochs dari web data...")
+    for ep in range(1, 201):
         if not running:
             break
         try:
             loss, count = trainer.train_one_epoch()
             if count > 0:
-                print(f"  [TRAIN] Ep {ep:2d}/50 | loss={loss:.4f} | total={model.step}")
+                if ep % 20 == 0 or ep == 1 or ep == 200:
+                    print(f"  [TRAIN] Ep {ep:3d}/200 | loss={loss:.4f} | total={model.step}")
                 if ep % 10 == 0:
                     model.save()
                     tokenizer.save()
