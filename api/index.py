@@ -350,21 +350,60 @@ def _parse_recent(raw):
     return str(raw) if raw else ''
 
 def _generate_reply(text):
-    """Generate reply using Engine (with templates + smart_reply fallback)."""
+    """Generate reply using templates + Engine (NO raw model output on Vercel)."""
+    # 1. Try code templates first (instant, correct, no model needed)
+    try:
+        from dikaai.coding.code_templates import match_template
+        tmpl = match_template(text)
+        if tmpl['matched']:
+            return f"```python\n{tmpl['code']}\n```\n\n✅ {tmpl['template_name']} template"
+    except Exception:
+        pass
+
+    # 2. Try Engine (uses templates + smart_reply, NO model)
     engine = _get_engine()
     if engine:
         try:
             result = engine.process(text)
-            return result.get('response', '')
+            response = result.get('response', '')
+            # Safety: if response looks like model garbage, use smart_reply
+            if _looks_like_garbage(response):
+                from dikaai.coding.smart_reply import get_smart_reply
+                return get_smart_reply(text)
+            return response
         except Exception as e:
             print(f"[ENGINE] Error: {e}")
-    
-    # Fallback: smart_reply
+
+    # 3. Fallback: smart_reply (pattern matching, no model)
     try:
         from dikaai.coding.smart_reply import get_smart_reply
         return get_smart_reply(text)
     except Exception:
         return "DikaAI is processing. Please try again."
+
+
+def _looks_like_garbage(text):
+    """Extra garbage detection for model output that passes basic checks."""
+    if not text or len(text) < 5:
+        return True
+    text = text.strip()
+    # Check for common model garbage patterns
+    garbage_patterns = [
+        r'^[a-z_]+ [a-z_]+ [a-z_]+',  # random words separated by spaces
+        r'\b(func|def|class|import|return|print)\b.*\b(func|def|class|import|return|print)\b',
+        r'_\s*$',  # ends with underscore
+        r'\b(test|error|none|null|undefined|false|true)\b.*\b(test|error|none|null|undefined|false|true)\b',
+    ]
+    for pat in garbage_patterns:
+        if re.search(pat, text, re.IGNORECASE):
+            return True
+    # If response has no proper sentences (no capital letters, no punctuation)
+    sentences = [s.strip() for s in re.split(r'[.!?\n]', text) if s.strip()]
+    if sentences:
+        has_proper = any(s[0].isupper() or s.startswith('```') for s in sentences if len(s) > 3)
+        if not has_proper and not text.startswith('```'):
+            return True
+    return False
 
 
 # ============================================================
