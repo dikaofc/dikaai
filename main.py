@@ -31,18 +31,25 @@ from trainer import DikaTrainer
 from bot import DikaBot
 from config import (
     API_ID, API_HASH, MODEL_DIR, CONTEXT_LEN, TRAIN_INTERVAL,
-    AUTO_REPLY_ENABLED
+    AUTO_REPLY_ENABLED, USE_REDIS, UPSTASH_REDIS_URL, UPSTASH_REDIS_TOKEN
 )
 from dashboard import start_dashboard, set_state, record_loss
 from webscraper import DikaWebScraper
 
+# Redis sync (auto-import if available)
+try:
+    from sync_to_redis import UpstashRedis, sync_messages, sync_model, sync_vocab, sync_training_history
+except ImportError:
+    UpstashRedis = None
+
 BANNER = """
-╔══════════════════════════════════════╗
-║         DikaAi v1.1                  ║
-║   Paling Ringan Sedunia 🚀           ║
-║   Ultra-Light AI Personal            ║
-║   Auto-Reply + 24/7 Learning         ║
-╚══════════════════════════════════════╝
+╔══════════════════════════════════════════╗
+║         DikaAi v2.0                      ║
+║   Paling Ringan Sedunia 🚀               ║
+║   Ultra-Light AI Personal                ║
+║   Auto-Reply + 24/7 Learning             ║
+║   Dashboard + Redis Sync                 ║
+╚══════════════════════════════════════════╝
 """
 
 
@@ -58,6 +65,7 @@ class DikaAi:
 
         self.running = False
         self.train_thread = None
+        self._redis_thread = None
 
         # Setup dashboard state
         set_state(
@@ -165,6 +173,42 @@ class DikaAi:
         except Exception as e:
             print(f"  [WEB] Error: {e}")
 
+    def _redis_sync_loop(self):
+        """Auto-sync SQLite → Redis every 60s."""
+        if not USE_REDIS or not UpstashRedis:
+            return
+
+        try:
+            r = UpstashRedis(UPSTASH_REDIS_URL, UPSTASH_REDIS_TOKEN)
+            r.ping()
+            print("  [REDIS] ✅ Connected to Upstash Redis")
+        except Exception as e:
+            print(f"  [REDIS] ❌ Connection failed: {e}")
+            return
+
+        # Initial sync
+        try:
+            sync_messages(r, limit=200)
+            sync_model(r)
+            sync_vocab(r)
+            sync_training_history(r)
+            print("  [REDIS] ✅ Initial sync complete")
+        except Exception as e:
+            print(f"  [REDIS] ⚠️  Initial sync error: {e}")
+
+        # Periodic sync every 60s
+        while self.running:
+            try:
+                time.sleep(60)
+                if not self.running:
+                    break
+                sync_messages(r, limit=200)
+                sync_model(r)
+                sync_vocab(r)
+            except Exception as e:
+                print(f"  [REDIS] ⚠️  Sync error: {e}")
+                time.sleep(30)
+
     async def run_all(self):
         """Run everything AUTOMATICALLY: scrape + train + listen + auto-reply."""
         self.running = True
@@ -181,6 +225,12 @@ class DikaAi:
 
         print(BANNER)
         self.show_stats()
+
+        # Show Redis status
+        if USE_REDIS:
+            print("  [SYS] ✅ Redis: Auto-sync ON (every 60s)")
+        else:
+            print("  [SYS] ⚠️  Redis: Not configured (local only)")
 
         # Check Telegram config
         if not API_ID or not API_HASH:
@@ -229,13 +279,24 @@ class DikaAi:
         )
         self._web_thread.start()
 
-        # Phase 6: Rebuild vocab after scrape
-        print("\n  [PHASE 6] Rebuilding vocab from new data...")
-        self.trainer.build_vocab()
-        print(f"  [PHASE 6] ✅ Vocab updated: {self.tokenizer.vocab_size} tokens")
+        # Phase 6: Redis auto-sync (if configured)
+        if USE_REDIS:
+            print("\n  [PHASE 6] Starting Redis auto-sync (every 60s)...")
+            self._redis_thread = threading.Thread(
+                target=self._redis_sync_loop,
+                daemon=True
+            )
+            self._redis_thread.start()
+        else:
+            print("\n  [PHASE 6] Redis not configured, skipping sync")
 
-        # Phase 6: Periodic re-scrape (every 6 hours)
-        print("\n  [PHASE 7] Periodic re-scrape every 6 hours...")
+        # Phase 7: Rebuild vocab after scrape
+        print("\n  [PHASE 7] Rebuilding vocab from new data...")
+        self.trainer.build_vocab()
+        print(f"  [PHASE 7] ✅ Vocab updated: {self.tokenizer.vocab_size} tokens")
+
+        # Phase 8: Periodic re-scrape (every 6 hours)
+        print("\n  [PHASE 8] Periodic re-scrape every 6 hours...")
         scrape_count = 0
 
         while self.running:
