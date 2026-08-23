@@ -23,6 +23,8 @@ from dikaai.config import (
     UPSTASH_REDIS_URL, UPSTASH_REDIS_TOKEN, USE_REDIS
 )
 
+BASE_DIR = Path(__file__).parent
+
 
 # ============================================================
 # Upstash Redis Client (path-based REST API)
@@ -312,6 +314,59 @@ def sync_training_history(r):
     return count
 
 
+def sync_engine_state(r):
+    """Sync DikaAI Engine state (episodes, facts, benchmark) to Redis."""
+    print("  \U0001f9e0 Syncing engine state...")
+    synced = 0
+
+    # Sync episodes (from data/memory/episodic_memory.json)
+    episodic_file = BASE_DIR / 'data' / 'memory' / 'episodic_memory.json'
+    if episodic_file.exists():
+        try:
+            with open(episodic_file, 'r') as f:
+                episodes = json.load(f)
+            if isinstance(episodes, list):
+                r.set('dikaai:engine:episodes', json.dumps(episodes[-50:]))
+                r.set('dikaai:engine:episode_count', str(len(episodes)))
+                synced += 1
+        except Exception as e:
+            print(f"    ⚠️ Episodes sync error: {e}")
+
+    # Sync facts (from data/memory/semantic_memory.json)
+    semantic_file = BASE_DIR / 'data' / 'memory' / 'semantic_memory.json'
+    if semantic_file.exists():
+        try:
+            with open(semantic_file, 'r') as f:
+                facts = json.load(f)
+            if isinstance(facts, list):
+                r.set('dikaai:engine:facts', json.dumps(facts[-100:]))
+                r.set('dikaai:engine:fact_count', str(len(facts)))
+                synced += 1
+        except Exception as e:
+            print(f"    ⚠️ Facts sync error: {e}")
+
+    # Sync benchmark history
+    bench_file = BASE_DIR / 'data' / 'benchmarks' / 'benchmark_history.json'
+    if bench_file.exists():
+        try:
+            with open(bench_file, 'r') as f:
+                benchmarks = json.load(f)
+            if isinstance(benchmarks, list):
+                r.set('dikaai:engine:benchmarks', json.dumps(benchmarks[-10:]))
+                if benchmarks:
+                    latest = benchmarks[-1]
+                    r.hset('dikaai:model',
+                        'benchmark_score', str(latest.get('score', 0)),
+                        'benchmark_grade', str(latest.get('grade', 'F')),
+                        'benchmark_pass', str(latest.get('pass_rate', 0)),
+                    )
+                synced += 1
+        except Exception as e:
+            print(f"    ⚠️ Benchmark sync error: {e}")
+
+    print(f"  ✅ Engine state synced ({synced} components)")
+
+
 def show_stats(r):
     """Show Redis stats."""
     print("\n" + "=" * 50)
@@ -373,6 +428,7 @@ def full_sync():
     sync_model(r)
     sync_vocab(r)
     sync_training_history(r)
+    sync_engine_state(r)
 
     # Show final stats
     show_stats(r)
