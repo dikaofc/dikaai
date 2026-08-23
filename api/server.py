@@ -26,12 +26,13 @@ _API_PREFIXES = ('/api/', '/v1/', '/api', '/v1')
 def _resolve_path(handler):
     """Get the real request path, robust to rewrite proxies.
 
-    When Vercel uses `rewrites` to point /api/* and /v1/* at this function,
-    `self.path` normally keeps the original path. As a safety net, fall back
-    to headers some proxies set when the path collapses to the function file.
+    The function is mounted at /api/server via vercel.json. The `rewrites`
+    send /api/* and /v1/* here, and Vercel preserves the original path in
+    `self.path`. As a safety net, fall back to proxy headers if the path
+    collapses to the function mount point.
     """
     path = urlparse(handler.path).path
-    if path in ('/api/index.py', '/api', '/api/'):
+    if path in ('/api/server', '/api/server/'):
         original = (
             handler.headers.get('x-vercel-original-url')
             or handler.headers.get('x-forwarded-path')
