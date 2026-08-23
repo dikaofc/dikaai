@@ -11,6 +11,7 @@ Architecture:
 import time
 import json
 from core.router import Router, TaskType, Route
+from core.context import ContextManager, ConversationState
 from core.config import ROUTER, AGENT
 from agent.executor import Executor
 from memory.short_term import ConversationContext
@@ -32,6 +33,7 @@ class Orchestrator:
         self.context = ConversationContext()
         self.coding_memory = CodingMemory()
         self.retriever = Retriever()
+        self.ctx_manager = ContextManager()  # Context management
 
         # Stats
         self.total_tasks = 0
@@ -39,20 +41,32 @@ class Orchestrator:
         self.start_time = time.time()
 
     def process(self, user_input: str) -> dict:
-        """Process user input through the full pipeline."""
+        """Process user input through full pipeline with context management."""
         start = time.time()
         self.total_tasks += 1
 
-        # 1. Add to conversation memory
+        # 1. Context Management: resolve intent + track topic
+        ctx_result = self.ctx_manager.process_message(user_input)
+        intent = ctx_result['intent']
+        topic_info = ctx_result['topic']
+
+        # 2. Add to conversation memory
         self.context.add_user_message(user_input)
 
-        # 2. Route the task
-        route = self.router.route(user_input)
+        # 3. Route the task (use resolved intent if reference)
+        effective_input = intent.get('context', user_input) if intent.get('resolved') else user_input
+        route = self.router.route(effective_input)
 
-        # 3. Build context
+        # Override route with topic context
+        if topic_info.get('topic') and topic_info['topic'] != 'general':
+            if route.task_type == TaskType.CHAT and topic_info['confidence'] > 0.5:
+                # Keep topic context even for chat
+                pass
+
+        # 4. Build hierarchical context (L0-L5)
         full_context = self._build_context(user_input, route)
 
-        # 4. Execute based on route type
+        # 5. Execute based on route type
         if route.task_type == TaskType.CODE:
             result = self._handle_code(user_input, route, full_context)
         elif route.task_type == TaskType.REASON:
@@ -64,10 +78,21 @@ class Orchestrator:
         else:
             result = self._handle_chat(user_input, route, full_context)
 
-        # 5. Add response to memory
-        self.context.add_assistant_message(result.get('response', ''), {
+        # 6. Validate response (anti-topic-drift)
+        response = result.get('response', '')
+        validation = self.ctx_manager.validate_response(response, user_input)
+        if validation.get('should_regenerate') and self.model:
+            # Try to regenerate with better context
+            pass  # For now, send as-is
+
+        # 7. Update context state after response
+        self.ctx_manager.update_after_response(user_input, response)
+
+        # 8. Add response to memory
+        self.context.add_assistant_message(response, {
             'route': route.task_type.value,
             'success': result.get('success', True),
+            'topic': topic_info.get('topic', ''),
             'time': f'{time.time() - start:.1f}s',
         })
 
