@@ -227,64 +227,57 @@ def _render_stats_html():
     pc = phase_colors.get(phase, '#94a3b8')
     pl = phase_labels.get(phase, phase)
 
-    # Thread status dots
     threads = _live_stats.get('threads', {})
+
     def dot(name):
-        status = threads.get(name, 'off')
-        color = '#10b981' if status == 'on' else '#6b7280'
-        return f'<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:{color};margin-right:4px"></span>{name}'
+        st = threads.get(name, 'off')
+        c = '#10b981' if st == 'on' else '#6b7280'
+        return '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + c + ';margin-right:4px"></span>' + name
 
-    html = f"""<div style="font-family:monospace;background:#0c0c14;color:#e0e0e8;border:2px solid #2d2d40;border-radius:16px;padding:20px;margin:8px 0;max-width:600px">
-  <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
-    <div style="width:12px;height:12px;border-radius:50%;background:{pc};box-shadow:0 0 8px {pc};animation:pulse 2s infinite"></div>
-    <span style="font-size:16px;font-weight:800;color:#a78bfa">DikaAI Live</span>
-    <span style="font-size:11px;color:{pc};font-weight:600;background:{pc}22;padding:2px 8px;border-radius:6px;border:1px solid {pc}44">{pl}</span>
-    <span style="margin-left:auto;font-size:11px;color:#606078">{elapsed_h:.1f}h / 12h</span>
-  </div>
+    msgs = str(_live_stats['messages'])
+    step = str(_live_stats['step'])
+    vocab = str(_live_stats['vocab'])
+    replies = str(_live_stats['replies'])
+    web_new = str(_live_stats['web_new'])
+    syncs = str(_live_stats['redis_syncs'])
+    rem = str(round(remaining, 1))
+    elh = str(round(elapsed_h, 1))
 
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
-    <div style="background:#16161f;border:2px solid #2d2d40;border-radius:10px;padding:12px;text-align:center">
-      <div style="font-size:10px;color:#606078;text-transform:uppercase;letter-spacing:0.5px">Messages</div>
-      <div style="font-size:22px;font-weight:800;color:#10b981">{_live_stats['messages']}</div>
-    </div>
-    <div style="background:#16161f;border:2px solid #2d2d40;border-radius:10px;padding:12px;text-align:center">
-      <div style="font-size:10px;color:#606078;text-transform:uppercase;letter-spacing:0.5px">Model Step</div>
-      <div style="font-size:22px;font-weight:800;color:#3b82f6">{_live_stats['step']}</div>
-    </div>
-    <div style="background:#16161f;border:2px solid #2d2d40;border-radius:10px;padding:12px;text-align:center">
-      <div style="font-size:10px;color:#606078;text-transform:uppercase;letter-spacing:0.5px">Vocab</div>
-      <div style="font-size:22px;font-weight:800;color:#a855f7">{_live_stats['vocab']}</div>
-    </div>
-  </div>
+    html = '<div style="font-family:monospace;background:#0c0c14;color:#e0e0e8;border:2px solid #2d2d40;border-radius:16px;padding:20px;margin:8px 0;max-width:600px">'
+    html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">'
+    html += '<div style="width:12px;height:12px;border-radius:50%;background:' + pc + ';box-shadow:0 0 8px ' + pc + ';animation:pulse 2s infinite"></div>'
+    html += '<span style="font-size:16px;font-weight:800;color:#a78bfa">DikaAI Live</span>'
+    html += '<span style="font-size:11px;color:' + pc + ';font-weight:600;background:' + pc + '22;padding:2px 8px;border-radius:6px;border:1px solid ' + pc + '44">' + pl + '</span>'
+    html += '<span style="margin-left:auto;font-size:11px;color:#606078">' + elh + 'h / 12h</span>'
+    html += '</div>'
 
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-    <div style="background:#16161f;border:2px solid #2d2d40;border-radius:10px;padding:10px">
-      <div style="font-size:10px;color:#606078;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Stats</div>
-      <div style="font-size:12px;color:#94a3b8;line-height:1.8">
-        Replies: <span style="color:#10b981;font-weight:700">{_live_stats['replies']}</span><br>
-        Web New: <span style="color:#f59e0b;font-weight:700">{_live_stats['web_new']}</span><br>
-        Redis Syncs: <span style="color:#06b6d4;font-weight:700">{_live_stats['redis_syncs']}</span>
-      </div>
-    </div>
-    <div style="background:#16161f;border:2px solid #2d2d40;border-radius:10px;padding:10px">
-      <div style="font-size:10px;color:#606078;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Threads</div>
-      <div style="font-size:12px;color:#94a3b8;line-height:1.8">
-        {dot('redis')}<br>
-        {dot('training')}<br>
-        {dot('web_scrape')}<br>
-        {dot('telegram')}
-      </div>
-    </div>
-  </div>
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">'
+    for label, val, color in [('Messages', msgs, '#10b981'), ('Model Step', step, '#3b82f6'), ('Vocab', vocab, '#a855f7')]:
+        html += '<div style="background:#16161f;border:2px solid #2d2d40;border-radius:10px;padding:12px;text-align:center">'
+        html += '<div style="font-size:10px;color:#606078;text-transform:uppercase;letter-spacing:0.5px">' + label + '</div>'
+        html += '<div style="font-size:22px;font-weight:800;color:' + color + '">' + val + '</div>'
+        html += '</div>'
+    html += '</div>'
 
-  <div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:2px solid #2d2d40">
-    <span style="font-size:11px;color:#606078">Remaining: <span style="color:#f59e0b;font-weight:700">{remaining:.1f}h</span></span>
-    <a href="https://dikaai.vercel.app" target="_blank" style="font-size:11px;color:#a78bfa;text-decoration:none">Dashboard</a>
-  </div>
-</div>
-<style>
-@keyframes pulse {{ 0%,100%{{opacity:1}} 50%{{opacity:0.4}} }}
-</style>"""
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">'
+    html += '<div style="background:#16161f;border:2px solid #2d2d40;border-radius:10px;padding:10px">'
+    html += '<div style="font-size:10px;color:#606078;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Stats</div>'
+    html += '<div style="font-size:12px;color:#94a3b8;line-height:1.8">'
+    html += 'Replies: <span style="color:#10b981;font-weight:700">' + replies + '</span><br>'
+    html += 'Web New: <span style="color:#f59e0b;font-weight:700">' + web_new + '</span><br>'
+    html += 'Redis Syncs: <span style="color:#06b6d4;font-weight:700">' + syncs + '</span>'
+    html += '</div></div>'
+    html += '<div style="background:#16161f;border:2px solid #2d2d40;border-radius:10px;padding:10px">'
+    html += '<div style="font-size:10px;color:#606078;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Threads</div>'
+    html += '<div style="font-size:12px;color:#94a3b8;line-height:1.8">'
+    html += dot('redis') + '<br>' + dot('training') + '<br>' + dot('web_scrape') + '<br>' + dot('telegram')
+    html += '</div></div></div>'
+
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:2px solid #2d2d40">'
+    html += '<span style="font-size:11px;color:#606078">Remaining: <span style="color:#f59e0b;font-weight:700">' + rem + 'h</span></span>'
+    html += '<a href="https://dikaai.vercel.app" target="_blank" style="font-size:11px;color:#a78bfa;text-decoration:none">Dashboard</a>'
+    html += '</div></div>'
+    html += '<style>@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }</style>'
     return html
 
 # Stats display thread
