@@ -6,5 +6,55 @@
     "confidence": 1.0,
     "source": "audit",
     "tags": []
+  },
+  {
+    "subject": "Check if string",
+    "predicate": "is",
+    "object": "a palindrome",
+    "confidence": 1.0,
+    "source": "conversation",
+    "tags": [
+      "coding"
+    ]
+  },
+  {
+    "subject": "that checks if a string",
+    "predicate": "is",
+    "object": "a palindrome (case-insensitive)",
+    "confidence": 1.0,
+    "source": "user_question",
+    "tags": [
+      "coding"
+    ]
+  },
+  {
+    "subject": "to check if a string",
+    "predicate": "is",
+    "object": "a palindrome",
+    "confidence": 1.0,
+    "source": "user_question",
+    "tags": [
+      "coding"
+    ]
+  },
+  {
+    "subject": "Check if string of brackets",
+    "predicate": "is",
+    "object": "valid",
+    "confidence": 1.0,
+    "source": "conversation",
+    "tags": [
+      "coding"
+    ]
+  },
+  {
+    "subject": "that checks if a string of brackets",
+    "predicate": "is",
+    "object": "valid",
+    "confidence": 1.0,
+    "source": "user_question",
+    "tags": [
+      "coding"
+    ]
   }
 ]
