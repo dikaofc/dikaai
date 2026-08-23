@@ -186,6 +186,15 @@ def main():
             results = runner.run(category=cat, difficulty=diff, max_tasks=max_t)
             report = runner.report(results)
             Evaluator().print_report(report)
+        elif cmd == 'train-code':
+            from dikaai.model.trainer import DikaTrainer
+            from dikaai.database import DikaDB
+            epochs = int(sys.argv[2]) if len(sys.argv) > 2 else 100
+            db = DikaDB()
+            trainer = DikaTrainer(db)
+            print(f"\n  🧠 Training on coding dataset ({epochs} epochs)...")
+            loss, steps = trainer.train_coding(epochs=epochs)
+            print(f"  ✅ Done! loss={loss:.4f}, steps={trainer.model.step}")
         else:
             print(BANNER)
     else:

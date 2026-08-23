@@ -140,13 +140,15 @@ class Evaluator:
     def _compute_score(self, pass_rate, first_attempt_rate,
                        syntax_error_rate, hallucination_rate) -> dict:
         """Compute overall benchmark score (0-100)."""
-        # Weighted score
+        # Weighted score (each factor is 0-1, weights sum to 1.0)
         score = (
             pass_rate * 50 +           # 50% weight: pass rate
             first_attempt_rate * 30 +   # 30% weight: first attempt
             (1 - syntax_error_rate) * 10 +  # 10% weight: syntax
             (1 - hallucination_rate) * 10   # 10% weight: no hallucination
-        ) * 100
+        )
+        # Clamp to 0-100
+        score = max(0, min(100, score))
 
         # Grade
         if score >= 90:

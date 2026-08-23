@@ -109,12 +109,36 @@ class Engine:
         return 'chat'
 
     def _exec_code(self, message, model, tokenizer):
+        # First: check code templates (instant, no model needed)
+        from dikaai.coding.code_templates import match_template
+        template = match_template(message)
+        if template['matched']:
+            code = template['code']
+            return {
+                'response': f"```python\n{code}\n```\n\n✅ {template['template_name']} template",
+                'success': True,
+            }
+
+        # Second: try executor (plan → code → test → debug)
         result = self.executor.execute(message, max_retries=3)
         self.observer.log_tool_call('code_agent', result.success, result.total_time)
         if result.success:
             out = result.output[:500] if result.output else 'Done'
             return {'response': f"✅ {out}\n⏱️ {result.total_time:.1f}s", 'success': True}
-        return {'response': f"❌ {result.error[:200]}", 'success': False}
+
+        # Third: try model generation
+        if model and tokenizer and tokenizer._loaded:
+            try:
+                from dikaai.config import CONTEXT_LEN
+                tokens = tokenizer.encode(message, max_length=CONTEXT_LEN)
+                gen = model.generate(tokens, max_len=100, temperature=0.5)
+                resp = tokenizer.decode(gen)
+                if resp and len(resp.strip()) > 10:
+                    return {'response': f"```python\n{resp.strip()}\n```", 'success': True}
+            except Exception:
+                pass
+
+        return {'response': f"❌ No template match and model too small for code generation", 'success': False}
 
     def _exec_tool(self, message):
         if 'git' in message.lower():
