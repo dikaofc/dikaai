@@ -1,0 +1,8 @@
+# DikaAi Dependencies
+# For local use (bot + training):
+telethon>=1.28.0
+aiohttp>=3.8.0
+
+# For Vercel deployment (dashboard + Redis):
+# Uses Python stdlib only (urllib for Upstash REST API)
+# No additional pip packages needed!

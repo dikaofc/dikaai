@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+
+# Virtual environment
+.venv/
+venv/
+env/
+ENV/
+
+# Vercel
+.vercel/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets (don't commit!)
+config.env
+.env.local
+
+# Telegram session (don't commit!)
+dikaai_session.session
+dikaai_session.session-journal
+
+# Database (too large for git, use external storage)
+*.db
+*.db-shm
+*.db-wal
+
+# Training data (commit these for Vercel deployment)
+# model_checkpoints/*.json
+# training_history.csv
+# vocab.json
