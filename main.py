@@ -21,12 +21,13 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 BANNER = """
 ╔═══════════════════════════════════════════════════╗
-║        DikaAI v3 - Coding Agent & Chat 🧠         ║
+║        DikaAI v3.1 - Coding Agent & Chat 🧠       ║
 ║                                                   ║
 ║  Input → Context → Memory → RAG → Agent → Model   ║
 ║                                                   ║
 ║  Commands:                                        ║
 ║    python main.py              # Interactive chat  ║
+║    python main.py web          # Web chat UI 🌐    ║
 ║    python main.py run "task"   # Single task       ║
 ║    python main.py agent        # Agent mode        ║
 ║    python main.py api          # REST API          ║
@@ -154,6 +155,10 @@ def main():
                     print(f"  Error: {e}")
         elif cmd == 'api':
             from server.api import start_server
+            port = int(sys.argv[2]) if len(sys.argv) > 2 else 8080
+            start_server(port)
+        elif cmd == 'web':
+            from server.web import start_server
             port = int(sys.argv[2]) if len(sys.argv) > 2 else 8080
             start_server(port)
         elif cmd == 'token':

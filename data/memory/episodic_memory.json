@@ -1122,5 +1122,23 @@
       "tool",
       "python"
     ]
+  },
+  {
+    "task": "Write a fibonacci function",
+    "plan": [],
+    "code": "def fibonacci(n):\n    \"\"\"Calculate the nth Fibonacci number.\"\"\"\n    if n <= 1:\n        return n\n    a, b = 0, 1\n    for _ in range(2, n + 1):\n        a, b = b, a + b\n    return b\n",
+    "error": "",
+    "fix": "template:fibonacci",
+    "success": true,
+    "language": "python",
+    "tools_used": [
+      "code"
+    ],
+    "confidence": 1.0,
+    "use_count": 0,
+    "tags": [
+      "code",
+      "python"
+    ]
   }
 ]
