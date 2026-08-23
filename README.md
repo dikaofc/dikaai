@@ -1,62 +1,63 @@
-# 🧠 DikaAi - Ultra Lightweight AI Personal Assistant
+# 🧠 DikaAI - Intelligent AI Coding Agent & Chat System
 
-**Paling Ringan Sedunia 🚀** - AI Indonesia yang belajar dari chat Telegram + web scraping
+**AI Indonesia yang tidak hanya chatbot, tapi coding agent.** Belajar dari chat Telegram + web scraping + coding experience.
 
-> 100% otomatis. Sekali jalan, langsung kerja. Web scrape → Training → Telegram auto-reply → Dashboard monitoring.
+> Arsitektur: `User → Context → Memory → RAG → Agent → Model → Validator → Response`
 
 ---
 
 ## ✨ Features
 
-### 🌐 Web Scraping (Prioritas)
-- **Wikipedia Indonesia** - 70+ articles (teknologi, programming, AI, dll)
-- **StackOverflow** - Q&A programming
-- **GitHub** - Trending repos + README
-- **Indonesian Corpus** - 100+ phrases (casual, tech, bisnis)
+### 🧠 AI Engine (dikaai/)
+- **Context Management** - Topic tracking, anti-drift, hierarchical context
+- **Memory System** - Short-term conversation + long-term coding experience
+- **RAG** - Knowledge retrieval via vector search
+- **Coding Agent** - Plan → Code → Test → Debug → Retry loop
+- **Validator** - Response quality check (correctness, relevance, safety)
+- **Smart Reply** - 100+ pola Indonesian dengan garbage detection
 
-### 🧠 Training (Auto)
-- **200 epochs** web data training sebelum Telegram
-- **32 pairs/epoch** (batch size lebih gede)
-- **LSTM model** 48K params (pure Python, no numpy)
+### 🤖 Coding Agent
+- **Planner** - Breakdown task jadi langkah actionable
+- **Executor** - Loop: Plan → Code → Run → Test → Debug → Retry
+- **Tools** - Filesystem, terminal, git (sandboxed)
+- **Coding Memory** - Belajar dari error→solution pairs
+- **Auto-fix** - ModuleNotFoundError → auto `pip install`
+
+### 🧠 Model
+- **LSTM** 48K params (pure Python, no numpy)
 - **Adam optimizer** + cosine LR scheduler
-- **Loss turun** dari 2.0 → 0.12 dalam 7000+ steps
+- **Indonesian tokenizer** dengan slang normalization
+- **Training pipeline** - Auto from web data + chat
 
 ### 📱 Telegram Bot
-- **Auto-reply** cerdas (100+ pola Indonesian)
-- **Scrape semua chat** (private, group, channel)
+- **Auto-reply** cerdas (100+ pola)
 - **Parallel scraping** (15 concurrent)
 - **Real-time listener** + auto-reply
 
 ### 📊 Dashboard
-- **Vercel** - Web UI monitoring (auto-refresh 10s)
-- **Loss chart** - Grafik training real-time
+- **Vercel** - Web UI (auto-refresh 10s)
+- **Loss chart** - Training real-time
 - **Controls** - Toggle on/off fitur
 - **Chat** - Web chat dengan AI
-- **CSV export** - Download training data
-
-### 🔴 Redis Sync
-- **Auto-sync** SQLite → Upstash Redis tiap 60 detik
-- **Dashboard Vercel** always updated
-- **Hybrid mode** - SQLite (training) + Redis (Vercel)
+- **Redis sync** - SQLite → Upstash tiap 60 detik
 
 ---
 
-## 🚀 Cara Run
+## 🚀 Quick Start
 
 ### Google Colab (Paling Gampang!)
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/dikaofc/dikaai/blob/main/colab_simple.py)
 
 ```python
-# 1. Buka Colab
-# 2. Paste colab_simple.py
-# 3. Ganti 5 config ini:
+# 1. Paste colab_simple.py ke Colab
+# 2. Ganti 5 config:
 TELEGRAM_API_ID = 12345678        # dari my.telegram.org
 TELEGRAM_API_HASH = "abc123def456"
 TELEGRAM_PHONE = "+628123456789"
 UPSTASH_REDIS_URL = "https://xxx.upstash.io"   # dari upstash.com
 UPSTASH_REDIS_TOKEN = "AXxx..."
-# 4. Run!
+# 3. Run!
 ```
 
 **Flow otomatis:**
@@ -64,39 +65,29 @@ UPSTASH_REDIS_TOKEN = "AXxx..."
 PHASE 1 → 🌐 Web scrape (Wikipedia, SO, GitHub)
 PHASE 2 → 🧠 Training 200 epochs dari web data
 PHASE 3 → 📱 Telegram loop (auto-reply + scrape)
-⏱️ Auto-stop: 12 jam
 ```
 
-### Termux (Android)
-
-```bash
-pkg install python git
-pip install telethon aiohttp nest_asyncio
-git clone https://github.com/dikaofc/dikaai.git
-cd dikaai
-nano config.env  # Isi API credentials
-python main.py
-```
-
-### PC / Laptop
+### CLI (PC / Termux)
 
 ```bash
 git clone https://github.com/dikaofc/dikaai.git
 cd dikaai
 pip install telethon aiohttp nest_asyncio
-cp config.env.example config.env
-nano config.env
+
+# Interactive chat
 python main.py
-```
 
-### Vercel (Dashboard Only)
+# Single task
+python main.py run "fix error di main.py"
 
-```bash
-# 1. Import repo ke Vercel
-# 2. Set env vars:
-#    UPSTASH_REDIS_REST_URL = https://xxx.upstash.io
-#    UPSTASH_REDIS_REST_TOKEN = AXxx...
-# 3. Deploy
+# Agent mode
+python main.py agent
+
+# Stats
+python main.py stats
+
+# Index project untuk RAG
+python main.py index
 ```
 
 ---
@@ -105,38 +96,188 @@ python main.py
 
 | Command | Fungsi |
 |---------|--------|
-| `python main.py` | Jalankan semua (scrape + train + bot) |
-| `python main.py scrape` | Scrape Telegram saja |
-| `python main.py train` | Training saja |
-| `python main.py chat` | Chat interaktif dengan AI |
-| `python main.py stats` | Lihat statistik |
-| `python main.py dashboard` | Dashboard web saja |
+| `python main.py` | Interactive chat |
+| `python main.py chat` | Interactive chat |
+| `python main.py run "task"` | Single task execution |
+| `python main.py agent` | Agent mode (continuous coding) |
+| `python main.py api` | REST API server |
+| `python main.py stats` | Show statistics |
+| `python main.py index` | Index project for RAG |
+
+### Chat Commands
+
+| Command | Fungsi |
+|---------|--------|
+| `/stats` | Show statistics |
+| `/memory` | Show coding memory |
+| `/clear` | Clear conversation |
+| `/help` | Show help |
+| `/quit` | Exit |
 
 ---
 
-## 📁 Project Structure
+## 📁 Architecture
 
 ```
-dikaai/
-├── main.py              # Entry point - jalankan semua
-├── config.py            # Configuration (auto-detect device)
-├── database.py          # SQLite + Redis hybrid database
-├── model.py             # LSTM model (pure Python, 48K params)
-├── tokenizer.py         # Indonesian text tokenizer (slang-aware)
-├── trainer.py           # Auto training (200 epochs web data)
-├── bot.py               # Telegram bot + scraper (parallel)
-├── webscraper.py        # Web scraper (Wikipedia, SO, GitHub)
-├── smart_reply.py       # 100+ Indonesian reply patterns
-├── dashboard.py         # Local web dashboard (port 8888)
-├── sync_to_redis.py     # SQLite → Upstash Redis sync
-├── api/index.py         # Vercel serverless dashboard
-├── colab_simple.py      # ⭐ Google Colab runner (1 cell)
-├── colab_run.ipynb      # Colab notebook
-├── vercel.json          # Vercel config
-├── model_checkpoints/   # Model weights
-│   └── dikaai_latest.json
-├── vocab.json           # Vocabulary (auto-built)
-└── training_history.csv # Loss history
+DikaAI/
+├── main.py                  ← Clean launcher
+├── bot.py                   ← Telegram interface
+├── cli.py                   ← CLI interface
+├── dashboard.py             ← Local dashboard
+├── webscraper.py            ← Web scraper
+├── sync_to_redis.py         ← SQLite → Redis sync
+│
+├── dikaai/                  ← 🧠 AI Engine (canonical)
+│   ├── __init__.py          ← Public API (20 exports)
+│   ├── config.py            ← Configuration
+│   ├── database.py          ← SQLite + Redis
+│   ├── engine.py            ← Main brain (pipeline)
+│   ├── chat.py              ← Chat interface
+│   │
+│   ├── model/               ← 🧠 Neural Network
+│   │   ├── model.py         ← LSTM (pure Python)
+│   │   ├── tokenizer.py     ← Indonesian tokenizer
+│   │   └── trainer.py       ← Training pipeline
+│   │
+│   ├── context/             ← 💬 Topic tracking
+│   │   └── tracker.py       ← Anti-drift, hierarchical
+│   │
+│   ├── memory/              ← 🧠 Memory system
+│   │   ├── short_term.py    ← Conversation memory
+│   │   └── coding_memory.py ← Error→solution DB
+│   │
+│   ├── rag/                 ← 📚 Knowledge retrieval
+│   │   ├── embeddings.py    ← Text embeddings
+│   │   ├── vector_db.py     ← Vector database
+│   │   └── retriever.py     ← Knowledge search
+│   │
+│   ├── agent/               ← 🤖 Coding agent
+│   │   ├── planner.py       ← Task breakdown
+│   │   └── executor.py      ← Plan→Code→Test→Debug
+│   │
+│   ├── tools/               ← 🛠️ System tools
+│   │   ├── filesystem.py    ← File operations
+│   │   ├── terminal.py      ← Command execution
+│   │   └── git_tools.py     ← Git operations
+│   │
+│   └── coding/              ← 🔍 Quality control
+│       ├── validator.py     ← Response validation
+│       ├── observer.py      ← Execution logging
+│       └── smart_reply.py   ← Fallback replies
+│
+├── server/api.py            ← REST API
+├── api/index.py             ← Vercel dashboard
+├── data/                    ← Memory, RAG, knowledge
+├── model_checkpoints/       ← Model weights
+└── colab_simple.py          ← Google Colab runner
+```
+
+---
+
+## 🧠 Pipeline
+
+```
+User Input
+    │
+    ▼
+┌─────────────────────┐
+│   InputProcessor    │ ← language, intent, entities
+└──────────┬──────────┘
+           ▼
+┌─────────────────────┐
+│   TopicTracker      │ ← detect topic, prevent drift
+└──────────┬──────────┘
+           ▼
+┌─────────────────────┐
+│   IntentResolver    │ ← "lanjut yang tadi" → understand
+└──────────┬──────────┘
+           ▼
+┌─────────────────────┐
+│   ContextManager    │ ← hierarchical L0-L5 context
+└──────────┬──────────┘
+           ▼
+┌─────────────────────┐
+│   Router            │ ← chat/code/reason/search/tool
+└──────────┬──────────┘
+           │
+     ┌─────┼─────┬─────────┐
+     ▼     ▼     ▼         ▼
+  Memory  RAG  Project   Agent
+     │     │     │         │
+     └─────┼─────┼─────────┘
+           ▼
+┌─────────────────────┐
+│   Agent             │ ← plan → code → test → debug
+└──────────┬──────────┘
+           ▼
+┌─────────────────────┐
+│   Model             │ ← LSTM inference
+└──────────┬──────────┘
+           ▼
+┌─────────────────────┐
+│   Validator         │ ← correctness, relevance, safety
+└──────────┬──────────┘
+           ▼
+       Response
+```
+
+---
+
+## 🤖 Usage Examples
+
+### Python API
+
+```python
+from dikaai import DikaAIChat
+
+chat = DikaAIChat(workspace="/path/to/project")
+
+# Chat
+result = chat.send("halo apa kabar")
+print(result['response'])  # "Hei! Ada apa nih?"
+
+# Code task
+result = chat.send("fix error di main.py")
+print(result['response'])  # Agent: plan → read → fix → test
+
+# Tool
+result = chat.send("git status")
+print(result['response'])  # Actual git output
+
+# Stats
+stats = chat.stats()
+print(f"Tasks: {stats['total']}, Success: {stats['rate']}")
+```
+
+### Sub-packages
+
+```python
+# Model
+from dikaai.model import DikaModel, DikaTokenizer
+model = DikaModel()
+model.load()
+
+# Context
+from dikaai.context import ContextManager
+ctx = ContextManager()
+result = ctx.process_message("lanjut yang tadi")  # Resolves reference
+
+# Agent
+from dikaai.agent import Planner, Executor
+planner = Planner()
+steps = planner.plan("fix authentication bug")
+
+# RAG
+from dikaai.rag import Retriever
+retriever = Retriever()
+retriever.index_directory("/path/to/project")
+context = retriever.retrieve("how does auth work?")
+
+# Memory
+from dikaai.memory import CodingMemory
+memory = CodingMemory()
+memory.save_experience("fix import error", success=True, error="ModuleNotFoundError")
+solution = memory.find_solution("ModuleNotFoundError: requests")
 ```
 
 ---
@@ -153,33 +294,7 @@ dikaai/
 | Optimizer | Adam (β1=0.9, β2=0.999) |
 | LR Schedule | Cosine with warmup |
 | Training | Pure Python (no numpy/pytorch) |
-| Vocab | Auto-built from messages (2000 max) |
-
----
-
-## 🧠 Smart Reply System
-
-Bot reply **natural & nyambung** ke 15+ topik:
-
-| Topik | Contoh |
-|-------|--------|
-| Greeting | "halo" → "Hei! Ada apa nih?" 😊 |
-| Tech | "error dong" → "Coba print dulu datanya!" 🧑‍💻 |
-| Casual | "lagi apa" → "Lagi ngoding nih!" 😄 |
-| Emotions | "sedih banget" → "Sabar ya! 💪" |
-| Food | "kopi enak ga" → "Jangan lupa makan ya!" 🍚 |
-| Sports | "main bola" → "Tim mana yang kamu suka?" ⚽ |
-| Anime | "anime apa" → "Solo Leveling lagi hype!" 🎌 |
-| Phone | "HP baru" → "iPhone atau Android?" 📱 |
-| Music | "dengerin musik" → "Genre apa yang kamu suka?" 🎵 |
-| Help | "tolong dong" → "Siap! Ceritain aja!" 🙌 |
-| Thanks | "makasih" → "Sama-sama! 😊" |
-| Bye | "dah" → "Hati-hati ya! 👋" |
-| Relationship | "jomblo" → "Single itu enak, bebas! 🔥" |
-| Religion | "sholat" → "Jangan lupa sholat 5 waktu! 🤲" |
-| Money | "gaji" → "Semangat kerja! 💪" |
-
-**Garbage detection:** Bot deteksi output sampah (repetisi, echo, karakter acak) → auto fallback ke smart reply.
+| Vocab | Auto-built (2000 tokens max) |
 
 ---
 
@@ -190,12 +305,11 @@ Bot reply **natural & nyambung** ke 15+ topik:
 | Model size | ~190KB |
 | Training speed | ~14 steps/sec |
 | Memory usage | < 100MB |
-| Vocab size | 2000 tokens |
+| Pipeline latency | < 0.1s per message |
 | Web sources | 4 (Wikipedia, SO, GitHub, Corpus) |
 | Telegram concurrent | 15 chats |
 | Dashboard refresh | 10 seconds |
 | Redis sync | 60 seconds |
-| Auto-stop | 12 jam (Colab) |
 
 ---
 
@@ -215,4 +329,4 @@ MIT License - Free untuk dipakai
 
 ---
 
-Made with ❤️ by DikaAi
+Made with ❤️ by DikaAI
