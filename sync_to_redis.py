@@ -228,6 +228,12 @@ def sync_messages(r, limit=200):
     r.set('dikaai:total', str(total))
     r.set('dikaai:last_synced_ts', str(max_ts))
 
+    # Count processed messages
+    conn2 = sqlite3.connect(str(DB_PATH))
+    processed = conn2.execute("SELECT COUNT(*) FROM messages WHERE processed = 1").fetchone()[0]
+    conn2.close()
+    r.set('dikaai:processed', str(processed))
+
     # Count unique chats
     unique_chats = r.scard('dikaai:chats') or 0
     r.set('dikaai:unique_chats', str(unique_chats))

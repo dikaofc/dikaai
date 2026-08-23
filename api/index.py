@@ -337,6 +337,18 @@ canvas { width: 100%; height: 200px; }
 .footer { text-align: center; padding: 16px; color: #333; font-size: 11px; }
 .toast { position: fixed; bottom: 20px; right: 20px; background: #00ff8822; border: 1px solid #00ff88; color: #00ff88; padding: 12px 20px; border-radius: 8px; font-size: 13px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 100; }
 .toast.show { opacity: 1; }
+
+/* Toggle switches */
+.toggle-group { display: flex; flex-direction: column; gap: 12px; }
+.toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #0d0d0d; border-radius: 6px; border: 1px solid #222; }
+.toggle-label { font-size: 13px; color: #ccc; }
+.toggle-desc { font-size: 10px; color: #555; margin-top: 2px; }
+.switch { position: relative; width: 44px; height: 24px; cursor: pointer; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: #333; border-radius: 24px; transition: 0.3s; }
+.slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background: #666; border-radius: 50%; transition: 0.3s; }
+.switch input:checked + .slider { background: #00ff8844; }
+.switch input:checked + .slider:before { transform: translateX(20px); background: #00ff88; }
 </style>
 </head>
 <body>
@@ -380,7 +392,46 @@ canvas { width: 100%; height: 200px; }
         </div>
     </div>
 
+    <!-- Controls Panel -->
     <div class="row row-2">
+        <div class="panel">
+            <div class="panel-header"><span>🎛️ Controls</span></div>
+            <div class="panel-body">
+                <div class="toggle-group">
+                    <div class="toggle-row">
+                        <div>
+                            <div class="toggle-label">🤖 Auto-Reply</div>
+                            <div class="toggle-desc">Balas otomatis di chat Telegram</div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-reply" checked onchange="toggleFeature('auto_reply', this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-row">
+                        <div>
+                            <div class="toggle-label">🧠 Training</div>
+                            <div class="toggle-desc">Model belajar dari data</div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-training" checked onchange="toggleFeature('training', this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-row">
+                        <div>
+                            <div class="toggle-label">📱 Scraping</div>
+                            <div class="toggle-desc">Ambil chat dari Telegram</div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-scraping" checked onchange="toggleFeature('scraping', this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="panel">
             <div class="panel-header"><span>💬 Chat with DikaAi</span><span id="chat-status" style="color:#555;font-size:11px">ready</span></div>
             <div class="panel-body np">
@@ -431,6 +482,20 @@ function toast(msg) {
 function escapeHtml(t) {
     return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
+
+// Toggle feature
+async function toggleFeature(feature, enabled) {
+    try {
+        const res = await fetch('/api/toggle', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({feature, enabled})
+        });
+        const data = await res.json();
+        toast(data.ok ? '✅ ' + feature + (enabled ? ' ON' : ' OFF') : '❌ Error');
+    } catch(e) { toast('❌ Connection error'); }
+}
+
 async function sendChat() {
     const input = $('chat-input');
     const text = input.value.trim();
@@ -526,6 +591,11 @@ function updateUI(d) {
     if (d.total_loss !== undefined && d.total_steps > 0) $('avg-loss').textContent = 'avg: ' + (d.total_loss/d.total_steps).toFixed(4);
     $('vocab-size').textContent = d.vocab_tokens || m.vocab_size || 0;
     $('uptime').textContent = formatTime(d.uptime || 0);
+    // Sync toggle states
+    const t = d.toggles || {};
+    if ($('toggle-reply')) $('toggle-reply').checked = t.auto_reply !== false;
+    if ($('toggle-training')) $('toggle-training').checked = t.training !== false;
+    if ($('toggle-scraping')) $('toggle-scraping').checked = t.scraping !== false;
     drawChart(losses);
     $('chart-info').textContent = losses.length + ' points';
     const msgs = d.recent_messages || [];
@@ -592,12 +662,19 @@ class handler(BaseHTTPRequestHandler):
                 losses = [h['loss'] for h in history]
                 timestamps = [h['timestamp'] for h in history]
 
+                # Calculate uptime from first training entry to now
+                uptime = 0
+                if history:
+                    first_ts = history[0].get('timestamp', 0)
+                    last_ts = history[-1].get('timestamp', 0)
+                    uptime = int(time.time() - first_ts) if first_ts > 0 else 0
+
                 stats = {
                     'db': redis_stats,
                     'model': redis_model or {'params': 0, 'step': 0, 'vocab_size': 0},
                     'vocab_tokens': (redis_model or {}).get('vocab_size', 0),
                     'status': 'ready' if (redis_model or {}).get('step', 0) > 0 else 'idle',
-                    'uptime': 0,
+                    'uptime': uptime,
                     'toggles': {'auto_reply': True, 'training': True, 'scraping': True},
                     'loss_chart': {
                         'timestamps': timestamps,
@@ -619,6 +696,12 @@ class handler(BaseHTTPRequestHandler):
                 losses = [h['loss'] for h in history]
                 timestamps = [h['timestamp'] for h in history]
 
+                # Calculate uptime from first training entry to now
+                uptime = 0
+                if history:
+                    first_ts = history[0].get('timestamp', 0)
+                    uptime = int(time.time() - first_ts) if first_ts > 0 else 0
+
                 stats = {
                     'db': db_stats,
                     'model': {
@@ -628,7 +711,7 @@ class handler(BaseHTTPRequestHandler):
                     },
                     'vocab_tokens': vocab_size,
                     'status': 'ready' if model_info['step'] > 0 else 'idle',
-                    'uptime': 0,
+                    'uptime': uptime,
                     'toggles': {'auto_reply': True, 'training': True, 'scraping': True},
                     'loss_chart': {
                         'timestamps': timestamps,
