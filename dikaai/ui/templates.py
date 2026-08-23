@@ -271,8 +271,11 @@ CHAT_PAGE_CSS = """
 .mem-item .mem-val{color:var(--text);font-size:15px;font-weight:700;word-break:break-word}
 .chat-main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
 .chat-messages{flex:1;overflow-y:auto;padding:20px;padding-bottom:calc(20px + var(--safe-b));display:flex;flex-direction:column;gap:14px;min-height:0;scroll-behavior:smooth}
+.msg-row{display:flex;flex-direction:column;max-width:82%;margin-bottom:4px;min-width:0}
+.msg-row.user{margin-left:auto;align-items:flex-end}
+.msg-row.ai{margin-right:auto;align-items:flex-start}
 .msg-bubble{
-  max-width:82%;padding:14px 18px;border-radius:var(--radius);
+  width:100%;min-width:0;padding:14px 18px;border-radius:var(--radius);
   line-height:1.65;font-size:14px;white-space:pre-wrap;word-wrap:break-word;overflow-wrap:anywhere;
   animation:msgIn .3s var(--ease);
 }
@@ -280,7 +283,7 @@ CHAT_PAGE_CSS = """
 .msg-user{
   background:var(--primary);color:#fff;
   border:1px solid var(--primary-dark);
-  border-bottom-right-radius:4px;margin-left:auto;
+  border-bottom-right-radius:4px;
   box-shadow:0 2px 12px rgba(124,92,252,0.25);
 }
 .msg-ai{
@@ -288,9 +291,9 @@ CHAT_PAGE_CSS = """
   border:1px solid var(--border);border-bottom-left-radius:4px;
 }
 .msg-ai:hover{border-color:var(--primary-border)}
-.msg-meta{font-size:11px;color:var(--text-3);margin-top:6px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.msg-meta{width:100%;font-size:11px;color:var(--text-3);margin-top:6px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .msg-meta svg{width:12px;height:12px}
-.msg-user .msg-meta{justify-content:flex-end}
+.msg-row.user .msg-meta{justify-content:flex-end}
 .route-badge{
   display:inline-flex;align-items:center;gap:3px;
   padding:2px 10px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;
@@ -350,20 +353,20 @@ CHAT_PAGE_CSS = """
   .chat-sidebar{position:fixed;top:0;left:0;bottom:0;height:100%;height:100dvh;z-index:50;width:min(82vw,300px);transform:translateX(-100%);box-shadow:var(--shadow-lg)}
   .chat-sidebar.open{transform:translateX(0)}
   .mem-list{grid-template-columns:1fr 1fr}
-  .msg-bubble{max-width:90%}
+  .msg-row{max-width:90%}
   .chat-messages{padding:14px}
 }
 @media(max-width:420px){
   .mem-list{grid-template-columns:1fr}
-  .msg-bubble{max-width:94%}
+  .msg-row{max-width:94%}
   .send-btn{padding:0 16px;min-width:54px}
 }
 @media(min-width:861px){.chat-sidebar{transform:none!important}.mem-list{grid-template-columns:1fr 1fr}}
 """
 
 API_DOCS_CSS = """
-.docs-body{padding:32px 16px;max-width:900px;margin:0 auto;width:100%}
-@media(min-width:768px){.docs-body{padding:40px 24px}}
+.docs-body{padding:32px 16px;padding-bottom:calc(32px + var(--nav-h) + var(--safe-b));max-width:900px;margin:0 auto;width:100%;flex:1}
+@media(min-width:768px){.docs-body{padding:40px 24px;padding-bottom:calc(40px + var(--nav-h) + var(--safe-b))}}
 .docs-body h1{font-size:clamp(26px,6vw,32px);font-weight:800;margin-bottom:6px;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .docs-body .sub{color:var(--text-2);margin-bottom:28px;font-size:14px}
 .docs-body h2{font-size:20px;font-weight:700;margin:32px 0 14px;color:var(--primary-light);border-bottom:1px solid var(--border);padding-bottom:8px;display:flex;align-items:center;gap:8px}
@@ -708,7 +711,7 @@ const welcome=messages.querySelector('.welcome-box');if(welcome)welcome.remove()
 addMessage('user',text);
 const typing=document.createElement('div');typing.className='msg-bubble msg-ai typing-ind';typing.innerHTML='<span></span><span></span><span></span>';messages.appendChild(typing);messages.scrollTop=messages.scrollHeight;
 try{{const r=await fetch('/api/chat',{{method:'POST',headers:{{'Content-Type':'application/json'}},body:JSON.stringify({{message:text}})}});const d=await r.json();typing.remove();addMessage('assistant',d.response||d.reply||'',{{route:d.route,time:d.time,topic:d.topic}});loadStats()}}catch(err){{typing.remove();addMessage('assistant','Error: '+err.message,{{route:'error'}})}}isLoading=false;sendBtn.disabled=false;input.focus()}}
-function addMessage(role,content,meta={{}}){{if(content===undefined||content===null)content='';const div=document.createElement('div');div.style.cssText='max-width:82%;margin-bottom:4px';
+function addMessage(role,content,meta={{}}){{if(content===undefined||content===null)content='';const div=document.createElement('div');div.className='msg-row '+(role==='user'?'user':'ai');
 let metaHtml='';if(meta.route)metaHtml+=`<span class="route-badge ${{meta.route}}">${{meta.route}}</span>`;if(meta.time)metaHtml+=`<span style="display:inline-flex;align-items:center;gap:3px">{i('clock',11)}${{meta.time}}</span>`;if(meta.topic)metaHtml+=`<span style="display:inline-flex;align-items:center;gap:3px">{i('folder',11)}${{meta.topic}}</span>`;
 const formatted=formatContent(content);
 const cls=role==='user'?'msg-bubble msg-user':'msg-bubble msg-ai';

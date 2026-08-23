@@ -1,21 +1,24 @@
 #!/usr/bin/env python3
 """
-DikaAI - Google Colab Runner (v4 - BULLETPROOF)
-================================================
+DikaAI - Google Colab Runner (v5 - 180+ SOURCES PARALLEL)
+==========================================================
 Copy-paste SEMUA ke SATU cell di Colab.
 Ganti config, lalu Run! Semua fitur jalan otomatis.
 
 Features (ALL automatic):
-  1. Web Scrape (Wikipedia, StackOverflow, GitHub, Indonesian Corpus)
-  2. Training (200 epochs from web data)
+  1. Web Scrape (180+ sources: NusaCrowd, HuggingFace, Wikipedia, StackOverflow,
+     GitHub, Python/JS/Rust/Go/Kotlin/C++ docs, MDN, Linux/DevOps, Android,
+     ML/AI, conversational, DuckDuckGo, news, Kaskus - ALL PARALLEL)
+  2. Training (500 epochs from web data + continuous background)
   3. Benchmark (coding capability test)
   4. Telegram Bot (auto-reply + scrape all chats)
-  5. Redis Sync (Vercel dashboard auto-update)
-  6. Continuous Training (background)
-  7. Periodic Web Scraping (every 2h)
+  5. Redis Sync (Vercel dashboard auto-update every 30s)
+  6. Continuous Training (background, max speed)
+  7. Periodic Web Scraping (every 1h, all sources parallel)
+  8. Google Drive session persistence
 
 Dashboard: https://dikaai.vercel.app
-================================================
+==========================================================
 """
 
 # ============================================================
@@ -26,16 +29,14 @@ import sys
 import shutil
 import importlib
 
-# Always start from /content to avoid getcwd errors
 os.chdir('/content')
-print(f"[0] CWD: {os.getcwd()}")
+print("[0] CWD: " + os.getcwd())
 
 # ============================================================
 # STEP 1: MOUNT GOOGLE DRIVE + INSTALL + CLONE
 # ============================================================
 print("\n[1] Mounting Google Drive + installing dependencies...")
 
-# Mount Google Drive for session persistence
 _gdrive_mounted = False
 try:
     from google.colab import drive
@@ -45,31 +46,26 @@ try:
 except Exception:
     print("    Google Drive not available (not Colab?)")
 
-# Install packages
 os.system('pip install telethon aiohttp nest_asyncio -q')
 
-# Remove old clone (prevents stale cache issues)
 if os.path.exists('/content/dikaai'):
     print("    Removing old clone...")
     shutil.rmtree('/content/dikaai', ignore_errors=True)
 
-# Clone fresh (shallow for speed)
 exit_code = os.system('git clone --depth 1 https://github.com/dikaofc/dikaai.git /content/dikaai')
 if exit_code != 0:
-    print("ERROR: git clone failed! Check internet.")
+    print("ERROR: git clone failed!")
     raise SystemExit(1)
 
-# Verify clone
 if not os.path.exists('/content/dikaai/main.py'):
     print("ERROR: Clone incomplete!")
     raise SystemExit(1)
 
-# cd into project
 os.chdir('/content/dikaai')
 sys.path.insert(0, '/content/dikaai')
-print(f"    Project CWD: {os.getcwd()}")
+print("    Project CWD: " + os.getcwd())
 
-# Restore Telegram session from Google Drive (skip re-login!)
+# Restore Telegram session from Google Drive
 SESSION_FILE = 'dikaai_session.session'
 SESSION_DRIVE_PATH = '/content/drive/MyDrive/dikaai_sessions/'
 
@@ -78,11 +74,10 @@ if _gdrive_mounted:
     saved_session = os.path.join(SESSION_DRIVE_PATH, SESSION_FILE)
     local_session = os.path.join('/content/dikaai', SESSION_FILE)
     if os.path.exists(saved_session):
-        import shutil as _shutil
-        _shutil.copy2(saved_session, local_session)
-        print(f"    Session restored from Google Drive!")
+        shutil.copy2(saved_session, local_session)
+        print("    Session restored from Google Drive!")
     else:
-        print("    No saved session found (first time - will need login)")
+        print("    No saved session (first time - will need login)")
 
 # Clear ALL Python bytecode cache
 for root, dirs, files in os.walk('/content/dikaai'):
@@ -90,10 +85,8 @@ for root, dirs, files in os.walk('/content/dikaai'):
         if d == '__pycache__':
             shutil.rmtree(os.path.join(root, d), ignore_errors=True)
 
-# Invalidate Python import cache
 importlib.invalidate_caches()
 
-# Remove any stale .pyc files
 for root, dirs, files in os.walk('/content/dikaai'):
     for f in files:
         if f.endswith('.pyc'):
@@ -102,42 +95,38 @@ for root, dirs, files in os.walk('/content/dikaai'):
 print("    Cache cleared!")
 
 # ============================================================
-# STEP 2: CONFIG (GANTI INI SEBELUM RUN!)
+# STEP 2: CONFIG
 # ============================================================
 print("\n[2] Writing config...")
 
 # =====================================================
 # GANTI BAGIAN INI DENGAN DATA KAMU!
 # =====================================================
-TELEGRAM_API_ID = 12345678                     # dari https://my.telegram.org
-TELEGRAM_API_HASH = "abc123def456789"          # dari https://my.telegram.org
-TELEGRAM_PHONE = "+6281234567890"              # nomor HP Telegram kamu
-
-# Daftar gratis: https://upstash.com → Create Database → Copy URL + Token
-UPSTASH_REDIS_URL = "https://xxx.upstash.io"       # ganti!
-UPSTASH_REDIS_TOKEN = "AXxxxxxx=="                  # ganti!
+TELEGRAM_API_ID = 12345678
+TELEGRAM_API_HASH = "abc123def456789"
+TELEGRAM_PHONE = "+6281234567890"
+UPSTASH_REDIS_URL = "https://xxx.upstash.io"
+UPSTASH_REDIS_TOKEN = "AXxxxxxx=="
 # =====================================================
 
-# Write config.env
-config_content = f"""TELEGRAM_API_ID={TELEGRAM_API_ID}
-TELEGRAM_API_HASH={TELEGRAM_API_HASH}
-TELEGRAM_PHONE={TELEGRAM_PHONE}
-UPSTASH_REDIS_REST_URL={UPSTASH_REDIS_URL}
-UPSTASH_REDIS_REST_TOKEN={UPSTASH_REDIS_TOKEN}
-"""
+config_content = "TELEGRAM_API_ID=" + str(TELEGRAM_API_ID) + "\n"
+config_content += "TELEGRAM_API_HASH=" + str(TELEGRAM_API_HASH) + "\n"
+config_content += "TELEGRAM_PHONE=" + str(TELEGRAM_PHONE) + "\n"
+config_content += "UPSTASH_REDIS_REST_URL=" + str(UPSTASH_REDIS_URL) + "\n"
+config_content += "UPSTASH_REDIS_REST_TOKEN=" + str(UPSTASH_REDIS_TOKEN) + "\n"
 
 config_path = os.path.join('/content/dikaai', 'config.env')
 with open(config_path, 'w') as f:
     f.write(config_content)
 
-print(f"    Config saved: {config_path}")
-print(f"    Telegram: {TELEGRAM_PHONE}")
-print(f"    Redis: {UPSTASH_REDIS_URL[:30]}...")
+print("    Config saved: " + config_path)
+print("    Telegram: " + str(TELEGRAM_PHONE))
+print("    Redis: " + str(UPSTASH_REDIS_URL)[:30] + "...")
 
 # ============================================================
-# STEP 3: IMPORTS + MAX PERFORMANCE (after config.env is written!)
+# STEP 3: IMPORTS + MAX PERFORMANCE
 # ============================================================
-print("\n[3] Importing DikaAI modules + optimizing performance...")
+print("\n[3] Importing DikaAI modules + optimizing...")
 
 import time
 import signal
@@ -154,7 +143,7 @@ os.environ['OPENBLAS_NUM_THREADS'] = str(_num_cores)
 os.environ['VECLIB_MAXIMUM_THREADS'] = str(_num_cores)
 os.environ['NUMEXPR_NUM_THREADS'] = str(_num_cores)
 os.environ['TOKENIZERS_PARALLELISM'] = 'true'
-print(f"    CPU cores: {_num_cores} | All threads maximized!")
+print("    CPU cores: " + str(_num_cores) + " | All threads maximized!")
 
 import nest_asyncio
 nest_asyncio.apply()
@@ -174,12 +163,10 @@ from dikaai.config import (
 print("    All imports OK!")
 
 # ============================================================
-# LIVE STATS DISPLAY (Colab real-time cell output)
+# LIVE STATS DISPLAY
 # ============================================================
 from IPython.display import display, HTML, clear_output
-import threading as _threading
 
-# Shared state for live stats
 _live_stats = {
     'phase': 'init',
     'messages': 0,
@@ -196,7 +183,6 @@ _live_stats = {
 }
 
 def _update_live_stats():
-    """Collect current stats into _live_stats dict."""
     try:
         s = db.get_stats()
         _live_stats['messages'] = s.get('total', 0)
@@ -218,7 +204,6 @@ def _update_live_stats():
         pass
 
 def _render_stats_html():
-    """Render live stats as an HTML widget."""
     _update_live_stats()
     elapsed = time.time() - start_time
     remaining = max(0, (max_runtime - elapsed) / 3600)
@@ -231,7 +216,7 @@ def _render_stats_html():
         'telegram': '#10b981', 'done': '#6b7280',
     }
     phase_labels = {
-        'init': 'Initializing', 'web_scrape': 'Web Scraping',
+        'init': 'Initializing', 'web_scrape': 'Web Scraping (180+ sources)',
         'training': 'Training Model', 'benchmark': 'Benchmarking',
         'telegram': 'Telegram Live', 'done': 'Completed',
     }
@@ -254,48 +239,45 @@ def _render_stats_html():
     rem = str(round(remaining, 1))
     elh = str(round(elapsed_h, 1))
 
-    html = '<div style="font-family:monospace;background:#0c0c14;color:#e0e0e8;border:2px solid #2d2d40;border-radius:16px;padding:20px;margin:8px 0;max-width:600px">'
-    html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">'
-    html += '<div style="width:12px;height:12px;border-radius:50%;background:' + pc + ';box-shadow:0 0 8px ' + pc + ';animation:pulse 2s infinite"></div>'
-    html += '<span style="font-size:16px;font-weight:800;color:#a78bfa">DikaAI Live</span>'
-    html += '<span style="font-size:11px;color:' + pc + ';font-weight:600;background:' + pc + '22;padding:2px 8px;border-radius:6px;border:1px solid ' + pc + '44">' + pl + '</span>'
-    html += '<span style="margin-left:auto;font-size:11px;color:#606078">' + elh + 'h / 12h</span>'
-    html += '</div>'
+    h = '<div style="font-family:monospace;background:#0c0c14;color:#e0e0e8;border:2px solid #2d2d40;border-radius:16px;padding:20px;margin:8px 0;max-width:600px">'
+    h += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">'
+    h += '<div style="width:12px;height:12px;border-radius:50%;background:' + pc + ';box-shadow:0 0 8px ' + pc + ';animation:pulse 2s infinite"></div>'
+    h += '<span style="font-size:16px;font-weight:800;color:#a78bfa">DikaAI Live v5</span>'
+    h += '<span style="font-size:11px;color:' + pc + ';font-weight:600;background:' + pc + '22;padding:2px 8px;border-radius:6px;border:1px solid ' + pc + '44">' + pl + '</span>'
+    h += '<span style="margin-left:auto;font-size:11px;color:#606078">' + elh + 'h / 12h</span>'
+    h += '</div>'
 
-    html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">'
+    h += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">'
     for label, val, color in [('Messages', msgs, '#10b981'), ('Model Step', step, '#3b82f6'), ('Vocab', vocab, '#a855f7')]:
-        html += '<div style="background:#16161f;border:2px solid #2d2d40;border-radius:10px;padding:12px;text-align:center">'
-        html += '<div style="font-size:10px;color:#606078;text-transform:uppercase;letter-spacing:0.5px">' + label + '</div>'
-        html += '<div style="font-size:22px;font-weight:800;color:' + color + '">' + val + '</div>'
-        html += '</div>'
-    html += '</div>'
+        h += '<div style="background:#16161f;border:2px solid #2d2d40;border-radius:10px;padding:12px;text-align:center">'
+        h += '<div style="font-size:10px;color:#606078;text-transform:uppercase;letter-spacing:0.5px">' + label + '</div>'
+        h += '<div style="font-size:22px;font-weight:800;color:' + color + '">' + val + '</div>'
+        h += '</div>'
+    h += '</div>'
 
-    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">'
-    html += '<div style="background:#16161f;border:2px solid #2d2d40;border-radius:10px;padding:10px">'
-    html += '<div style="font-size:10px;color:#606078;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Stats</div>'
-    html += '<div style="font-size:12px;color:#94a3b8;line-height:1.8">'
-    html += 'Replies: <span style="color:#10b981;font-weight:700">' + replies + '</span><br>'
-    html += 'Web New: <span style="color:#f59e0b;font-weight:700">' + web_new + '</span><br>'
-    html += 'Redis Syncs: <span style="color:#06b6d4;font-weight:700">' + syncs + '</span>'
-    html += '</div></div>'
-    html += '<div style="background:#16161f;border:2px solid #2d2d40;border-radius:10px;padding:10px">'
-    html += '<div style="font-size:10px;color:#606078;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Threads</div>'
-    html += '<div style="font-size:12px;color:#94a3b8;line-height:1.8">'
-    html += dot('redis') + '<br>' + dot('training') + '<br>' + dot('web_scrape') + '<br>' + dot('telegram')
-    html += '</div></div></div>'
+    h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">'
+    h += '<div style="background:#16161f;border:2px solid #2d2d40;border-radius:10px;padding:10px">'
+    h += '<div style="font-size:10px;color:#606078;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Stats</div>'
+    h += '<div style="font-size:12px;color:#94a3b8;line-height:1.8">'
+    h += 'Replies: <span style="color:#10b981;font-weight:700">' + replies + '</span><br>'
+    h += 'Web New: <span style="color:#f59e0b;font-weight:700">' + web_new + '</span><br>'
+    h += 'Redis Syncs: <span style="color:#06b6d4;font-weight:700">' + syncs + '</span>'
+    h += '</div></div>'
+    h += '<div style="background:#16161f;border:2px solid #2d2d40;border-radius:10px;padding:10px">'
+    h += '<div style="font-size:10px;color:#606078;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Threads</div>'
+    h += '<div style="font-size:12px;color:#94a3b8;line-height:1.8">'
+    h += dot('redis') + '<br>' + dot('training') + '<br>' + dot('web_scrape') + '<br>' + dot('telegram')
+    h += '</div></div></div>'
 
-    html += '<div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:2px solid #2d2d40">'
-    html += '<span style="font-size:11px;color:#606078">Remaining: <span style="color:#f59e0b;font-weight:700">' + rem + 'h</span></span>'
-    html += '<a href="https://dikaai.vercel.app" target="_blank" style="font-size:11px;color:#a78bfa;text-decoration:none">Dashboard</a>'
-    html += '</div></div>'
-    html += '<style>@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }</style>'
-    return html
+    h += '<div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:2px solid #2d2d40">'
+    h += '<span style="font-size:11px;color:#606078">Remaining: <span style="color:#f59e0b;font-weight:700">' + rem + 'h</span></span>'
+    h += '<a href="https://dikaai.vercel.app" target="_blank" style="font-size:11px;color:#a78bfa;text-decoration:none">Dashboard</a>'
+    h += '</div></div>'
+    h += '<style>@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }</style>'
+    return h
 
-# Stats display thread
 def _stats_display_thread():
-    """Update Colab cell output every 5 seconds."""
-    # Wait a bit for phases to start
-    time.sleep(2)
+    time.sleep(3)
     while running:
         try:
             html = _render_stats_html()
@@ -304,7 +286,6 @@ def _stats_display_thread():
         except Exception:
             pass
         time.sleep(5)
-    # Final display
     try:
         _live_stats['phase'] = 'done'
         _live_stats['threads'] = {}
@@ -314,8 +295,7 @@ def _stats_display_thread():
     except Exception:
         pass
 
-# Start stats display
-_stats_t = _threading.Thread(target=_stats_display_thread, daemon=True)
+_stats_t = threading.Thread(target=_stats_display_thread, daemon=True)
 _stats_t.start()
 print("  Live stats display started!")
 
@@ -323,30 +303,36 @@ print("  Live stats display started!")
 # STEP 4: BANNER
 # ============================================================
 print("\n" + "=" * 60)
-print("  DikaAI v3.2 - FULL AUTO Google Colab Runner")
+print("  DikaAI v5 - 180+ Sources PARALLEL")
 print("=" * 60)
 print("  Auto-stop : 12 jam")
-print("  Flow      : Web Scrape -> Train -> Benchmark -> Telegram")
+print("  Flow      : Scrape(180+) -> Train(500) -> Bench -> Telegram")
 print("  Dashboard : https://dikaai.vercel.app")
 print("=" * 60)
 print("  Features ALL otomatis:")
-print("    [1] Web Scraping  (Wikipedia, SO, GitHub, Corpus, etc)")
-print("    [2] Training      (200 epochs + continuous background)")
+print("    [1] Web Scrape 180+ sources PARALLEL (8 threads)")
+print("        A: NusaCrowd, HF Indonesian, Wikipedia ID")
+print("        B: Kaskus, Detik, Kompas, Liputan6, CNN, DuckDuckGo")
+print("        C: Python/JS/Rust/Go/Kotlin/C++ docs, SO, GitHub")
+print("        D: Git/Docker/K8s/Nginx/Linux/Redis docs")
+print("        E: Android/Termux docs")
+print("        F: PyTorch/TensorFlow/HuggingFace ML docs")
+print("        G: The Stack, CodeSearchNet, StarCoder info")
+print("        H: Conversational Indonesian Q&A dataset")
+print("    [2] Training      (500 epochs + continuous background)")
 print("    [3] Benchmark     (coding capability test)")
 print("    [4] Telegram Bot  (auto-reply + scrape all chats)")
-print("    [5] Redis Sync    (dashboard Vercel auto-update)")
+print("    [5] Redis Sync    (dashboard Vercel auto-update 30s)")
 print("    [6] Engine Sync   (episodes, facts, traces)")
 print("=" * 60)
 
 if not API_ID or not API_HASH:
     print("\nERROR: Telegram API belum dikonfigurasi!")
-    print("Ganti TELEGRAM_API_ID dan TELEGRAM_API_HASH di bagian STEP 2!")
     raise SystemExit(1)
 
 if not USE_REDIS:
     print("\nWARNING: Redis belum dikonfigurasi!")
     print("Dashboard Vercel TIDAK akan update.")
-    print("Isi UPSTASH_REDIS_URL dan UPSTASH_REDIS_TOKEN dulu!")
 
 # ============================================================
 # STEP 5: INIT
@@ -355,14 +341,13 @@ print("\n[5] Initializing components...")
 
 db = DikaDB()
 trainer = DikaTrainer(db)
-# Use trainer's model/tokenizer (they load saved state)
 model = trainer.model
 tokenizer = trainer.tokenizer
 bot = DikaBot(db, model=model, tokenizer=tokenizer)
 
 running = True
 start_time = time.time()
-max_runtime = 12 * 3600  # 12 hours
+max_runtime = 12 * 3600
 
 def stop_handler(sig, frame):
     global running
@@ -377,10 +362,9 @@ except ValueError:
 print("    All components initialized!")
 
 # ============================================================
-# BACKGROUND THREAD: Redis Sync (every 60s)
+# BACKGROUND THREAD: Redis Sync (every 30s for real-time dashboard)
 # ============================================================
 def redis_sync_thread():
-    """Sync SQLite -> Redis for Vercel dashboard."""
     if not USE_REDIS:
         print("  [REDIS] Skipped (not configured)")
         return
@@ -407,17 +391,16 @@ def redis_sync_thread():
                 _live_stats['redis_syncs'] = n
                 if n % 5 == 0:
                     stats = db.get_stats()
-                    print(f"  [REDIS] Sync #{n} | {stats['total']} msgs -> Vercel")
+                    print("  [REDIS] Sync #" + str(n) + " | " + str(stats['total']) + " msgs -> Vercel")
             except Exception as e:
-                print(f"  [REDIS] Sync error: {e}")
+                print("  [REDIS] Sync error: " + str(e))
     except Exception as e:
-        print(f"  [REDIS] Connection failed: {e}")
+        print("  [REDIS] Connection failed: " + str(e))
 
 # ============================================================
 # BACKGROUND THREAD: Continuous Training (max speed)
 # ============================================================
 def training_thread():
-    """Continuous model training - max speed, no sleep between epochs."""
     print("  [TRAIN] Max-speed training started...")
     ep = 0
     while running:
@@ -427,28 +410,19 @@ def training_thread():
             if count > 0:
                 _live_stats['loss'] = loss
             if count > 0 and ep % 20 == 0:
-                print(f"  [TRAIN] Ep {ep} | loss={loss:.4f} | step={model.step}")
+                print("  [TRAIN] Ep " + str(ep) + " | loss=" + str(round(loss, 4)) + " | step=" + str(model.step))
             if model.step % 50 == 0:
                 model.save()
                 tokenizer.save()
         except Exception as e:
-            print(f"  [TRAIN] Error: {e}")
+            print("  [TRAIN] Error: " + str(e))
             time.sleep(1)
 
 # ============================================================
-# BACKGROUND THREAD: Periodic Web Scraping (every 1h, parallel)
+# BACKGROUND THREAD: Periodic Web Scraping (every 1h, ALL 180+ sources)
 # ============================================================
-def _scrape_source(scraper, method, name):
-    """Scrape a single source in a thread."""
-    try:
-        method()
-    except Exception as e:
-        print(f"  [WEB] {name} error: {e}")
-
 def web_scrape_thread():
-    """Periodic web scraping every hour, parallel sources."""
     while running:
-        # Wait 1 hour first
         for _ in range(3600):
             if not running:
                 return
@@ -456,82 +430,54 @@ def web_scrape_thread():
         if not running:
             return
         try:
-            print("  [WEB] Parallel scrape starting...")
+            print("  [WEB] Periodic scrape (180+ sources, parallel)...")
             scraper = DikaWebScraper(db)
-            sources = [
-                (scraper.scrape_indonesian_corpus, 'Corpus'),
-                (scraper.scrape_wikipedia_full, 'Wikipedia'),
-                (scraper.scrape_stackoverflow_id, 'StackOverflow'),
-                (scraper.scrape_github_trending, 'GitHub'),
-                (scraper.scrape_duckduckgo, 'DuckDuckGo'),
-            ]
-            threads = []
-            for method, name in sources:
-                t = threading.Thread(target=_scrape_source, args=(scraper, method, name), daemon=True)
-                t.start()
-                threads.append(t)
-            for t in threads:
-                t.join(timeout=120)
-            print(f"  [WEB] Parallel scrape done! New: {scraper.stats['new']}")
+            scraper.scrape_all()
+            print("  [WEB] Periodic done! New: " + str(scraper.stats['new']))
         except Exception as e:
-            print(f"  [WEB] Periodic error: {e}")
+            print("  [WEB] Periodic error: " + str(e))
 
 # ============================================================
-# PHASE 1: WEB SCRAPE (BLOCKING - priority!)
+# PHASE 1: WEB SCRAPE (ALL 180+ SOURCES PARALLEL)
 # ============================================================
 _live_stats['phase'] = 'web_scrape'
 print("\n" + "=" * 60)
-print("  PHASE 1: Web Scrape (from internet)")
+print("  PHASE 1: Web Scrape (180+ sources, PARALLEL)")
 print("=" * 60)
 
-# Start Redis sync immediately (so dashboard updates ASAP)
+# Start Redis sync immediately
 redis_t = threading.Thread(target=redis_sync_thread, daemon=True)
 redis_t.start()
 _live_stats['threads']['redis'] = 'on'
 print("  Redis sync thread started!")
 
-# Do web scrape FIRST - PARALLEL sources for speed!
+# Web scrape ALL 180+ sources in parallel
 try:
-    scraper = DikaWebScraper(db)
-    sources = [
-        (scraper.scrape_indonesian_corpus, 'Corpus'),
-        (scraper.scrape_wikipedia_full, 'Wikipedia'),
-        (scraper.scrape_wikipedia_id, 'Wiki Summary'),
-        (scraper.scrape_stackoverflow_id, 'StackOverflow'),
-        (scraper.scrape_github_trending, 'GitHub'),
-        (scraper.scrape_duckduckgo, 'DuckDuckGo'),
-    ]
-    threads = []
-    for method, name in sources:
-        t = threading.Thread(target=_scrape_source, args=(scraper, method, name), daemon=True)
-        t.start()
-        threads.append(t)
-        time.sleep(0.1)  # Stagger slightly
-    for t in threads:
-        t.join(timeout=180)
+    scraper = DikaWebScraper(db, max_workers=8)
+    scraper.scrape_all()
 except Exception as e:
-    print(f"  [WEB] Error: {e}")
+    print("  [WEB] Error: " + str(e))
 
 stats = db.get_stats()
-print(f"\n  Web scrape result: {stats['total']} total messages (parallel)")
+print("\n  Web scrape done: " + str(stats['total']) + " total messages")
 
-# Start background training IMMEDIATELY (parallel with everything)
+# Start background training IMMEDIATELY
 train_t = threading.Thread(target=training_thread, daemon=True)
 train_t.start()
 _live_stats['threads']['training'] = 'on'
 print("  Background training started!")
 
 # ============================================================
-# PHASE 2: TRAINING (from web data)
+# PHASE 2: TRAINING (500 epochs max speed)
 # ============================================================
 _live_stats['phase'] = 'training'
 print("\n" + "=" * 60)
-print("  PHASE 2: Training dari Web Data")
+print("  PHASE 2: Training dari Web Data (500 epochs)")
 print("=" * 60)
 
 if stats['total'] > 0:
     trainer.build_vocab()
-    print(f"  Vocab: {tokenizer.vocab_size} tokens")
+    print("  Vocab: " + str(tokenizer.vocab_size) + " tokens")
 
     print("  Training 500 epochs (max speed)...")
     for ep in range(1, 501):
@@ -542,21 +488,21 @@ if stats['total'] > 0:
             if count > 0:
                 _live_stats['loss'] = loss
                 if ep % 50 == 0 or ep == 1 or ep == 500:
-                    print(f"  [TRAIN] Ep {ep:3d}/500 | loss={loss:.4f} | step={model.step}")
+                    print("  [TRAIN] Ep " + str(ep) + "/500 | loss=" + str(round(loss, 4)) + " | step=" + str(model.step))
                 if ep % 25 == 0:
                     model.save()
                     tokenizer.save()
         except Exception as e:
-            print(f"  [TRAIN] Error: {e}")
+            print("  [TRAIN] Error: " + str(e))
 
     model.save()
     tokenizer.save()
-    print(f"  Training done! Model step: {model.step}")
+    print("  Training done! Model step: " + str(model.step))
 else:
     print("  No web data, skipping training")
 
 # ============================================================
-# PHASE 3: BENCHMARK (quick test)
+# PHASE 3: BENCHMARK
 # ============================================================
 _live_stats['phase'] = 'benchmark'
 print("\n" + "=" * 60)
@@ -570,63 +516,55 @@ try:
     report = runner.report(results)
     Evaluator().print_report(report)
 
-    # Save to history
     history = BenchmarkHistory()
     history.record(report, model_step=model.step)
     print("  Saved to benchmark history")
 except Exception as e:
-    print(f"  Benchmark skipped: {e}")
+    print("  Benchmark skipped: " + str(e))
 
 # ============================================================
-# PHASE 4: TELEGRAM LOOP (blocking until 12h)
+# PHASE 4: TELEGRAM LOOP (all features running)
 # ============================================================
 _live_stats['phase'] = 'telegram'
 print("\n" + "=" * 60)
 print("  PHASE 4: Telegram Loop (all features running)")
-print("  Auto-reply + scrape + training + Redis sync")
+print("  Auto-reply + scrape + training + Redis sync + web scrape")
 print("  Auto-stop: 12 jam")
 print("=" * 60)
 
-# Start web scrape background thread
 web_t = threading.Thread(target=web_scrape_thread, daemon=True)
 web_t.start()
 _live_stats['threads']['web_scrape'] = 'on'
-print("  Web scrape thread started (every 2h)")
+print("  Web scrape thread started (every 1h, 180+ sources)")
 
-# Telegram loop (main blocking loop)
 async def telegram_loop():
     global running
 
     if not await bot.connect():
         print("Telegram connect failed!")
-        print("Make sure TELEGRAM_API_ID, TELEGRAM_API_HASH, TELEGRAM_PHONE are correct!")
         return
 
     print("Telegram connected!")
     _live_stats['telegram_connected'] = True
     _live_stats['threads']['telegram'] = 'on'
 
-    # Save session to Google Drive (skip re-login next time!)
+    # Save session to Google Drive
     if _gdrive_mounted:
         try:
             src = os.path.join('/content/dikaai', SESSION_FILE)
             dst = os.path.join(SESSION_DRIVE_PATH, SESSION_FILE)
             if os.path.exists(src):
-                import shutil as _shutil
-                _shutil.copy2(src, dst)
-                print(f"  Session saved to Google Drive!")
+                shutil.copy2(src, dst)
+                print("  Session saved to Google Drive!")
         except Exception as e:
-            print(f"  Session save failed: {e}")
+            print("  Session save failed: " + str(e))
 
-    # Initial scrape of ALL chats
     print("\nScraping ALL Telegram chats...")
     await bot.scrape_all()
 
-    # Setup auto-reply listener
     bot.setup_auto_reply()
     print("Auto-reply listener active!")
 
-    # Periodic re-scrape every 6 hours
     n = 0
     while running:
         try:
@@ -637,35 +575,29 @@ async def telegram_loop():
                 break
 
             stats = db.get_stats()
-            print(f"\n[STATUS] {rem:.1f}h left | {stats['total']} msgs | step {model.step} | {model.vocab_size} vocab")
+            print("\n[STATUS] " + str(round(rem, 1)) + "h left | " + str(stats['total']) + " msgs | step " + str(model.step) + " | " + str(tokenizer.vocab_size) + " vocab")
 
-            # Sleep 6 hours then re-scrape
             await asyncio.sleep(6 * 3600)
             if not running:
                 break
 
             n += 1
-            print(f"\nRe-scrape #{n}...")
+            print("\nRe-scrape #" + str(n) + "...")
             await bot.scrape_recent(hours=6)
-
-            # Rebuild vocab with new data
             trainer.build_vocab()
 
         except asyncio.CancelledError:
             break
         except Exception as e:
-            print(f"  Error: {e}")
+            print("  Error: " + str(e))
             await asyncio.sleep(300)
 
-# Run telegram loop
 try:
     asyncio.run(telegram_loop())
 except KeyboardInterrupt:
     print("\nInterrupted!")
 except RuntimeError as e:
-    # nest_asyncio handles this, but just in case
-    print(f"  Async error: {e}")
-    # Try alternative approach
+    print("  Async error: " + str(e))
     try:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
@@ -674,23 +606,20 @@ except RuntimeError as e:
         pass
 finally:
     running = False
-
-    # Save everything
     model.save()
     tokenizer.save()
 
-    # Final stats
     s = db.get_stats()
     runtime_hours = (time.time() - start_time) / 3600
 
     print("\n" + "=" * 60)
     print("  FINAL STATS")
     print("=" * 60)
-    print(f"  Messages : {s['total']}")
-    print(f"  Model    : step {model.step}")
-    print(f"  Vocab    : {tokenizer.vocab_size} tokens")
-    print(f"  Runtime  : {runtime_hours:.1f} jam")
-    print(f"  Dashboard: https://dikaai.vercel.app")
+    print("  Messages : " + str(s['total']))
+    print("  Model    : step " + str(model.step))
+    print("  Vocab    : " + str(tokenizer.vocab_size) + " tokens")
+    print("  Runtime  : " + str(round(runtime_hours, 1)) + " jam")
+    print("  Dashboard: https://dikaai.vercel.app")
     print("=" * 60)
     print("  All features completed!")
     print("=" * 60)
