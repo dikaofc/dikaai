@@ -97,7 +97,7 @@ a:hover{color:var(--primary)}
 :focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:6px}
 img,svg{max-width:100%}
 .app-main{flex:1;display:flex;flex-direction:column;min-height:0;min-width:0}
-.container{max-width:1100px;width:100%;margin:0 auto;padding:16px;flex:1}
+.container{max-width:1100px;width:100%;margin:0 auto;padding:16px;padding-bottom:calc(16px + var(--nav-h) + var(--safe-b));flex:1}
 @media(min-width:768px){.container{padding:24px}}
 
 /* Scrollbar */
@@ -112,13 +112,12 @@ img,svg{max-width:100%}
 
 NAVBAR_CSS = """
 .nav-bottom{
-  position:sticky;bottom:0;z-index:100;flex-shrink:0;
+  position:fixed;bottom:0;left:0;right:0;z-index:100;flex-shrink:0;
   display:flex;justify-content:center;gap:0;
   background:rgba(22,22,31,0.92);
   backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
   border-top:1px solid var(--border);
   padding:6px 8px calc(6px + var(--safe-b));
-  margin-top:auto;
 }
 .nav-inner{display:flex;width:100%;max-width:420px;justify-content:space-around;gap:8px}
 .nav-item{
@@ -252,7 +251,7 @@ TOGGLE_CSS = """
 """
 
 CHAT_PAGE_CSS = """
-.chat-wrap{flex:1;display:flex;min-height:0;overflow:hidden;position:relative}
+.chat-wrap{flex:1;display:flex;min-height:0;overflow:hidden;position:relative;padding-bottom:var(--nav-h)}
 .chat-sidebar{
   width:268px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);
   display:flex;flex-direction:column;overflow:hidden;
@@ -619,7 +618,7 @@ def chat_page():
 <title>DikaAI Chat</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<style>{DESIGN_CSS}{HEADER_CSS}{CHAT_PAGE_CSS}
+<style>{DESIGN_CSS}{NAVBAR_CSS}{HEADER_CSS}{CHAT_PAGE_CSS}
 .header-stats{{font-size:11px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:42vw}}
 @media(max-width:460px){{.header-stats{{display:none}}}}
 </style>
