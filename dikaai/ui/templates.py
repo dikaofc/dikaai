@@ -423,6 +423,8 @@ def dashboard_page():
 .stats-grid{{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:14px}}
 @media(min-width:560px){{.stats-grid{{grid-template-columns:repeat(3,1fr)}}}}
 @media(min-width:860px){{.stats-grid{{grid-template-columns:repeat(6,1fr)}}}}
+.grid-2{{display:grid;gap:14px;margin-bottom:14px;grid-template-columns:1fr}}
+@media(min-width:768px){{.grid-2{{grid-template-columns:1fr 1fr}}}}
 .grid-3{{display:grid;gap:14px;margin-bottom:14px}}
 @media(min-width:820px){{.grid-3{{grid-template-columns:1fr 1fr 1fr}}}}
 
@@ -514,32 +516,32 @@ canvas{{width:100%;height:200px;border-radius:var(--radius-xs);display:block}}
     </div>
   </div>
 
-  <div class="grid-3">
+  <div class="grid-2">
 
     <div class="panel">
-      <div class="panel-head">{i('settings',16)} Controls</div>
+      <div class="panel-head">{i('zap',16)} Status</div>
       <div class="panel-body">
         <div class="toggle-group">
-          <div class="toggle-row">
+          <div class="toggle-row" style="cursor:default">
             <div class="toggle-info">
               <div class="toggle-label">{i('zap',16)} Auto-Reply</div>
               <div class="toggle-desc">Balas otomatis di Telegram</div>
             </div>
-            <label class="switch"><input type="checkbox" id="toggle-reply" checked onchange="toggleFeature('auto_reply',this.checked)"><span class="switch-track"></span><span class="switch-thumb"></span></label>
+            <div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:50%;background:var(--success);box-shadow:0 0 8px var(--success)"></div><span style="font-size:11px;color:var(--success);font-weight:600">ON</span></div>
           </div>
-          <div class="toggle-row">
+          <div class="toggle-row" style="cursor:default">
             <div class="toggle-info">
               <div class="toggle-label">{i('cpu',16)} Training</div>
               <div class="toggle-desc">Model belajar dari data</div>
             </div>
-            <label class="switch"><input type="checkbox" id="toggle-training" checked onchange="toggleFeature('training',this.checked)"><span class="switch-track"></span><span class="switch-thumb"></span></label>
+            <div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:50%;background:var(--success);box-shadow:0 0 8px var(--success)"></div><span style="font-size:11px;color:var(--success);font-weight:600">ON</span></div>
           </div>
-          <div class="toggle-row">
+          <div class="toggle-row" style="cursor:default">
             <div class="toggle-info">
               <div class="toggle-label">{i('refresh',16)} Scraping</div>
               <div class="toggle-desc">Ambil chat dari Telegram</div>
             </div>
-            <label class="switch"><input type="checkbox" id="toggle-scraping" checked onchange="toggleFeature('scraping',this.checked)"><span class="switch-track"></span><span class="switch-thumb"></span></label>
+            <div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:50%;background:var(--success);box-shadow:0 0 8px var(--success)"></div><span style="font-size:11px;color:var(--success);font-weight:600">ON</span></div>
           </div>
         </div>
       </div>

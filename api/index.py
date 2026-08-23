@@ -438,6 +438,29 @@ def _looks_like_garbage(text):
 _dash_cache = None
 _chat_cache = None
 _docs_cache = None
+_default_token = None
+
+def _ensure_default_token():
+    """Auto-generate API token if none exists."""
+    global _default_token
+    if _default_token:
+        return _default_token
+    try:
+        r = _get_redis()
+        if r:
+            tokens = r._api('smembers', 'dikaai:tokens')
+            if tokens and len(tokens) > 0:
+                _default_token = tokens[0] if isinstance(tokens, list) else tokens
+                return _default_token
+        # No tokens exist, create one
+        ta = TokenAuth()
+        token = ta.create('dikaai-default', 'chat,code,agent,tools,admin')
+        if token:
+            _default_token = token
+            return token
+    except Exception:
+        pass
+    return None
 
 
 def _get_dash():
@@ -572,9 +595,11 @@ class handler(BaseHTTPRequestHandler):
         # Public API
         if path == '/v1/health':
             engine = _get_engine()
+            token = _ensure_default_token()
             self._json({
                 'status': 'ok', 'version': '3.2.0', 'timestamp': time.time(),
                 'engine': engine is not None, 'redis': USE_REDIS,
+                'token': token,
             })
             return
 
@@ -623,7 +648,7 @@ class handler(BaseHTTPRequestHandler):
             })
             return
 
-        # OpenAI-compatible
+        # OpenAI-compatible (no auth required for easy integration)
         if path == '/v1/chat/completions':
             messages = body.get('messages', [])
             user_msg = ''
