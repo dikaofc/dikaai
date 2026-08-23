@@ -6,11 +6,16 @@ This is the core engine that processes user messages through:
 
 import time
 from dikaai.context.tracker import ContextManager
+from dikaai.context.long_context import LongContextManager
 from dikaai.memory.short_term import ConversationMemory
 from dikaai.memory.coding_memory import CodingMemory
+from dikaai.memory.episodic import EpisodicMemory
+from dikaai.memory.semantic import SemanticMemory
 from dikaai.rag.retriever import Retriever
+from dikaai.rag.reranker import Reranker
 from dikaai.agent.planner import Planner
 from dikaai.agent.executor import Executor
+from dikaai.agent.reasoning import ReasoningEngine
 from dikaai.tools.filesystem import FilesystemTools
 from dikaai.tools.terminal import TerminalTools
 from dikaai.tools.git_tools import GitTools
@@ -26,11 +31,16 @@ class Engine:
 
         # Core components
         self.context = ContextManager()
+        self.long_context = LongContextManager()
         self.memory = ConversationMemory()
         self.coding_memory = CodingMemory()
+        self.episodic_memory = EpisodicMemory()
+        self.semantic_memory = SemanticMemory()
         self.retriever = Retriever()
+        self.reranker = Reranker()
         self.planner = Planner()
         self.executor = Executor(workspace)
+        self.reasoning = ReasoningEngine()
         self.validator = ResponseValidator()
         self.observer = Observer()
 
@@ -48,19 +58,27 @@ class Engine:
         start = time.time()
         self.total += 1
 
-        # 1. Context Management
+        # 1. Context Management (dual: tracker + long-context)
         ctx = self.context.process_message(message)
         intent = ctx['intent']
         topic = ctx['topic']
 
-        # 2. Memory Retrieval
-        mem_ctx = self.coding_memory.get_context(message)
+        # 2. Long-context processing (L0-L6 memory)
+        self.long_context.process_message(message, topic.get('topic', ''))
 
-        # 3. Route
+        # 3. Memory Retrieval (all memory types)
+        mem_ctx = self.coding_memory.get_context(message)
+        episodic_ctx = self.episodic_memory.get_context(message)
+        semantic_ctx = self.semantic_memory.get_facts_for_topic(message)
+
+        # 4. Route
         effective = intent.get('context', message) if intent.get('resolved') else message
         route = self._route(effective)
 
-        # 4. Execute
+        # 5. Build hierarchical context (L0-L6)
+        long_ctx = self.long_context.build_context(message, max_tokens=2000)
+
+        # 6. Execute
         if route == 'code':
             result = self._exec_code(message, model, tokenizer)
         elif route == 'tool':
@@ -72,12 +90,13 @@ class Engine:
         else:
             result = self._exec_chat(message)
 
-        # 5. Validate
+        # 7. Validate
         validation = self.validator.validate(result['response'], message, self.context.state)
         self.observer.log_validation(validation.passed, validation.issues)
 
-        # 6. Update state
+        # 8. Update all state
         self.context.update_after_response(message, result['response'])
+        self.long_context.process_response(result['response'], topic.get('topic', ''))
         self.memory.add('user', message)
         self.memory.add('assistant', result['response'])
 
@@ -160,6 +179,15 @@ class Engine:
         return {'response': 'No matches found', 'success': True}
 
     def _exec_reason(self, message, model, tokenizer):
+        # Use reasoning engine for complex analysis
+        chain = self.reasoning.reason(message)
+        if chain.steps:
+            response = chain.to_text()
+            if chain.conclusion:
+                response += f"\n\n{chain.conclusion}"
+            return {'response': response, 'success': True}
+
+        # Fallback to model
         if model and tokenizer and tokenizer._loaded:
             try:
                 from dikaai.config import CONTEXT_LEN
@@ -184,4 +212,7 @@ class Engine:
             'rate': f'{self.successful/max(self.total,1)*100:.0f}%',
             'observer': self.observer.get_stats(),
             'context': self.context.state.to_dict(),
+            'long_context': self.long_context.get_stats(),
+            'episodic': self.episodic_memory.get_task_stats(),
+            'semantic': self.semantic_memory.get_stats(),
         }

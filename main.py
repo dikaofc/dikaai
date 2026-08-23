@@ -178,7 +178,7 @@ def main():
             count = r.index_directory(os.getcwd())
             print(f"  ✅ Indexed {count} files for RAG")
         elif cmd == 'benchmark':
-            from dikaai.benchmark import BenchmarkRunner, Evaluator
+            from dikaai.benchmark import BenchmarkRunner, Evaluator, BenchmarkHistory
             cat = sys.argv[2] if len(sys.argv) > 2 else None
             diff = sys.argv[3] if len(sys.argv) > 3 else None
             max_t = int(sys.argv[4]) if len(sys.argv) > 4 else None
@@ -186,6 +186,17 @@ def main():
             results = runner.run(category=cat, difficulty=diff, max_tasks=max_t)
             report = runner.report(results)
             Evaluator().print_report(report)
+            # Save to history
+            history = BenchmarkHistory()
+            from dikaai.model.model import DikaModel
+            m = DikaModel()
+            m.load()
+            history.record(report, model_step=m.step)
+            print("  📝 Saved to benchmark history")
+        elif cmd == 'bench-history':
+            from dikaai.benchmark import BenchmarkHistory
+            history = BenchmarkHistory()
+            history.print_history()
         elif cmd == 'train-code':
             from dikaai.model.trainer import DikaTrainer
             from dikaai.database import DikaDB
