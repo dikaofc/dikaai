@@ -458,18 +458,15 @@ class Engine:
 
     def _exec_reason(self, message, model, tokenizer, memory_ctx):
         """Reasoning with memory context for informed analysis."""
-        # Use reasoning engine for complex analysis
+        # Use reasoning engine to GENERATE actual answer
         chain = self.reasoning.reason(message)
-        if chain.steps:
-            response = chain.to_text()
-            if chain.conclusion:
-                response += f"\n\n{chain.conclusion}"
+        response = chain.answer if chain.answer else chain.to_text()
 
+        if response:
             # Enrich with memory context
             mem_info = self._format_memory_for_prompt(memory_ctx, max_tokens=400)
             if mem_info:
                 response += f"\n\n📖 Context:\n{mem_info}"
-
             return {'response': response, 'success': True}
 
         # Fallback to model with memory context
@@ -487,28 +484,26 @@ class Engine:
             except Exception:
                 pass
 
-        # Smart reply with memory context
-        from dikaai.coding.smart_reply import get_smart_reply
-        base_reply = get_smart_reply(message)
-
-        # Add relevant memory
-        mem_info = self._format_memory_for_prompt(memory_ctx, max_tokens=300)
-        if mem_info:
-            base_reply += f"\n\n📖 Related knowledge:\n{mem_info}"
-
-        return {'response': base_reply, 'success': True}
+        return {'response': f'Saya belum punya cukup informasi untuk menjawab "{message[:50]}" secara spesifik. Bisa dijelaskan lebih detail?', 'success': True}
 
     def _exec_chat(self, message, memory_ctx):
-        """Chat with memory context for informed conversation."""
-        from dikaai.coding.smart_reply import get_smart_reply
-        base_reply = get_smart_reply(message)
+        """Chat: use reasoning engine to understand and respond intelligently."""
+        # Try reasoning engine first - it can handle general questions too
+        chain = self.reasoning.reason(message)
+        if chain.answer and len(chain.answer) > 20:
+            return {'response': chain.answer, 'success': True}
 
-        # Add memory context for richer conversation
-        mem_info = self._format_memory_for_prompt(memory_ctx, max_tokens=200)
-        if mem_info:
-            base_reply += f"\n\n📖 Context: {mem_info}"
+        # For very short/generic messages, use contextual response
+        text = message.lower().strip()
+        if len(text.split()) <= 2:
+            return {'response': f'Oke! Ada yang spesifik yang mau ditanyain? Saya bisa bantu coding, debugging, atau penjelasan konsep.', 'success': True}
 
-        return {'response': base_reply, 'success': True}
+        # For longer messages, try to understand intent
+        if any(w in text for w in ['halo', 'hai', 'hi', 'hey', 'test', 'tes']):
+            return {'response': 'Halo! Saya DikaAI, AI coding assistant. Ada yang bisa dibantu?', 'success': True}
+
+        # For casual chat
+        return {'response': f'Noted! Ada yang spesifik yang mau dibahas? Saya bisa bantu dengan coding, debugging, atau penjelasan konsep programming.', 'success': True}
 
     # ================================================================
     # MEMORY RECORDING
