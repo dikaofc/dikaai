@@ -2,14 +2,16 @@
 """
 DikaAi - Google Colab Runner
 ========================================
-Copy-paste SEMUA ke SATU cell di Colab.
-Ganti config di bawah, lalu Run!
+Setiap jalan ulang:
+  1. Web scrape (Wikipedia, SO, GitHub)
+  2. Build vocab + Training dari web data
+  3. Baru connect Telegram + loop
 Dashboard Vercel: https://dikaai.vercel.app
 ========================================
 """
 
 # ============================================================
-# STEP 1: Install + Clone (shallow - cepat!)
+# STEP 1: Install + Clone
 # ============================================================
 !pip install telethon aiohttp nest_asyncio -q
 !git clone --depth 1 https://github.com/dikaofc/dikaai.git /content/dikaai
@@ -62,7 +64,7 @@ from config import API_ID, API_HASH, PHONE, UPSTASH_REDIS_URL, UPSTASH_REDIS_TOK
 print("\n" + "=" * 55)
 print("  🧠 DikaAi - Google Colab Runner")
 print("  ⏱️  Auto-stop: 12 jam")
-print("  🌐 Web scrape → Training → Telegram")
+print("  🔄 Flow: Web Scrape → Train → Telegram Loop")
 print("  📊 Dashboard: https://dikaai.vercel.app")
 print("=" * 55)
 
@@ -71,19 +73,19 @@ if not API_ID or not API_HASH:
     raise SystemExit(1)
 
 if not USE_REDIS:
-    print("⚠️  Redis belum dikonfigurasi!")
-    print("   Dashboard Vercel TIDAK akan update.")
-    print("   Isi UPSTASH_REDIS_URL dan UPSTASH_REDIS_TOKEN dulu!")
+    print("⚠️  Redis belum dikonfigurasi! Dashboard ga jalan.")
 
-# Init
+# Init (FRESH - ga load model lama)
 db = DikaDB()
 tokenizer = DikaTokenizer()
 model = DikaModel()
 trainer = DikaTrainer(db)
 bot = DikaBot(db, model=model, tokenizer=tokenizer)
 
-model.load()
-tokenizer.load()
+# ⚠️ JANGAN load model lama - mulai dari awal!
+# model.load()  # SKIP!
+# tokenizer.load()  # SKIP!
+print("  🆕 Starting FRESH (no old model)")
 
 running = True
 start_time = time.time()
@@ -93,27 +95,20 @@ def stop_handler(sig, frame):
     global running
     print("\n⏹️ Stopping...")
     running = False
-signal.signal(signal.SIGINT, stop_handler)
+try:
+    signal.signal(signal.SIGINT, stop_handler)
+except ValueError:
+    pass
 
-# --- Threads ---
-def web_scrape():
-    try:
-        DikaWebScraper(db).scrape_all()
-        print("  [WEB] ✅ Done!")
-    except Exception as e:
-        print(f"  [WEB] Error: {e}")
-
+# --- Redis Sync Thread ---
 def redis_sync():
-    """Sync SQLite → Redis setiap 60 detik (biar dashboard Vercel update)"""
     if not USE_REDIS:
-        print("  [REDIS] ⚠️ Skip (not configured)")
         return
     try:
         from sync_to_redis import UpstashRedis, sync_messages, sync_model, sync_vocab, sync_training_history
         r = UpstashRedis(UPSTASH_REDIS_URL, UPSTASH_REDIS_TOKEN)
         r.ping()
-        print("  [REDIS] ✅ Connected to Upstash!")
-        print("  [REDIS] 📊 Dashboard: https://dikaai.vercel.app")
+        print("  [REDIS] ✅ Connected!")
         n = 0
         while running:
             time.sleep(60)
@@ -128,15 +123,13 @@ def redis_sync():
                     stats = db.get_stats()
                     print(f"  [REDIS] ✅ Sync #{n} | {stats['total']} msgs → Vercel")
             except Exception as e:
-                print(f"  [REDIS] ⚠️ Sync error: {e}")
+                print(f"  [REDIS] ⚠️ {e}")
     except Exception as e:
-        print(f"  [REDIS] ❌ Connection failed: {e}")
+        print(f"  [REDIS] ❌ {e}")
 
+# --- Training Thread ---
 def train():
     print("  [TRAIN] 🧠 Training started...")
-    if db.get_stats()['total'] > 0:
-        trainer.build_vocab()
-        print(f"  [TRAIN] ✅ Vocab: {tokenizer.vocab_size} tokens")
     ep = 0
     while running:
         try:
@@ -152,10 +145,11 @@ def train():
             print(f"  [TRAIN] Error: {e}")
             time.sleep(10)
 
-async def telegram():
+# --- Telegram Loop ---
+async def telegram_loop():
     global running
     if not await bot.connect():
-        print("❌ Telegram connect failed, skipping...")
+        print("❌ Telegram connect failed!")
         return
     print("✅ Telegram connected!")
     await bot.scrape_all()
@@ -168,12 +162,12 @@ async def telegram():
                 running = False
                 break
             stats = db.get_stats()
-            print(f"\n⏰ {rem:.1f}h left | {stats['total']} msgs | model step {model.step}")
+            print(f"\n⏰ {rem:.1f}h left | {stats['total']} msgs | step {model.step}")
             await asyncio.sleep(6 * 3600)
             if not running: break
             n += 1
             print(f"\n🔄 Re-scrape #{n}...")
-            wt = threading.Thread(target=web_scrape, daemon=True)
+            wt = threading.Thread(target=web_scrape_fn, daemon=True)
             wt.start()
             await bot.scrape_recent(hours=6)
             wt.join(timeout=120)
@@ -184,22 +178,81 @@ async def telegram():
             print(f"  Error: {e}")
             await asyncio.sleep(300)
 
-# Start threads
-print("\n🚀 Starting all threads...")
-for name, fn in [("Redis sync", redis_sync), ("Training", train), ("Web scrape", web_scrape)]:
-    t = threading.Thread(target=fn, daemon=True)
-    t.start()
-    print(f"  ✅ {name} thread started")
+def web_scrape_fn():
+    try:
+        DikaWebScraper(db).scrape_all()
+        print("  [WEB] ✅ Done!")
+    except Exception as e:
+        print(f"  [WEB] Error: {e}")
 
+# ============================================================
+# PHASE 1: WEB SCRAPE (priority, blocking)
+# ============================================================
+print("\n" + "=" * 55)
+print("  📡 PHASE 1: Web Scrape (dari internet)")
+print("=" * 55)
+
+# Start Redis sync
+redis_t = threading.Thread(target=redis_sync, daemon=True)
+redis_t.start()
+
+# Web scrape - BLOCKING, tunggu selesai
+web_scrape_fn()
+
+# ============================================================
+# PHASE 2: BUILD VOCAB + TRAINING (web data only)
+# ============================================================
+print("\n" + "=" * 55)
+print("  🧠 PHASE 2: Training dari Web Data")
+print("=" * 55)
+
+stats = db.get_stats()
+print(f"  📊 Data: {stats['total']} messages dari web")
+
+if stats['total'] > 0:
+    trainer.build_vocab()
+    print(f"  📖 Vocab: {tokenizer.vocab_size} tokens")
+
+    # Training loop - belajar dari web data
+    print("  🏋️ Training 50 epochs dari web data...")
+    for ep in range(1, 51):
+        if not running:
+            break
+        try:
+            loss, count = trainer.train_one_epoch()
+            if count > 0:
+                print(f"  [TRAIN] Ep {ep:2d}/50 | loss={loss:.4f} | total={model.step}")
+                if ep % 10 == 0:
+                    model.save()
+                    tokenizer.save()
+            time.sleep(3)
+        except Exception as e:
+            print(f"  [TRAIN] Error: {e}")
+            time.sleep(5)
+
+    model.save()
+    tokenizer.save()
+    print(f"  ✅ Training selesai! Model step: {model.step}")
+else:
+    print("  ⚠️ Tidak ada data web, skip training")
+
+# ============================================================
+# PHASE 3: TELEGRAM LOOP (auto-reply + scrape)
+# ============================================================
+print("\n" + "=" * 55)
+print("  📱 PHASE 3: Telegram Loop")
+print("  🔄 Auto-reply + scrape + training continues")
+print("  ⏱️  Auto-stop: 12 jam")
+print("=" * 55)
+
+# Start training in background
+train_t = threading.Thread(target=train, daemon=True)
+train_t.start()
+print("  ✅ Training thread started (background)")
+
+# Run Telegram loop
 try:
-    print("\n⏳ Waiting for web scrape (priority)...")
-    time.sleep(10)
-    if db.get_stats()['total'] > 0:
-        trainer.build_vocab()
-        print(f"✅ Vocab: {tokenizer.vocab_size} tokens")
-
-    print(f"\n📊 Dashboard: https://dikaai.vercel.app")
-    asyncio.run(telegram())
+    asyncio.run(telegram_loop())
 except KeyboardInterrupt:
     pass
 finally:
