@@ -69,10 +69,10 @@ print(f"  [SYS] CPU cores: {CPU_CORES} | Workers: {MAX_WORKERS} | TG concurrent:
 # ============================================================
 MODEL_NAME = os.environ.get('MODEL_NAME', 'DikaAi')
 VOCAB_SIZE = int(os.environ.get('MAX_VOCAB_SIZE', 2000))
-EMBED_DIM = int(os.environ.get('EMBEDDING_DIM', 48))
-HIDDEN_DIM = int(os.environ.get('HIDDEN_DIM', 96))
-CONTEXT_LEN = int(os.environ.get('CONTEXT_LENGTH', 48))
-CHUNK_SIZE = int(os.environ.get('CHUNK_SIZE', 24))
+EMBED_DIM = int(os.environ.get('EMBEDDING_DIM', 64))
+HIDDEN_DIM = int(os.environ.get('HIDDEN_DIM', 128))
+CONTEXT_LEN = int(os.environ.get('CONTEXT_LENGTH', 64))
+CHUNK_SIZE = int(os.environ.get('CHUNK_SIZE', 32))
 NUM_LAYERS = 1
 
 # Training - Aggressive for fast convergence
@@ -81,7 +81,7 @@ LR = float(os.environ.get('LEARNING_RATE', 0.003))
 LR_MIN = float(os.environ.get('LR_MIN', 0.0005))
 LR_WARMUP = int(os.environ.get('LR_WARMUP', 30))
 LR_DECAY = int(os.environ.get('LR_DECAY', 300))
-TRAIN_INTERVAL = int(os.environ.get('TRAIN_EVERY_SECONDS', 5))  # Faster
+TRAIN_INTERVAL = int(os.environ.get('TRAIN_EVERY_SECONDS', 3))  # Ultra fast
 MAX_TRAIN_STEPS = int(os.environ.get('MAX_TRAIN_STEPS', 500))
 GRAD_ACCUM = int(os.environ.get('GRAD_ACCUM', 4))
 
