@@ -135,15 +135,26 @@ print(f"    Telegram: {TELEGRAM_PHONE}")
 print(f"    Redis: {UPSTASH_REDIS_URL[:30]}...")
 
 # ============================================================
-# STEP 3: IMPORTS (after config.env is written!)
+# STEP 3: IMPORTS + MAX PERFORMANCE (after config.env is written!)
 # ============================================================
-print("\n[3] Importing DikaAI modules...")
+print("\n[3] Importing DikaAI modules + optimizing performance...")
 
 import time
 import signal
 import threading
 import asyncio
 import json
+import multiprocessing
+
+# Max performance settings for Colab
+_num_cores = multiprocessing.cpu_count()
+os.environ['OMP_NUM_THREADS'] = str(_num_cores)
+os.environ['MKL_NUM_THREADS'] = str(_num_cores)
+os.environ['OPENBLAS_NUM_THREADS'] = str(_num_cores)
+os.environ['VECLIB_MAXIMUM_THREADS'] = str(_num_cores)
+os.environ['NUMEXPR_NUM_THREADS'] = str(_num_cores)
+os.environ['TOKENIZERS_PARALLELISM'] = 'true'
+print(f"    CPU cores: {_num_cores} | All threads maximized!")
 
 import nest_asyncio
 nest_asyncio.apply()
@@ -382,7 +393,7 @@ def redis_sync_thread():
         print("  [REDIS] Connected!")
         n = 0
         while running:
-            time.sleep(60)
+            time.sleep(30)
             if not running:
                 break
             try:
@@ -402,11 +413,11 @@ def redis_sync_thread():
         print(f"  [REDIS] Connection failed: {e}")
 
 # ============================================================
-# BACKGROUND THREAD: Continuous Training
+# BACKGROUND THREAD: Continuous Training (max speed)
 # ============================================================
 def training_thread():
-    """Continuous model training in background."""
-    print("  [TRAIN] Continuous training started...")
+    """Continuous model training - max speed, no sleep between epochs."""
+    print("  [TRAIN] Max-speed training started...")
     ep = 0
     while running:
         try:
@@ -414,34 +425,53 @@ def training_thread():
             loss, count = trainer.train_one_epoch()
             if count > 0:
                 _live_stats['loss'] = loss
-            if count > 0 and ep % 50 == 0:
+            if count > 0 and ep % 20 == 0:
                 print(f"  [TRAIN] Ep {ep} | loss={loss:.4f} | step={model.step}")
-            if model.step % 100 == 0:
+            if model.step % 50 == 0:
                 model.save()
                 tokenizer.save()
-            time.sleep(5)
         except Exception as e:
             print(f"  [TRAIN] Error: {e}")
-            time.sleep(10)
+            time.sleep(1)
 
 # ============================================================
-# BACKGROUND THREAD: Periodic Web Scraping (every 2h)
+# BACKGROUND THREAD: Periodic Web Scraping (every 1h, parallel)
 # ============================================================
+def _scrape_source(scraper, method, name):
+    """Scrape a single source in a thread."""
+    try:
+        method()
+    except Exception as e:
+        print(f"  [WEB] {name} error: {e}")
+
 def web_scrape_thread():
-    """Periodic web scraping every 2 hours."""
+    """Periodic web scraping every hour, parallel sources."""
     while running:
-        # Wait 2 hours first
-        for _ in range(7200):
+        # Wait 1 hour first
+        for _ in range(3600):
             if not running:
                 return
             time.sleep(1)
         if not running:
             return
         try:
-            print("  [WEB] Periodic scrape starting...")
+            print("  [WEB] Parallel scrape starting...")
             scraper = DikaWebScraper(db)
-            scraper.scrape_all()
-            print("  [WEB] Periodic scrape done!")
+            sources = [
+                (scraper.scrape_indonesian_corpus, 'Corpus'),
+                (scraper.scrape_wikipedia_full, 'Wikipedia'),
+                (scraper.scrape_stackoverflow_id, 'StackOverflow'),
+                (scraper.scrape_github_trending, 'GitHub'),
+                (scraper.scrape_duckduckgo, 'DuckDuckGo'),
+            ]
+            threads = []
+            for method, name in sources:
+                t = threading.Thread(target=_scrape_source, args=(scraper, method, name), daemon=True)
+                t.start()
+                threads.append(t)
+            for t in threads:
+                t.join(timeout=120)
+            print(f"  [WEB] Parallel scrape done! New: {scraper.stats['new']}")
         except Exception as e:
             print(f"  [WEB] Periodic error: {e}")
 
@@ -459,15 +489,36 @@ redis_t.start()
 _live_stats['threads']['redis'] = 'on'
 print("  Redis sync thread started!")
 
-# Do web scrape FIRST (blocking - get data before training)
+# Do web scrape FIRST - PARALLEL sources for speed!
 try:
     scraper = DikaWebScraper(db)
-    scraper.scrape_all()
+    sources = [
+        (scraper.scrape_indonesian_corpus, 'Corpus'),
+        (scraper.scrape_wikipedia_full, 'Wikipedia'),
+        (scraper.scrape_wikipedia_id, 'Wiki Summary'),
+        (scraper.scrape_stackoverflow_id, 'StackOverflow'),
+        (scraper.scrape_github_trending, 'GitHub'),
+        (scraper.scrape_duckduckgo, 'DuckDuckGo'),
+    ]
+    threads = []
+    for method, name in sources:
+        t = threading.Thread(target=_scrape_source, args=(scraper, method, name), daemon=True)
+        t.start()
+        threads.append(t)
+        time.sleep(0.1)  # Stagger slightly
+    for t in threads:
+        t.join(timeout=180)
 except Exception as e:
     print(f"  [WEB] Error: {e}")
 
 stats = db.get_stats()
-print(f"\n  Web scrape result: {stats['total']} total messages")
+print(f"\n  Web scrape result: {stats['total']} total messages (parallel)")
+
+# Start background training IMMEDIATELY (parallel with everything)
+train_t = threading.Thread(target=training_thread, daemon=True)
+train_t.start()
+_live_stats['threads']['training'] = 'on'
+print("  Background training started!")
 
 # ============================================================
 # PHASE 2: TRAINING (from web data)
@@ -481,22 +532,21 @@ if stats['total'] > 0:
     trainer.build_vocab()
     print(f"  Vocab: {tokenizer.vocab_size} tokens")
 
-    print("  Training 200 epochs...")
-    for ep in range(1, 201):
+    print("  Training 500 epochs (max speed)...")
+    for ep in range(1, 501):
         if not running:
             break
         try:
             loss, count = trainer.train_one_epoch()
             if count > 0:
-                if ep % 20 == 0 or ep == 1 or ep == 200:
-                    print(f"  [TRAIN] Ep {ep:3d}/200 | loss={loss:.4f} | total={model.step}")
-                if ep % 10 == 0:
+                _live_stats['loss'] = loss
+                if ep % 50 == 0 or ep == 1 or ep == 500:
+                    print(f"  [TRAIN] Ep {ep:3d}/500 | loss={loss:.4f} | step={model.step}")
+                if ep % 25 == 0:
                     model.save()
                     tokenizer.save()
-            time.sleep(3)
         except Exception as e:
             print(f"  [TRAIN] Error: {e}")
-            time.sleep(5)
 
     model.save()
     tokenizer.save()
@@ -536,12 +586,7 @@ print("  Auto-reply + scrape + training + Redis sync")
 print("  Auto-stop: 12 jam")
 print("=" * 60)
 
-# Start background threads
-train_t = threading.Thread(target=training_thread, daemon=True)
-train_t.start()
-_live_stats['threads']['training'] = 'on'
-print("  Training thread started (background)")
-
+# Start web scrape background thread
 web_t = threading.Thread(target=web_scrape_thread, daemon=True)
 web_t.start()
 _live_stats['threads']['web_scrape'] = 'on'
