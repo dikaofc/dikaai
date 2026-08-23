@@ -1,17 +1,20 @@
-"""DikaAI Orchestrator - The Brain.
+"""DikaAI v2 Orchestrator - Complete AI Operating System Brain.
 
-Routes tasks → Plans execution → Runs coding agent → Learns from results.
-
-Architecture:
-  User → Router → Planner → Executor → Memory → Response
-                  ↑                         ↓
-                  └──── RAG ──── Coding Memory
+Pipeline:
+  User → InputProcessor → StateManager → ContextManager
+  → Router → Memory/RAG/Project → Agent → Model
+  → Observer → Validator → Send/Regenerate
 """
 
 import time
-import json
-from core.router import Router, TaskType, Route
+from core.router import Router, TaskType
+from core.input_processor import InputProcessor
 from core.context import ContextManager, ConversationState
+from core.state_manager import StateManager
+from core.token_budget import TokenBudget
+from core.validator import Validator
+from core.observer import Observer
+from core.project_index import ProjectIndex
 from core.config import ROUTER, AGENT
 from agent.executor import Executor
 from memory.short_term import ConversationContext
@@ -20,53 +23,89 @@ from rag.retriever import Retriever
 
 
 class Orchestrator:
-    """Main brain of DikaAI - orchestrates all components."""
+    """Main brain - orchestrates all DikaAI components."""
 
     def __init__(self, workspace: str = None, model=None, tokenizer=None):
         self.workspace = workspace
         self.model = model
         self.tokenizer = tokenizer
 
-        # Core components
+        # === FOUNDATION ===
+        self.input_processor = InputProcessor()
+        self.state_manager = StateManager()
+        self.context_manager = ContextManager()
+        self.token_budget = TokenBudget(total=4000)
+        self.validator = Validator()
+        self.observer = Observer()
+
+        # === CORE ===
         self.router = Router()
         self.executor = Executor(workspace, model, tokenizer)
-        self.context = ConversationContext()
+        self.memory = ConversationContext()
         self.coding_memory = CodingMemory()
         self.retriever = Retriever()
-        self.ctx_manager = ContextManager()  # Context management
+        self.project_index = ProjectIndex(workspace)
 
-        # Stats
+        # === STATS ===
         self.total_tasks = 0
         self.successful_tasks = 0
+        self.failed_tasks = 0
+        self.regenerations = 0
         self.start_time = time.time()
 
     def process(self, user_input: str) -> dict:
-        """Process user input through full pipeline with context management."""
+        """Full pipeline: input → analyze → route → execute → validate → respond."""
         start = time.time()
         self.total_tasks += 1
 
-        # 1. Context Management: resolve intent + track topic
-        ctx_result = self.ctx_manager.process_message(user_input)
+        # === STEP 1: INPUT PROCESSING ===
+        input_analysis = self.input_processor.process(user_input)
+        self.observer.log_tool_call('input_process', True, 0)
+
+        # === STEP 2: INTENT RESOLUTION (handle vague references) ===
+        ctx_result = self.context_manager.process_message(user_input)
         intent = ctx_result['intent']
         topic_info = ctx_result['topic']
 
-        # 2. Add to conversation memory
-        self.context.add_user_message(user_input)
-
-        # 3. Route the task (use resolved intent if reference)
+        # Use resolved intent if reference
         effective_input = intent.get('context', user_input) if intent.get('resolved') else user_input
+
+        # === STEP 3: ROUTING ===
         route = self.router.route(effective_input)
+        self.observer.log_tool_call('router', True, 0)
 
-        # Override route with topic context
-        if topic_info.get('topic') and topic_info['topic'] != 'general':
-            if route.task_type == TaskType.CHAT and topic_info['confidence'] > 0.5:
-                # Keep topic context even for chat
-                pass
+        # === STEP 4: STATE MANAGEMENT ===
+        task_state = self.state_manager.start_task(user_input[:200])
 
-        # 4. Build hierarchical context (L0-L5)
-        full_context = self._build_context(user_input, route)
+        # === STEP 5: MEMORY RETRIEVAL ===
+        memory_context = self.coding_memory.get_context(user_input, input_analysis.get('language'))
 
-        # 5. Execute based on route type
+        # === STEP 6: RAG RETRIEVAL ===
+        rag_context = self.retriever.retrieve(user_input)
+
+        # === STEP 7: PROJECT CONTEXT ===
+        project_context = ""
+        if self.project_index.indexed:
+            project_context = self.project_index.get_context(user_input)
+
+        # === STEP 8: BUILD HIERARCHICAL CONTEXT ===
+        self.token_budget = TokenBudget(total=4000)  # Reset per request
+        context_str = self.context_manager.build_context(
+            effective_input, memory_context, project_context
+        )
+
+        # === STEP 9: EXECUTE ===
+        full_context = {
+            'language': input_analysis.get('language'),
+            'action': route.action,
+            'input_analysis': input_analysis,
+            'topic': topic_info,
+            'memory': memory_context,
+            'rag': rag_context,
+            'project': project_context,
+            'context_str': context_str,
+        }
+
         if route.task_type == TaskType.CODE:
             result = self._handle_code(user_input, route, full_context)
         elif route.task_type == TaskType.REASON:
@@ -78,99 +117,80 @@ class Orchestrator:
         else:
             result = self._handle_chat(user_input, route, full_context)
 
-        # 6. Validate response (anti-topic-drift)
+        # === STEP 10: VALIDATION ===
         response = result.get('response', '')
-        validation = self.ctx_manager.validate_response(response, user_input)
-        if validation.get('should_regenerate') and self.model:
-            # Try to regenerate with better context
-            pass  # For now, send as-is
+        validation = self.validator.validate(
+            response, user_input,
+            state=self.context_manager.state,
+            context=full_context
+        )
+        self.observer.log_validation(validation.passed, validation.issues)
 
-        # 7. Update context state after response
-        self.ctx_manager.update_after_response(user_input, response)
+        # Regenerate if validation fails
+        if validation.should_regenerate and self.regenerations < 3:
+            self.regenerations += 1
+            self.observer.log_retry(self.regenerations, validation.regenerate_reason)
+            # For now, send as-is (regeneration needs model call)
+            pass
 
-        # 8. Add response to memory
-        self.context.add_assistant_message(response, {
+        # === STEP 11: UPDATE STATE ===
+        self.context_manager.update_after_response(user_input, response)
+        self.state_manager.complete_current(response[:200])
+
+        # === STEP 12: SAVE EXPERIENCE ===
+        self.memory.add_user_message(user_input)
+        self.memory.add_assistant_message(response, {
             'route': route.task_type.value,
             'success': result.get('success', True),
             'topic': topic_info.get('topic', ''),
-            'time': f'{time.time() - start:.1f}s',
         })
 
-        # 6. Update stats
+        # === STEP 13: BUILD FINAL RESPONSE ===
+        elapsed = time.time() - start
         if result.get('success', True):
             self.successful_tasks += 1
-
-        result['route'] = route.task_type.value
-        result['time'] = f'{time.time() - start:.1f}s'
-        result['task_id'] = self.total_tasks
-
-        return result
-
-    def _build_context(self, user_input: str, route: Route) -> dict:
-        """Build full context for execution."""
-        ctx = {
-            'language': route.language,
-            'action': route.action,
-            'conversation': self.context.short_term.get_context(max_tokens=300),
-            'project': self.context.project.to_dict(),
-        }
-
-        # Add RAG context
-        rag_context = self.retriever.retrieve(user_input)
-        if rag_context:
-            ctx['rag_context'] = rag_context
-
-        # Add coding memory
-        mem_context = self.coding_memory.get_context(user_input, route.language)
-        if mem_context:
-            ctx['memory_context'] = mem_context
-
-        return ctx
-
-    def _handle_code(self, user_input: str, route: Route, context: dict) -> dict:
-        """Handle coding tasks - the core capability."""
-        # Update context
-        self.context.set_task(user_input)
-        if route.language:
-            self.context.project.languages = [route.language]
-
-        # Execute coding task
-        result = self.executor.execute(user_input, context, max_retries=AGENT['max_retries'])
-
-        # Generate response
-        response = self._generate_code_response(user_input, result, context)
+        else:
+            self.failed_tasks += 1
 
         return {
             'response': response,
-            'success': result.success,
-            'execution': result.to_dict(),
-            'type': 'code',
+            'route': route.task_type.value,
+            'success': result.get('success', True),
+            'time': f'{elapsed:.1f}s',
+            'topic': topic_info.get('topic', ''),
+            'intent': intent.get('intent', ''),
+            'complexity': input_analysis.get('complexity', ''),
+            'validation': validation.to_dict(),
+            'task_id': self.total_tasks,
+            'state': self.state_manager.get_current(),
         }
 
-    def _handle_reason(self, user_input: str, route: Route, context: dict) -> dict:
-        """Handle complex reasoning tasks."""
-        # Use model for reasoning
+    # === HANDLERS ===
+
+    def _handle_code(self, user_input, route, context):
+        task_state = self.state_manager.current_task
+        if task_state:
+            task_state.start("executing code task")
+
+        result = self.executor.execute(user_input, context, max_retries=AGENT['max_retries'])
+        self.observer.log_tool_call('code_agent', result.success, result.total_time)
+
+        response = self._generate_code_response(user_input, result, context)
+        return {'response': response, 'success': result.success, 'type': 'code'}
+
+    def _handle_reason(self, user_input, route, context):
         response = self._generate_response(user_input, context,
                                            temperature=ROUTER['temperature_reason'])
+        return {'response': response, 'success': True, 'type': 'reason'}
 
-        return {
-            'response': response,
-            'success': True,
-            'type': 'reason',
-        }
-
-    def _handle_search(self, user_input: str, route: Route, context: dict) -> dict:
-        """Handle search/lookup tasks."""
-        # Search codebase
+    def _handle_search(self, user_input, route, context):
         from tools.filesystem import FilesystemTools
         fs = FilesystemTools(self.workspace)
-
-        # Extract search query
         query = user_input
         for word in ['cari', 'find', 'search', 'look', 'dimana', 'where']:
             query = query.replace(word, '').strip()
-
         results = fs.search_code(query, self.workspace or '.')
+        self.observer.log_tool_call('search', results.get('success', False), 0)
 
         if results.get('matches'):
             lines = [f"Found {len(results['matches'])} matches:"]
@@ -179,44 +199,24 @@ class Orchestrator:
             response = '\n'.join(lines)
         else:
             response = self._generate_response(user_input, context)
+        return {'response': response, 'success': True, 'type': 'search'}
 
-        return {
-            'response': response,
-            'success': True,
-            'search_results': results,
-            'type': 'search',
-        }
-
-    def _handle_tool(self, user_input: str, route: Route, context: dict) -> dict:
-        """Handle tool operations (git, install, etc)."""
+    def _handle_tool(self, user_input, route, context):
         from tools.terminal import TerminalTools
         from tools.git_tools import GitTools
-
         terminal = TerminalTools(self.workspace)
         git = GitTools(self.workspace)
 
-        # Detect git commands
         if 'git' in user_input.lower():
             if 'status' in user_input:
                 result = git.status()
-                response = result.get('stdout', 'No changes')
             elif 'diff' in user_input:
                 result = git.diff()
-                response = result.get('stdout', 'No diff')
             elif 'log' in user_input:
                 result = git.log()
-                response = result.get('stdout', 'No commits')
-            elif 'commit' in user_input:
-                msg = user_input.split('commit')[-1].strip().strip('"').strip("'")
-                if not msg:
-                    msg = "Update from DikaAI"
-                result = git.commit(msg, add_all=True)
-                response = result.get('stdout', result.get('stderr', 'Commit done'))
             else:
-                # Run git command
-                cmd = user_input.strip()
-                result = terminal.run_command(cmd)
-                response = result.get('stdout', result.get('stderr', 'Done'))
+                result = terminal.run_command(user_input.strip())
+            response = result.get('stdout', result.get('stderr', 'Done'))
         elif 'install' in user_input.lower() or 'pip' in user_input.lower():
             cmd = user_input.strip()
             if not cmd.startswith('pip'):
@@ -227,90 +227,65 @@ class Orchestrator:
             result = terminal.run_command(user_input.strip())
             response = result.get('stdout', result.get('stderr', 'Done'))
 
-        return {
-            'response': response,
-            'success': True,
-            'type': 'tool',
-        }
+        self.observer.log_tool_call('terminal', True, 0)
+        return {'response': response, 'success': True, 'type': 'tool'}
 
-    def _handle_chat(self, user_input: str, route: Route, context: dict) -> dict:
-        """Handle simple chat/conversation."""
-        # Use smart_reply as fallback
+    def _handle_chat(self, user_input, route, context):
         from smart_reply import get_smart_reply
         response = get_smart_reply(user_input)
+        return {'response': response, 'success': True, 'type': 'chat'}
 
-        return {
-            'response': response,
-            'success': True,
-            'type': 'chat',
-        }
+    # === RESPONSE GENERATION ===
 
-    def _generate_code_response(self, task: str, result, context: dict) -> str:
-        """Generate a response for coding tasks."""
+    def _generate_code_response(self, task, result, context):
         lines = []
-
         if result.success:
-            lines.append(f"✅ Task completed successfully!")
+            lines.append("✅ Task completed!")
             if result.output:
-                # Show relevant output
                 output_lines = result.output.strip().split('\n')
                 if len(output_lines) > 10:
                     lines.append(f"Output ({len(output_lines)} lines):")
                     for line in output_lines[:5]:
                         lines.append(f"  {line}")
-                    lines.append(f"  ... ({len(output_lines) - 5} more lines)")
+                    lines.append(f"  ... ({len(output_lines) - 5} more)")
                 else:
-                    lines.append(f"Output:")
                     for line in output_lines:
                         lines.append(f"  {line}")
         else:
-            lines.append(f"❌ Task failed after {result.retries} retries")
+            lines.append(f"❌ Failed after {result.retries} retries")
             if result.error:
                 lines.append(f"Error: {result.error[:200]}")
-            if result.fixes_applied:
-                lines.append(f"Attempted fixes: {', '.join(result.fixes_applied[:3])}")
-
-        lines.append(f"\n⏱️ Time: {result.total_time:.1f}s | Steps: {len(result.steps_executed)}")
-
+        lines.append(f"⏱️ {result.total_time:.1f}s | {len(result.steps_executed)} steps")
         return '\n'.join(lines)
 
-    def _generate_response(self, prompt: str, context: dict, temperature: float = 0.7) -> str:
-        """Generate response using local LLM."""
+    def _generate_response(self, prompt, context, temperature=0.7):
         if self.model and self.tokenizer and self.tokenizer._loaded:
             try:
-                # Build prompt with context
-                full_prompt = prompt
-                if context.get('rag_context'):
-                    full_prompt = f"{context['rag_context']}\n\nUser: {prompt}"
-                elif context.get('memory_context'):
-                    full_prompt = f"{context['memory_context']}\n\nUser: {prompt}"
-
-                from core.config import ROUTER
                 from config import CONTEXT_LEN
-                tokens = self.tokenizer.encode(full_prompt, max_length=CONTEXT_LEN)
-                generated = self.model.generate(
-                    tokens,
-                    max_len=ROUTER['code_max_tokens'],
-                    temperature=temperature,
-                )
+                tokens = self.tokenizer.encode(prompt, max_length=CONTEXT_LEN)
+                generated = self.model.generate(tokens, max_len=256, temperature=temperature)
                 response = self.tokenizer.decode(generated)
                 if response and len(response.strip()) > 3:
                     return response.strip()
             except Exception:
                 pass
-
-        # Fallback to smart_reply
         from smart_reply import get_smart_reply
         return get_smart_reply(prompt)
 
-    def get_stats(self) -> dict:
-        """Get orchestrator statistics."""
+    # === STATS ===
+
+    def get_stats(self):
         return {
             'total_tasks': self.total_tasks,
-            'successful_tasks': self.successful_tasks,
+            'successful': self.successful_tasks,
+            'failed': self.failed_tasks,
+            'regenerations': self.regenerations,
             'success_rate': f'{self.successful_tasks/max(self.total_tasks,1)*100:.0f}%',
-            'uptime': f'{(time.time() - self.start_time)/3600:.1f}h',
+            'uptime': f'{(time.time()-self.start_time)/3600:.1f}h',
             'coding_memory': self.coding_memory.get_stats(),
             'rag': self.retriever.get_stats(),
-            'conversation_messages': len(self.context.short_term.messages),
+            'observer': self.observer.get_stats(),
+            'state': self.state_manager.to_dict(),
+            'project_indexed': self.project_index.indexed,
+            'conversation': len(self.memory.short_term.messages),
         }
