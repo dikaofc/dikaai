@@ -14,6 +14,7 @@ Usage:
 from dikaai.benchmark.runner import BenchmarkRunner
 from dikaai.benchmark.evaluator import Evaluator
 from dikaai.benchmark.tasks import get_tasks, get_categories, ALL_TASKS
+from dikaai.benchmark.needle_haystack import NeedleHaystackBenchmark
 
 __all__ = [
     'BenchmarkRunner',
@@ -21,4 +22,5 @@ __all__ = [
     'get_tasks',
     'get_categories',
     'ALL_TASKS',
+    'NeedleHaystackBenchmark',
 ]

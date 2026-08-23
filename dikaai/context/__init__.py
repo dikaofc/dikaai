@@ -16,6 +16,8 @@ from dikaai.context.tracker import (
     TOPIC_KEYWORDS,
     REFERENCE_WORDS,
 )
+from dikaai.context.compressor import ContextCompressor, CompressedContext
+from dikaai.context.long_context import LongContextManager
 
 __all__ = [
     'ContextManager',
@@ -24,4 +26,7 @@ __all__ = [
     'IntentResolver',
     'TOPIC_KEYWORDS',
     'REFERENCE_WORDS',
+    'ContextCompressor',
+    'CompressedContext',
+    'LongContextManager',
 ]

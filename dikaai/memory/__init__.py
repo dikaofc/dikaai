@@ -8,8 +8,10 @@ Components:
 
 from dikaai.memory.short_term import ConversationMemory
 from dikaai.memory.coding_memory import CodingMemory
+from dikaai.memory.hierarchical import HierarchicalMemory
 
 __all__ = [
     'ConversationMemory',
     'CodingMemory',
+    'HierarchicalMemory',
 ]
