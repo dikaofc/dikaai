@@ -253,9 +253,13 @@ def _get_model_info():
             data = json.load(f)
         info['vocab_size'] = data.get('vocab_size', 0)
         info['step'] = data.get('step', 0)
-        embed = data.get('embedding', [])
-        if embed and isinstance(embed[0], list):
-            info['params'] = len(embed) * len(embed[0])
+        # Prefer explicit 'params' written by the (torch) model.save() sidecar.
+        params = data.get('params', 0)
+        if not params:
+            embed = data.get('embedding', [])
+            if embed and isinstance(embed[0], list):
+                params = len(embed) * len(embed[0])
+        info['params'] = params
     except Exception:
         pass
     return info

@@ -119,7 +119,7 @@ class DikaTrainer:
         return pairs
 
     def train_one_epoch(self):
-        """Run one training epoch."""
+        """Run one training epoch (batched for GPU speed)."""
         if not self.tokenizer._loaded:
             if not self.build_vocab():
                 return 0.0, 0
@@ -128,18 +128,20 @@ class DikaTrainer:
         if not pairs:
             return 0.0, 0
 
+        random.shuffle(pairs)
+        # Truncate over-long contexts to CONTEXT_LEN for batched tensors.
+        pairs = [(c[:CONTEXT_LEN], t) for c, t in pairs]
+
         total_loss = 0.0
         count = 0
 
-        random.shuffle(pairs)
-
-        for input_tokens, target in pairs:
+        for i in range(0, len(pairs), BATCH_SIZE):
+            batch = pairs[i:i + BATCH_SIZE]
             try:
-                padded = input_tokens + [0] * (CONTEXT_LEN - len(input_tokens))
-                padded = padded[:CONTEXT_LEN]
-                loss = self.model.train_step_chunked(padded, target)
-                total_loss += loss
-                count += 1
+                loss = self.model.train_on_batch(batch)
+                if loss and loss > 0:
+                    total_loss += loss
+                    count += len(batch)
             except Exception as e:
                 continue
 

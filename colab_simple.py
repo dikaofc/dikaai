@@ -47,6 +47,8 @@ except Exception:
     print("    Google Drive not available (not Colab?)")
 
 os.system('pip install telethon aiohttp nest_asyncio -q')
+# PyTorch (Colab GPU runtime has it preinstalled; install as fallback / pin CPU-free)
+os.system('pip install torch -q')
 
 if os.path.exists('/content/dikaai'):
     print("    Removing old clone...")
@@ -134,6 +136,14 @@ config_content += "TELEGRAM_API_HASH=" + str(TELEGRAM_API_HASH) + "\n"
 config_content += "TELEGRAM_PHONE=" + str(TELEGRAM_PHONE) + "\n"
 config_content += "UPSTASH_REDIS_REST_URL=" + str(UPSTASH_REDIS_URL) + "\n"
 config_content += "UPSTASH_REDIS_REST_TOKEN=" + str(UPSTASH_REDIS_TOKEN) + "\n"
+# GPU XL model sizing (T4)
+config_content += "MAX_VOCAB_SIZE=25000\n"
+config_content += "EMBEDDING_DIM=512\n"
+config_content += "HIDDEN_DIM=1024\n"
+config_content += "NUM_LAYERS=3\n"
+config_content += "CONTEXT_LENGTH=128\n"
+config_content += "CHUNK_SIZE=64\n"
+config_content += "BATCH_SIZE=128\n"
 
 config_path = os.path.join('/content/dikaai', 'config.env')
 with open(config_path, 'w') as f:
@@ -181,6 +191,16 @@ from dikaai.config import (
 )
 
 print("    All imports OK!")
+
+# Report compute device (T4 GPU if runtime is set to GPU)
+try:
+    import torch as _torch
+    _cuda = _torch.cuda.is_available()
+    print("    [GPU] CUDA available: " + str(_cuda) + " | device: " + ("cuda" if _cuda else "cpu"))
+    if _cuda:
+        print("    [GPU] Using: " + _torch.cuda.get_device_name(0))
+except Exception as _e:
+    print("    [GPU] torch not available: " + str(_e))
 
 # ============================================================
 # LIVE STATS DISPLAY

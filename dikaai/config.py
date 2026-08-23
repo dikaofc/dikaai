@@ -85,7 +85,7 @@ EMBED_DIM = int(os.environ.get('EMBEDDING_DIM', 64))
 HIDDEN_DIM = int(os.environ.get('HIDDEN_DIM', 128))
 CONTEXT_LEN = int(os.environ.get('CONTEXT_LENGTH', 64))
 CHUNK_SIZE = int(os.environ.get('CHUNK_SIZE', 32))
-NUM_LAYERS = 1
+NUM_LAYERS = int(os.environ.get('NUM_LAYERS', 1))
 
 # Training - Aggressive for fast convergence
 BATCH_SIZE = int(os.environ.get('BATCH_SIZE', MAX_WORKERS * 2))

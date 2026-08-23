@@ -255,8 +255,11 @@ def sync_model(r):
         with open(model_file, 'r') as f:
             data = json.load(f)
 
-        embed = data.get('embedding', [])
-        params = len(embed) * len(embed[0]) if embed and isinstance(embed[0], list) else 0
+        params = data.get('params', 0)
+        if not params:
+            embed = data.get('embedding', [])
+            if embed and isinstance(embed[0], list):
+                params = len(embed) * len(embed[0])
 
         r.hset('dikaai:model',
             'vocab_size', str(data.get('vocab_size', 0)),
