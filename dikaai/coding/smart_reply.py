@@ -1,12 +1,13 @@
-"""DikaAi Smart Reply - Fallback system when model output is garbage
-100+ Indonesian conversational patterns for natural replies."""
+"""DikaAI Smart Reply v2 - Intelligent pattern matching with context awareness.
+
+Instead of random replies, gives specific, helpful responses based on:
+- Exact keyword detection (not just "coding" → random)
+- Context chains (coding question → coding answer)
+- Intent understanding (capability question → capability answer)
+"""
 import random
 import re
-import hashlib
 
-# ============================================================
-# GARBAGE DETECTION
-# ============================================================
 
 def _is_garbage(text):
     """Check if model output is garbage/unusable."""
@@ -19,15 +20,12 @@ def _is_garbage(text):
         return True
     words = text.split()
     chars = text.replace(' ', '')
-    # Too few unique chars (e.g. 'us us hc hc')
     if len(set(chars)) <= 3:
         return True
-    # Very few unique words
     if len(words) > 1:
         unique_ratio = len(set(words)) / len(words)
         if unique_ratio < 0.5:
             return True
-    # Repeated pattern (any window)
     if len(words) >= 4:
         for window in range(1, min(5, len(words) // 2 + 1)):
             pattern = words[:window]
@@ -35,15 +33,11 @@ def _is_garbage(text):
                          if words[i:i+window] == pattern)
             if matches >= 2:
                 return True
-    # Bigram repetition (us us hc hc -> us hc repeats)
-    if len(words) >= 4:
-        bigrams = [f'{words[i]}_{words[i+1]}' for i in range(0, len(words)-1, 2)]
-        if len(set(bigrams)) <= 1 and len(bigrams) >= 2:
-            return True
     vowels = set('aeiou')
     if not any(c in vowels for c in chars):
         return True
     return False
+
 
 def _echo_check(reply, user_msg):
     """Check if reply echoes the user message."""
@@ -57,412 +51,193 @@ def _echo_check(reply, user_msg):
         return True
     return False
 
+
 # ============================================================
-# CONVERSATIONAL PATTERNS (100+ replies)
+# INTENT-BASED REPLIES (specific, not random)
 # ============================================================
 
-PATTERNS = [
+INTENT_REPLIES = {
+    # === CAPABILITY QUESTIONS ===
+    'bisa coding': [
+        "Bisa dong! Aku bisa bantu:\n🔧 **Python** - fibonacci, sorting, algorithms\n🌐 **JavaScript** - debounce, fetch, DOM\n🦀 **Rust** - structs, traits, ownership\n🔷 **C++** - vectors, lambdas, STL\n🐹 **Go** - goroutines, channels\n\nCoba bilang 'buatin function fibonacci' atau 'write a debounce function'!",
+    ],
+    'kamu bisa apa': [
+        "Aku DikaAI, AI coding assistant! 🧠\n\nYang bisa aku lakuin:\n📝 **Buat kode** - Python, JS, Rust, C++, Go\n🐛 **Fix error** - kasih error message, aku fix\n📂 **Git** - status, commit, branch\n🔍 **Cari kode** - search dalam project\n🧠 **Jelaskan** - algoritma, konsep programming\n\nTanya aja, gas! 🚀",
+    ],
+    'siapa kamu': [
+        "Aku DikaAI! 🧠 AI Coding Agent yang dibuat buat bantu coding.\n\nAku bisa:\n✅ Buat kode (Python, JS, Rust, C++, Go)\n✅ Fix error & debugging\n✅ Jelaskan konsep programming\n✅ Operasi Git\n✅ Search dalam codebase\n\nMau coba? Bilang aja mau bikin apa!",
+    ],
+    'apa itu dikaai': [
+        "DikaAI adalah AI Coding Agent & Chat System 🧠\n\nArsitekturnya:\n```\nUser → Context → Memory → RAG → Agent → Model → Response\n```\n\nFitur:\n📝 Multi-language code generation\n🧠 Memory & context management\n🔧 Tool system (files, terminal, git)\n📊 Benchmark & evaluation\n🔄 Continuous learning from training data",
+    ],
+
+    # === CODING REQUESTS ===
+    'buatin code': [
+        "Oke! Aku bisa buatin code. Spesifik nya mau bahasa apa?\n\nContoh yang bisa aku buatin:\n🔢 `fibonacci function` - Python/JS/Rust\n🔍 `binary search` - semua bahasa\n📊 `merge sort` / `quicksort`\n🏗️ `stack` / `queue` / `linked list`\n🌐 `HTTP GET request`\n📁 `read file` / `write file`\n\nTinggal bilang aja mau bikin apa!",
+    ],
+    'buat function': [
+        "Siap! Mau function apa? Contoh:\n\n🔢 `fibonacci(n)` - angka Fibonacci\n📊 `factorial(n)` - faktorial\n🔍 `binary_search(arr, target)` - cari di sorted array\n✅ `is_palindrome(s)` - cek palindrome\n📝 `reverse_string(s)` - balik string\n🧮 `two_sum(nums, target)` - cari pasangan\n\nTinggal pilih atau sebutkan sendiri!",
+    ],
+    'write.*function': [
+        "Sure! What function do you need?\n\n🔢 **fibonacci(n)** - Fibonacci sequence\n🔍 **binary_search(arr, target)** - Search sorted array\n📊 **merge_sort(arr)** / **quicksort(arr)** - Sorting\n✅ **is_palindrome(s)** - Check palindrome\n📝 **reverse_string(s)** - Reverse string\n🧮 **two_sum(nums, target)** - Find pair\n\nJust say what you need!",
+    ],
+    'debounce': [
+        "Here's a clean debounce function:\n\n```javascript\nfunction debounce(fn, delay = 300) {\n    let timer;\n    return function (...args) {\n        clearTimeout(timer);\n        timer = setTimeout(() => fn.apply(this, args), delay);\n    };\n}\n\n// Usage\nconst search = debounce(fetchResults, 500);\ninput.addEventListener('input', search);\n```\n\nGunanya: delay execution sampai user berhenti input. Cocok buat search, resize handler, dll.",
+    ],
+
+    # === GIT ===
+    'git status': [
+        "Ini command git yang sering dipake:\n\n```bash\ngit status              # Lihat status file\ngit add .              # Stage semua file\ngit commit -m 'msg'    # Commit\ngit push               # Push ke remote\ngit pull               # Pull dari remote\ngit log --oneline      # Lihat history\ngit branch             # Lihat branches\ngit diff               # Lihat perubahan\n```\n\nMau aku jalanin yang mana?",
+    ],
+    'git': [
+        "Git commands yang tersedia:\n\n📊 `git status` - Status working tree\n📝 `git log` - Commit history\n🔀 `git branch` - List branches\n📋 `git diff` - Show changes\n\nMau run yang mana?",
+    ],
+
+    # === EXPLANATIONS ===
+    'apa itu': [
+        "Mau jelasin tentang apa? Contoh:\n\n🧠 **algoritma** - step-by-step solving\n📊 **data structure** - array, linked list, tree\n🔍 **binary search** - cari di sorted data\n🔄 **recursion** - function panggil diri sendiri\n🌐 **API** - Application Programming Interface\n🔐 **authentication** - verifikasi user\n\nTanya spesifik biar aku bisa jelasin lebih detail!",
+    ],
+    'jelaskan': [
+        "Mau dijelasin tentang apa? Contoh:\n\n🧠 **quicksort** - divide & conquer sorting\n📊 **linked list** - data structure linear\n🔄 **recursion** - function calling itself\n🌐 **REST API** - web service architecture\n🔐 **JWT** - JSON Web Token auth\n\nSpesifik ya biar jelas!",
+    ],
+    'apa itu python': [
+        "Python adalah bahasa pemrograman yang:\n\n🐍 **Simple syntax** - gampang dipelajari\n📦 **Rich ecosystem** - banyak library\n🌐 **Multi-purpose** - web, data science, AI, automation\n🔥 **Populer** - #1 di GitHub\n\nContoh kode Python:\n```python\n# Hello World\nprint('Hello, DikaAI!')\n\n# Function\ndef fibonacci(n):\n    if n <= 1: return n\n    a, b = 0, 1\n    for _ in range(2, n + 1):\n        a, b = b, a + b\n    return b\n```\n\nMau belajar Python dari mana?",
+    ],
+
     # === GREETINGS ===
-    {
-        'pattern': r'^(halo|hai|hi|hey|yo|hp|heh|heii|heloo|hellou|haloo|hayo|hay|oy|oi)\b',
-        'replies': [
-            'Halo juga! 😊 Ada apa nih?',
-            'Hai! Apa kabar? 🙌',
-            'Hey! Ada yang perlu?',
-            'Yo! Mau ngobrol apa?',
-            'Halo! Seneng bisa ngobrol sama kamu 😄',
-            'Hay! Lagi sibuk ga?',
-            'Hei! Ada apa nih?',
-            'Halo~ Ada yang bisa dibantu?',
-        ]
-    },
-    # === TIME-BASED GREETINGS ===
-    {
-        'pattern': r'\b(pagi|siang|sore|malam)\b',
-        'replies': [
-            'Selamat pagi! Semangat ya hari ini 💪',
-            'Siang! Udah makan belum?',
-            'Sore! Gimana harinya?',
-            'Malam! Udah istirahat belum? 🌙',
-            'Pagi-pagi udah aktif ya! 🌅',
-            'Siang-siang enaknya ngopi nih ☕',
-            'Sore enaknya jalan-jalan ya',
-            'Malam-malam masih begadang? 😄',
-        ]
-    },
-    # === HOW ARE YOU ===
-    {
-        'pattern': r'\b(kabar|kamu (?:gimana|apa|lagi)|gimana kabar|apa kabar|gmn kabar|kamu baik|you good|how are you)\b',
-        'replies': [
-            'Alhamdulillah baik! Kamu gimana?',
-            'Baik dong! Lagi semangat nih 🔥',
-            'Lumayan, lagi belajar jadi lebih pintar 🧠',
-            'Oke oke aja! Ada yang bisa dibantu?',
-            'Sehat alhamdulillah! Kamu juga ya 😊',
-            'Baik! Makasih udah nanya 😄',
-        ]
-    },
-    # === QUESTIONS (HOW/WHY/WHAT/WHERE/WHEN) ===
-    {
-        'pattern': r'\b(gimana|bagaimana|gmn|kenapa|knp|kenp|apa (?:itu|sih|aja|kabar)|siapa|dimana|dmna|diamna|kapan|kp|berapa|boleh)\b',
-        'replies': [
-            'Hmm, pertanyaan bagus! Menurutku sih...',
-            'Bisa dijelasin lebih detail ga?',
-            'Wah, topik yang menarik nih!',
-            'Aku juga lagi mikir tentang itu sebenernya 🤔',
-            'Good question! Coba search di Google juga ya',
-            'Hm, tergantung situasinya sih',
-            'Bisa banyak cara sebenernya, yang mana yang kamu mau?',
-            'Wah aku belum tau pasti, tapi semoga bisa bantu!',
-        ]
-    },
-    # === AGREEMENT / POSITIVE ===
-    {
-        'pattern': r'\b(setuju|bener|betul|iya|benar|mantap|oke|sip|gas|bagus|keren|ok|nice|good|great|wow|wah|asik|asyik|jos|joss|mantab|sipss|okeoke)\b',
-        'replies': [
-            'Iya bener banget! 👍',
-            'Setuju! Mantap jiwa 🔥',
-            'Gas! Kita gas bareng 🚀',
-            'Oke siap!',
-            'Betul tuh!mantap',
-            'Mantap, lanjut terus!',
-            'Wah keren! Aku juga suka 🔥',
-            'Nice! Good job! 👏',
-            'Jos! Emang bener tuh',
-            'Asik! Lanjut terus ya',
-        ]
-    },
+    'halo': [
+        "Halo juga! 😊 Ada apa nih?",
+        "Hai! Apa kabar? 🙌",
+        "Hey! Ada yang perlu dibantu?",
+        "Yo! Mau ngobrol apa? 🚀",
+        "Halo~ Siap bantu! 💪",
+    ],
+    'hai': [
+        "Hai! 👋 Ada yang bisa dibantu?",
+        "Hey! Mau ngobrol apa?",
+        "Hai hai! Gas aja tanya! 🚀",
+    ],
+    'hi': [
+        "Hi there! 👋 Ada apa?",
+        "Hey! Ready to help! 🚀",
+        "Hi! Mau coding atau ngobrol?",
+    ],
+    'test': [
+        "Oke, test berhasil! ✅\nAku DikaAI, siap bantu coding kamu! 🧠\n\nCoba tanya:\n- 'buatin fibonacci function'\n- 'apa itu binary search'\n- 'git status'\n- 'apa itu python'",
+    ],
+
     # === THANKS ===
-    {
-        'pattern': r'\b(makasih|terima kasih|thanks|thx|ty|mantap|bagus|helpful|help|thanks ya|mksh|thx ya|thanks bgd|makasih banyak)\b',
-        'replies': [
-            'Sama-sama! 😊',
-            'Santai aja, glad to help!',
-            'No problem! 👍',
-            'Anytime! 🙌',
-            'Sama-sama, seneng bisa bantu!',
-            'Santai bro, kapan aja boleh tanya lagi!',
-            'Sama-sama ya! 😄',
-        ]
-    },
-    # === TECH / CODING ===
-    {
-        'pattern': r'\b(python|javascript|coding|program|code|bug|error|deploy|server|database|api|react|node|docker|linux|github|git|css|html|php|laravel|flutter|android|ios|web|app|software|hardware|typing|keyboard|laptop|komputer|hp|android|iphone|samsung|xiaomi|oppo|vivo)\b',
-        'replies': [
-            'Wah lagi bahas coding ya! Aku juga suka coding 🧑‍💻',
-            'Coding emang seru tapi kadang bikin pusing ya 😅',
-            'Error lagi? Coba print dulu datanya, biasanya ketemu!',
-            'Deploy ke mana? Vercel gampang banget lho',
-            'Python atau JavaScript nih? Dua-duanya oke sih',
-            'Bug itu teman developer, hadapi aja 💪',
-            'Stack overflow solusinya selalu haha',
-            'Coding itu kayak puzzle, susah tapi seru! 🧩',
-            'Laptop baru? Buat coding enaknya yang minimal i5 ya',
-            'Android atau iOS? Dua-duanya ada kelebihannya',
-            'Web development seru! Mau frontend atau backend?',
-        ]
-    },
-    # === CASUAL CHAT ===
-    {
-        'pattern': r'\b(lagi apa|lagi sibuk|udah makan|mau kemana|weekend|nonton|game|anime|film|music|musik|lagu|buku|olahraga|olah raga|travel|jalan|liburan|libur)\b',
-        'replies': [
-            'Lagi ngoding nih, hobi banget 😄',
-            'Udah dong! Kamu gimana?',
-            'Weekend enaknya santai aja sih',
-            'Nonton apa? Kasih rekomendasi dong!',
-            'Game apa yang lagi dimainkan?',
-            'Anime apa yang lagi hot?',
-            'Musik genre apa yang kamu suka?',
-            'Liburan kemana? Aku iri 😭',
-            'Olahraga apa nih? Sehat itu penting! 💪',
-            'Buku bagus apa yang lagi dibaca?',
-        ]
-    },
-    # === FEELINGS / EMOTIONS ===
-    {
-        'pattern': r'\b(sedih|galau|kesel|dongkol|benci|maaf|sorry|parah|jelek|gagal|fail|error|bug|rusak|error|pusing|bingung|confused|bloon|bodoh|tolol|goblog|gblk|anjing|bangsat|kontol|memek|kntl|mmk|asu|bgst|anjay)\b',
-        'replies': [
-            'Sabar ya, pasti ada jalan keluarnya 💪',
-            'Tenang, semua pasti berlalu!',
-            'Aku di sini kalau mau cerita 😊',
-            'Gapapa, yang penting terus semangat!',
-            'Eh jangan sedih dong, ada aku nih!',
-            'Gagal itu wajar, yang penting coba lagi! 🔥',
-            'Pusing ya? Coba istirahat dulu bentar',
-            'Semua orang pernah kayak gitu kok, sabar ya 😊',
-            'Jangan menyerah! Kamu pasti bisa! 💪',
-        ]
-    },
-    # === COMPLIMENTS ===
-    {
-        'pattern': r'\b(keren|cantik|ganteng|pintar|cerdas|hebat|jago|pro|master|expert|suhu|guru|dosen|master)\b',
-        'replies': [
-            'Wah makasih! 😊 Kamu juga keren!',
-            'Hehe, masih belajar nih 🙏',
-            'Makasih! Tapi masih banyak yang perlu dipelajari',
-            'Kamu juga hebat kok! 💪',
-            'Wah jangan gitu, kita sama-sama belajar ya',
-            'Makasih! Aku juga terus belajar jadi lebih baik',
-        ]
-    },
-    # === IDK / CONFUSED ===
-    {
-        'pattern': r'\b(ga tau|gak tau|ngga tau|ga ngerti|gak ngerti|ngga ngerti|bingung|confused|pusing|gimana dong|gmn dong|gmn caranya|gimana caranya|cara|tutorial|belajar)\b',
-        'replies': [
-            'Coba search di Google ya, biasanya ada tutorialnya!',
-            'YouTube banyak tutorial bagus kok, coba cari di sana',
-            'Aku juga masih belajar, tapi coba langkah demi langkah ya',
-            'Jangan pusing! Mulai dari yang basic dulu',
-            'Banyak komunitas yang bisa bantu kok, coba gabung di Discord/Telegram',
-            'Semua orang pernah bingung, yang penting terus coba! 💪',
-        ]
-    },
-    # === GREETING RESPONSES ===
-    {
-        'pattern': r'\b(baik|alhamdulillah|lumayan|biasa aja|fine|good|ok|so so|sekedar|cuma|lagi|just)\b',
-        'replies': [
-            'Bagus dong! Seneng denger gitu 😊',
-            'Alhamdulillah ya! Semoga terus baik',
-            'Oke! Ada yang bisa dibantu?',
-            'Lumayan tuh, semangat terus ya! 💪',
-            'Good! Mau ngobrol apa nih?',
-        ]
-    },
-    # === HELP REQUESTS ===
-    {
-        'pattern': r'\b(bantu|tolong|help|bisa tolong|tolong dong|bantuin|help me|bisa ga|bisa gak|bisa gk|ada yang bisa)\b',
-        'replies': [
-            'Tentu! Aku siap bantu, ceritain aja 😊',
-            'Boleh! Tanya aja, insyaallah bisa bantu',
-            'Gas, ceritain masalahnya apa!',
-            'Siap! Aku dengerin nih 🎧',
-            'Yuk kita bantu bareng! Ceritain aja',
-        ]
-    },
-    # === YES/NO ===
-    {
-        'pattern': r'^(ya|y|iya|iye|yups|yep|yoi|bet|bener|emang|emg|iyalah|iya dong|iyain|iyain dong|ga|gak|nggak|enggak|kagak|no|n|nope|not really)\b',
-        'replies': [
-            'Oke noted! 👍',
-            'Siap! Ada lagi?',
-            'Oke gas!',
-            'Noted ya!',
-            'Oke oke, paham!',
-        ]
-    },
-    # === BIRTHDAY / CELEBRATION ===
-    {
-        'pattern': r'\b(ulang tahun|birthday|hbd|happy birthday|selamat|congrats|congratulation|恭喜|menang|juara|winner|champion)\b',
-        'replies': [
-            'Selamat! 🎉🎊 Semoga sukses terus ya!',
-            'Wah keren! Selamat! 🥳',
-            'Happy birthday! Semoga panjang umur dan sehat selalu! 🎂',
-            'Congrats! Kamu emang jago! 🏆',
-            'Selamat ya! Semoga makin sukses! 🎊',
-        ]
-    },
-    # === FOOD ===
-    {
-        'pattern': r'\b(makan|masak|resep|food|makanan|minum|kopi|teh|jus|snack|cemilan|buka puasa|sahur|buka|ngopi)\b',
-        'replies': [
-            'Enak tuh! Jangan lupa makan yang teratur ya 🍚',
-            'Makan apa? Kasih tau dong!',
-            'Kopi emang penyelamat saat ngoding ☕',
-            'Jangan lupa makan ya, kesehatan penting! 💪',
-            'Wah jadi lapar denger gitu 😋',
-        ]
-    },
-    # === MONEY / WORK ===
-    {
-        'pattern': r'\b(gaji|kerja|kantor|office|wfh|remote|freelance|side job|bisnis|usaha|dagang|jual|beli|harga|murah|mahal|diskon|promo|rekening|bank|transfer|duit|uang|modal)\b',
-        'replies': [
-            'Kerja keras pasti成果 nya kok! 💪',
-            'WFH enak ga? Aku lebih suka WFH sih',
-            'Freelance itu seru tapi kadang ga stabil ya',
-            'Bisnis online lagi trend banget nih',
-            'Semangat kerja! Pasti成果 nya! 🔥',
-            'Jangan lupa nabung ya! 💰',
-        ]
-    },
-    # === RELIGION / SPIRITUAL ===
-    {
-        'pattern': r'\b(sholat|salat|doa|allah|tuhan|god|berkah|rezeki|rezeki|amal|sedekah|quran|alquran|ngaji|ibadah|puasa|ramadhan|lebaran|idul fitri|idul adha)\b',
-        'replies': [
-            'Aamiin! Semoga dilancarkan ya 🤲',
-            'Semoga selalu dalam lindungan Allah SWT',
-            'Ibadah itu penting, jangan lupa ya! 🙏',
-            'Semoga berkah selalu! Aamiin 🤲',
-            'Jangan lupa sholat 5 waktu ya! 😊',
-        ]
-    },
-    # === TIME / SCHEDULE ===
-    {
-        'pattern': r'\b(jam|waktu|time|sekarang|saat ini|nanti|besok|lusa|kemarin|hari ini|today|tomorrow|yesterday|deadline|jadwal|schedule|menit|detik|jam berapa)\b',
-        'replies': [
-            'Waktu itu emas, jangan disia-siain ya! ⏰',
-            'Deadline kapan nih? Jangan mepet ya!',
-            'Jangan lupa istirahat juga ya, jangan kerja terus!',
-            'Atur waktu yang baik ya, produktif tapi tetep santai',
-            'Jangan begadang terus, tidur yang cukup! 🌙',
-        ]
-    },
-    # === BYE ===
-    {
-        'pattern': r'\b(dah|bye|goodbye|selamat tinggal|see you|sampe ketemu|hati hati|take care|good night|gn|td)\b',
-        'replies': [
-            'Dah! Hati-hati ya! 👋',
-            'Bye! See you next time! 🙌',
-            'Take care! Jaga kesehatan ya 😊',
-            'Sampai ketemu lagi! Semangat terus!',
-            'Good night! Tidur yang nyenyak 🌙',
-            'Dah! Seneng bisa ngobrol sama kamu!',
-        ]
-    },
-    # === RELATIONSHIP ===
-    {
-        'pattern': r'\b(pacar|doi|couple|jadian|putus|cinta|love|sayang|kasih|hati|crush|gebetan|jomblo|single|married|nikah|menikah|tunangan|kawin)\b',
-        'replies': [
-            'Wah lagi galau soal cinta nih? 😄',
-            'Single itu enak, bebas! Tapi kalau ada yang cocok gas aja 🔥',
-            'Semoga langgeng ya! 💕',
-            'Cinta itu indah, tapi jangan lupa belajar juga ya 😊',
-            'Sabar, jodoh itu ga kemana kok! 🤲',
-        ]
-    },
-    # === SPORTS ===
-    {
-        'pattern': r'\b(bola|sepak|futsal|basket|badminton|tennis|voli|moto gp|formula|nba|premier league|liga|champion|world cup|piala|olympic|olahraga|workout|gym|fitness|lari|running|joging|jogging|sepeda|cycling|renang|swimming|yoga)\b',
-        'replies': [
-            'Olahraga itu penting! Minimal jalan kaki 30 menit sehari 🏃',
-            'Main bola seru tuh! Tim mana yang kamu suka?',
-            'Gym rutin pasti hasilnya keliatan! 💪',
-            'Badminton Indonesia emang juara! 🏸',
-            'Jangan lupa pemanasan sebelum olahraga ya!',
-        ]
-    },
-    # === MUSIC ===
-    {
-        'pattern': r'\b(music|musik|lagu|song|playlist|spotify|youtube music|genre|rock|pop|jazz|dangdut|koplo|hip hop|rap|r&b|edm|dj|concert|konser|band|gitar|drum|piano|biola|suling|gamelan)\b',
-        'replies': [
-            'Musik emang bikin semangat! 🎵',
-            'Genre apa yang lagi kamu dengerin?',
-            'Playlist bagus apa nih? Kasih tau dong!',
-            'Dengerin musik sambil ngoding emang paling enak 🎧',
-            'Konser kemana? Aku iri! 😭',
-        ]
-    },
-    # === WEATHER ===
-    {
-        'pattern': r'\b(hujan|panas|dingin|cuaca|weather|gerimis|angin|banjir|kemarau|penghujan|panas banget|dingin banget|adem|sejuk)\b',
-        'replies': [
-            'Hujan enaknya di dalam nonton film 🎬',
-            'Panas-panas gini enaknya minum es ya 🧊',
-            'Jangan lupa bawa payung kalau keluar ya! ☂️',
-            'Adem-em enaknya tidur 😴',
-            'Cuaca ekstrem, jaga kesehatan ya! 💪',
-        ]
-    },
-    # === ANIME / MANGA ===
-    {
-        'pattern': r'\b(anime|manga|naruto|one piece|dragon ball|attack on titan|demon slayer|jujutsu kaisen|my hero|haikyuu|bleach|opm|solo leveling|manhwa|donghua|otaku|weeb|waifu|husbando)\b',
-        'replies': [
-            'Anime apa yang lagi kamu tonton?',
-            'One Piece emang terbaik! Luffy GOAT 🏴‍☠️',
-            'Demon Slayer animation-nya keren banget! 🔥',
-            'Solo Leveling lagi hype banget nih!',
-            'Manga atau anime dulu? Aku lebih suka manga sih',
-        ]
-    },
-    # === PHONE / GADGET ===
-    {
-        'pattern': r'\b(hp|handphone|smartphone|iphone|samsung|xiaomi|oppo|vivo|realme|oneplus|pixel|redmi|poco|asus|rog|gaming phone|tablet|ipad|apple|galaxy)\b',
-        'replies': [
-            'HP baru? Buat apa dipake-nya?',
-            'iPhone atau Android nih? Dua-duanya oke sih',
-            'Xiaomi value-for-money banget sih emang',
-            'Samsung Galaxy emang mantap display-nya!',
-            'Gaming phone emang kenceng, tapi buat daily use overkill ya 😄',
-        ]
-    },
-    # === FILM / SERIES ===
-    {
-        'pattern': r'\b(movie|film|series|nonton|streaming|netflix|disney|hbo|prime|youtube|tiktok|reels|shorts|viral|trending|booming)\b',
-        'replies': [
-            'Film apa yang lagi kamu tonton?',
-            'Netflix ada series bagus apa nih?',
-            'Rekomendasi dong, lagi cari tontonan nih!',
-            'TikTok bikin candu ya, tapi jangan kebanyakan juga 😄',
-            'Film Indonesia lagi bagus-bagus lho belakangan!',
-        ]
-    },
-]
+    'makasih': [
+        "Sama-sama! 😊 Seneng bisa bantu!",
+        "No problem! 👍 Kapan aja boleh tanya lagi!",
+        "Santai aja! Happy coding! 🚀",
+    ],
+    'terima kasih': [
+        "Sama-sama! 😊",
+        "Santai! Glad to help! 🙌",
+        "Anytime! 💪",
+    ],
+
+    # === CASUAL ===
+    'kamu lagi apa': [
+        "Lagi standby nih, nunggu kamu tanya! 😄\nMau coding atau ngobrol aja?",
+    ],
+    'lagi sibuk': [
+        "Aku selalu ready kok! 😄 Mau dibantu apa?",
+    ],
+    'anjing': [
+        "Woah, sabar bro! 😅 Ada yang bikin kesel? Cerita aja, aku dengerin.",
+    ],
+    'bodoh': [
+        "Hmm, aku masih belajar nih. Tapi aku bisa bantu kok! 🧠\nCoba tanya sesuatu yang spesifik.",
+    ],
+
+    # === TIME ===
+    'pagi': [
+        "Selamat pagi! ☀️ Semangat hari ini! Mau mulai coding?",
+    ],
+    'siang': [
+        "Siang! 🌤️ Udah makan belum? Siap coding?",
+    ],
+    'sore': [
+        "Sore! 🌅 Gimana harinya? Mau ngobrol apa?",
+    ],
+    'malam': [
+        "Malam! 🌙 Masih begadang? Siap bantu coding!",
+    ],
+
+    # === HELP ===
+    'help': [
+        "Apa yang bisa aku bantu? 🤔\n\n📝 **Coding** - 'buatin fibonacci function'\n🐛 **Debug** - 'fix error di main.py'\n📂 **Git** - 'git status'\n🔍 **Search** - 'cari function login'\n🧠 **Explain** - 'apa itu binary search'\n💬 **Chat** - tanya apa aja!",
+    ],
+    'bantuin': [
+        "Tentu! Cerita aja masalahnya apa. 🤝\n\nMau coding, debug, atau tanya sesuatu?",
+    ],
+}
+
 
 # ============================================================
-# GENERIC FALLBACKS
+# TECHNICAL KNOWLEDGE REPLIES
 # ============================================================
 
-FALLBACKS = [
-    'Hmm, menarik juga tuh! 🤔',
-    'Oke, aku catet ya!',
-    'Wah, bisa dijelasin lagi?',
-    'Noted! Ada lagi?',
-    'Interesting! Tell me more 😊',
-    'Aku masih belajar nih, tapi semoga bisa bantu!',
-    'Hm, aku belum paham banget, tapi nice! 👍',
-    'Wah seru! Lanjut dong ceritanya',
-    'Oke gas! Mau ngobrol apa lagi?',
-    'Asik! Ada topik lain ga?',
-    'Hmm gitu ya... menarik!',
-    'Wah keren! Aku juga mau tau lebih banyak',
-    'Siap! Ada lagi yang mau ditanya?',
-    'Oke noted, makasih infonya! 👍',
-    'Wah foto apa nih? Kasih tau dong!',
-]
+KNOWLEDGE_REPLIES = {
+    'python': "Python 🐍 - bahasa pemrograman serbaguna. Simple syntax, banyak library. Cocok buat web (Django/Flask), data science (pandas/numpy), AI (tensorflow/pytorch), automation.",
+    'javascript': "JavaScript 🌐 - bahasa web. Browser + Node.js. Framework: React, Vue, Angular. Package: npm/yarn.",
+    'rust': "Rust 🦀 - sistem bahasa, memory safe tanpa garbage collector. Cepat & aman. Cocok buat system programming, WebAssembly.",
+    'golang': "Go 🐹 - bahasa Google. Simpel, cepat, concurrent. Cocok buat microservices, CLI tools, server-side.",
+    'c++': "C++ 🔷 - sistem bahasa, high performance. STL library powerful. Cocok buat game, OS, embedded systems.",
+    'react': "React ⚛️ - library UI dari Facebook. Component-based, virtual DOM. Next.js untuk fullstack.",
+    'node': "Node.js 📦 - JavaScript runtime. Package manager: npm/yarn. Framework: Express, Fastify.",
+    'docker': "Docker 🐳 - container platform. Isolasi environment. Dockerfile → Image → Container.",
+    'kubernetes': "Kubernetes ☸️ - container orchestration. Manage banyak containers. Auto-scaling, load balancing.",
+    'linux': "Linux 🐧 - open source OS. Command line powerful. Distro: Ubuntu, Debian, CentOS, Arch.",
+    'git': "Git 📂 - version control. Track perubahan kode. Branch, merge, commit, push/pull.",
+    'api': "API 🌐 - Application Programming Interface. REST (HTTP methods), GraphQL (query), WebSocket (realtime).",
+    'database': "Database 🗄️ - SQL (MySQL, PostgreSQL) untuk structured data. NoSQL (MongoDB, Redis) untuk flexible data.",
+    'machine learning': "Machine Learning 🤖 - subset AI. Supervised (labeled data), Unsupervised (clustering), Reinforcement (rewards). Framework: TensorFlow, PyTorch.",
+    'html': "HTML 📄 - HyperText Markup Language. Struktur web page. Tag: div, p, a, img, form.",
+    'css': "CSS 🎨 - Cascading Style Sheets. Styling web. Flexbox, Grid, Responsive design.",
+    'typescript': "TypeScript 📘 - JavaScript + static typing. Better IDE support, fewer runtime errors.",
+}
 
-# ============================================================
-# CONTEXT-AWARE REPLIES (berdasarkan panjang pesan)
-# ============================================================
-
-SHORT_REPLIES = [
-    'Oke! 👍',
-    'Siap!',
-    'Noted!',
-    'Gas!',
-    'Oke gas! 🚀',
-    'Sip!',
-    'Iya!',
-    'Yoi!',
-]
-
-LONG_REPLIEWS = [
-    'Wah panjang juga ceritanya! Aku baca ya 😊',
-    'Oke aku coba bantu sebisaku!',
-    'Menarik banget! Aku bookmark ya 📌',
-    'Wah detail banget! Thanks udah share 😊',
-]
 
 # ============================================================
 # MAIN FUNCTION
 # ============================================================
 
 def get_smart_reply(user_msg, model_reply=None):
-    """Get a smart reply. Falls back to pattern matching if model output is garbage."""
-    # First: try model reply
+    """Get a smart, context-aware reply."""
+    # First: try model reply if it's good
     if model_reply and not _is_garbage(model_reply) and not _echo_check(model_reply, user_msg):
         return model_reply
 
-    # Second: pattern matching FIRST (before short/long check)
-    text_lower = user_msg.lower()
-    for pattern_group in PATTERNS:
-        if re.search(pattern_group['pattern'], text_lower):
-            return random.choice(pattern_group['replies'])
+    text = user_msg.lower().strip()
 
-    # Third: context-aware for very short/long messages
-    words = user_msg.split()
+    # Check INTENT-BASED replies first (most specific)
+    for intent, replies in INTENT_REPLIES.items():
+        if re.search(intent, text):
+            return random.choice(replies)
+
+    # Check TECHNICAL KNOWLEDGE
+    for keyword, reply in KNOWLEDGE_REPLIES.items():
+        if keyword in text:
+            return reply
+
+    # Context-aware short replies
+    words = text.split()
     if len(words) <= 2:
-        return random.choice(SHORT_REPLIES)
-    if len(words) > 30:
-        return random.choice(LONG_REPLIEWS)
+        return random.choice([
+            "Oke! 👍 Mau tanya apa?",
+            "Siap! Gas aja! 🚀",
+            "Noted! Ada lagi?",
+            "Gas! 🏎️",
+        ])
 
-    # Fourth: generic fallback
-    return random.choice(FALLBACKS)
+    # Generic but helpful fallback
+    return random.choice([
+        "Hmm, menarik! 🤔 Bisa dijelasin lebih detail?",
+        "Oke aku catet! Mau lanjut ke mana?",
+        f"Interesting! Tentang '{user_msg[:30]}...' - bisa kasih konteks lebih?",
+        "Wah, bisa dijelasin lagi? Biar aku bisa bantu lebih spesifik! 😊",
+        "Noted! Ada yang spesifik yang mau ditanyain? 🤔",
+    ])

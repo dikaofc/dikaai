@@ -350,13 +350,19 @@ def _parse_recent(raw):
     return str(raw) if raw else ''
 
 def _generate_reply(text):
-    """Generate reply using templates + Engine (NO raw model output on Vercel)."""
+    """Generate reply using templates + Engine. Returns dict with response + metadata."""
+    meta = {'route': 'chat', 'topic': 'general', 'time': '', 'success': True}
+
     # 1. Try code templates first (instant, correct, no model needed)
     try:
         from dikaai.coding.code_templates import match_template
         tmpl = match_template(text)
         if tmpl['matched']:
-            return f"```python\n{tmpl['code']}\n```\n\n✅ {tmpl['template_name']} template"
+            return {
+                'response': f"```python\n{tmpl['code']}\n```\n\n✅ {tmpl['template_name']} template",
+                **meta,
+                'route': 'code',
+            }
     except Exception:
         pass
 
@@ -369,17 +375,23 @@ def _generate_reply(text):
             # Safety: if response looks like model garbage, use smart_reply
             if _looks_like_garbage(response):
                 from dikaai.coding.smart_reply import get_smart_reply
-                return get_smart_reply(text)
-            return response
+                return {'response': get_smart_reply(text), **meta}
+            return {
+                'response': response,
+                'route': result.get('route', 'chat'),
+                'topic': result.get('topic', 'general'),
+                'time': result.get('time', ''),
+                'success': result.get('success', True),
+            }
         except Exception as e:
             print(f"[ENGINE] Error: {e}")
 
     # 3. Fallback: smart_reply (pattern matching, no model)
     try:
         from dikaai.coding.smart_reply import get_smart_reply
-        return get_smart_reply(text)
+        return {'response': get_smart_reply(text), **meta}
     except Exception:
-        return "DikaAI is processing. Please try again."
+        return {'response': "DikaAI is processing. Please try again.", **meta, 'success': False}
 
 
 def _looks_like_garbage(text):
@@ -554,7 +566,7 @@ CHAT_HTML = r"""<!DOCTYPE html>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--bg:#0a0a0f;--surface:#12121a;--surface2:#1a1a25;--border:#2a2a3a;--text:#e0e0e8;--text2:#888899;--primary:#6c5ce7;--primary2:#a29bfe;--green:#00b894;--red:#e17055;--yellow:#fdcb6e;--code-bg:#0d1117;--radius:12px}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column}
-.header{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;gap:12px}
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .header .logo{font-size:20px;font-weight:700;background:linear-gradient(135deg,var(--primary),var(--primary2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .header .nav{display:flex;gap:4px;margin-left:12px}
 .header .nav a{color:var(--text2);text-decoration:none;font-size:13px;padding:4px 10px;border-radius:6px;transition:all 0.2s}
@@ -565,7 +577,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
 .header .stats{margin-left:auto;font-size:11px;color:var(--text2)}
 .container{display:flex;flex:1;overflow:hidden}
-.sidebar{width:260px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.sidebar{width:260px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}.menu-btn{display:none;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:18px;cursor:pointer;border-radius:8px;padding:4px 10px;line-height:1}
 .sidebar h3{padding:16px;font-size:13px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border)}
 .sidebar .memory-list{flex:1;overflow-y:auto;padding:8px}
 .memory-item{padding:10px 12px;border-radius:8px;margin-bottom:4px;font-size:13px;cursor:pointer;transition:background 0.2s}
@@ -612,12 +624,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .welcome .chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:24px}
 .welcome .chip{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:8px 16px;font-size:13px;color:var(--text);cursor:pointer;transition:all 0.2s}
 .welcome .chip:hover{border-color:var(--primary);color:var(--primary2)}
-@media(max-width:768px){.sidebar{display:none}.message{max-width:95%}}
+@media(max-width:768px){.menu-btn{display:block}.sidebar{position:fixed;top:0;left:0;height:100%;z-index:50;transform:translateX(-100%);transition:transform .2s;-webkit-transform:translateX(-100%)}.sidebar.open{transform:translateX(0);-webkit-transform:translateX(0)}.message{max-width:95%}.input-wrapper{display:flex}.header .stats{width:100%;text-align:left;margin-left:0}}@media(min-width:769px){.sidebar.open{transform:none}}.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:40}@media(max-width:768px){.sidebar-overlay.show{display:block}}
 </style>
 </head>
 <body>
 <div class="header">
   <div class="logo">🧠 DikaAI</div>
+  <button class="menu-btn" onclick="toggleSidebar()" aria-label="Menu">☰</button>
   <div class="nav">
     <a href="/">📊 Dashboard</a>
     <a href="/chat" class="active">💬 Chat</a>
@@ -626,6 +639,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   <div class="status">Online</div>
   <div class="stats" id="stats">Loading...</div>
 </div>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 <div class="container">
   <div class="sidebar">
     <h3>📊 Engine</h3>
@@ -670,11 +684,11 @@ const messages=document.getElementById('messages');const input=document.getEleme
 input.addEventListener('input',()=>{input.style.height='auto';input.style.height=Math.min(input.scrollHeight,200)+'px'});
 input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendFromInput()}});
 function sendFromInput(){const t=input.value.trim();if(!t||isLoading)return;send(t);input.value='';input.style.height='auto'}
-async function send(text){if(isLoading)return;isLoading=true;sendBtn.disabled=true;const welcome=messages.querySelector('.welcome');if(welcome)welcome.remove();addMessage('user',text);const typing=document.createElement('div');typing.className='message assistant';typing.innerHTML='<div class="typing"><span></span><span></span><span></span></div>';messages.appendChild(typing);messages.scrollTop=messages.scrollHeight;try{const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text})});const d=await r.json();typing.remove();addMessage('assistant',d.response,{route:d.route,time:d.time,topic:d.topic});loadStats()}catch(err){typing.remove();addMessage('assistant','Error: '+err.message,{route:'error'})}isLoading=false;sendBtn.disabled=false;input.focus()}
-function addMessage(role,content,meta={}){const div=document.createElement('div');div.className='message '+role;let metaHtml='';if(meta.route)metaHtml+=`<span class="route-tag ${meta.route}">${meta.route}</span>`;if(meta.time)metaHtml+=`<span>\u23f1 ${meta.time}</span>`;if(meta.topic)metaHtml+=`<span>📁 ${meta.topic}</span>`;let formatted=escHtml(content);formatted=formatted.replace(/```(\w+)?\n([\s\S]*?)```/g,'<pre><code>$2</code></pre>');formatted=formatted.replace(/`([^`]+)`/g,'<code>$1</code>');div.innerHTML=`<div class="bubble">${formatted}</div>${metaHtml?'<div class="meta">'+metaHtml+'</div>':''}`;messages.appendChild(div);messages.scrollTop=messages.scrollHeight}
+async function send(text){if(isLoading)return;isLoading=true;sendBtn.disabled=true;const welcome=messages.querySelector('.welcome');if(welcome)welcome.remove();addMessage('user',text);const typing=document.createElement('div');typing.className='message assistant';typing.innerHTML='<div class="typing"><span></span><span></span><span></span></div>';messages.appendChild(typing);messages.scrollTop=messages.scrollHeight;try{const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text})});const d=await r.json();typing.remove();addMessage('assistant',d.response||d.reply||'',{route:d.route,time:d.time,topic:d.topic});loadStats()}catch(err){typing.remove();addMessage('assistant','Error: '+err.message,{route:'error'})}isLoading=false;sendBtn.disabled=false;input.focus()}
+function addMessage(role,content,meta={}){if(content===undefined||content===null)content='';const div=document.createElement('div');div.className='message '+role;let metaHtml='';if(meta.route)metaHtml+=`<span class="route-tag ${meta.route}">${meta.route}</span>`;if(meta.time)metaHtml+=`<span>\u23f1 ${meta.time}</span>`;if(meta.topic)metaHtml+=`<span>📁 ${meta.topic}</span>`;let formatted=escHtml(content);formatted=formatted.replace(/```(\w+)?\n([\s\S]*?)```/g,'<pre><code>$2</code></pre>');formatted=formatted.replace(/`([^`]+)`/g,'<code>$1</code>');div.innerHTML=`<div class="bubble">${formatted}</div>${metaHtml?'<div class="meta">'+metaHtml+'</div>':''}`;messages.appendChild(div);messages.scrollTop=messages.scrollHeight}
 function escHtml(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML}
 async function loadStats(){try{const r=await fetch('/api/stats');const d=await r.json();document.getElementById('stats').textContent=`${d.db?.total||0} tasks | ${d.status||'idle'}`;if(d.model)document.getElementById('mem-step').textContent=d.model.step||0;if(d.model)document.getElementById('mem-vocab').textContent=d.model.vocab_size||0;const e=d.engine||{};document.getElementById('mem-tasks').textContent=e.total||0;document.getElementById('mem-rate').textContent=e.rate||'0%';document.getElementById('mem-episodes').textContent=e.episodes||0;document.getElementById('mem-facts').textContent=e.facts||0;document.getElementById('mem-topics').textContent=e.topics||0;document.getElementById('mem-tokens').textContent=e.tokens||0}catch(e){}}
-loadStats();setInterval(loadStats,30000);
+function toggleSidebar(){const s=document.querySelector('.sidebar');if(s)s.classList.toggle('open');const o=document.getElementById('sidebarOverlay');if(o)o.classList.toggle('show')}loadStats();setInterval(loadStats,30000);
 </script>
 </body>
 </html>"""
@@ -940,8 +954,19 @@ class handler(BaseHTTPRequestHandler):
             if not text:
                 self._json({'error': 'empty message'}, 400)
                 return
-            reply = _generate_reply(text)
-            self._json({'reply': reply})
+            start_t = time.time()
+            r = _generate_reply(text)
+            elapsed = time.time() - start_t
+            # _generate_reply returns a string, not a dict
+            response = r if isinstance(r, str) else r.get('response', str(r))
+            self._json({
+                'response': response,
+                'reply': response,
+                'route': 'chat',
+                'topic': 'general',
+                'time': f'{elapsed:.1f}s',
+                'success': True,
+            })
             return
 
         # ---- Public API ----
@@ -964,9 +989,9 @@ class handler(BaseHTTPRequestHandler):
                     result = engine.process(user_msg)
                     response = result.get('response', '')
                 except Exception:
-                    response = _generate_reply(user_msg)
+                    response = _generate_reply(user_msg)['response']
             else:
-                response = _generate_reply(user_msg)
+                response = _generate_reply(user_msg)['response']
 
             self._json({
                 'id': f'chatcmpl-{int(time.time()*1000)}',
@@ -991,7 +1016,7 @@ class handler(BaseHTTPRequestHandler):
             if not prompt:
                 self._json({'error': 'No prompt'}, 400)
                 return
-            response = _generate_reply(prompt)
+            response = _generate_reply(prompt)['response']
             self._json({
                 'id': f'cmpl-{int(time.time()*1000)}',
                 'object': 'text_completion',
@@ -1014,7 +1039,7 @@ class handler(BaseHTTPRequestHandler):
                 except Exception as e:
                     self._json({'task': task, 'error': str(e), 'success': False})
             else:
-                self._json({'task': task, 'response': _generate_reply(task), 'success': True})
+                self._json({'task': task, 'response': _generate_reply(task)['response'], 'success': True})
             return
 
         # ---- Tools (execute locally on Vercel - limited) ----
