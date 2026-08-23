@@ -30,6 +30,7 @@ BANNER = """
 ║    python main.py run "task"   # Single task       ║
 ║    python main.py agent        # Agent mode        ║
 ║    python main.py api          # REST API          ║
+║    python main.py benchmark    # Run benchmark     ║
 ║    python main.py stats        # Statistics        ║
 ║    python main.py index        # Index project     ║
 ╚═══════════════════════════════════════════════════╝
@@ -176,6 +177,15 @@ def main():
             r = Retriever()
             count = r.index_directory(os.getcwd())
             print(f"  ✅ Indexed {count} files for RAG")
+        elif cmd == 'benchmark':
+            from dikaai.benchmark import BenchmarkRunner, Evaluator
+            cat = sys.argv[2] if len(sys.argv) > 2 else None
+            diff = sys.argv[3] if len(sys.argv) > 3 else None
+            max_t = int(sys.argv[4]) if len(sys.argv) > 4 else None
+            runner = BenchmarkRunner(workspace=os.getcwd())
+            results = runner.run(category=cat, difficulty=diff, max_tasks=max_t)
+            report = runner.report(results)
+            Evaluator().print_report(report)
         else:
             print(BANNER)
     else:
