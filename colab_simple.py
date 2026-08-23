@@ -138,6 +138,159 @@ from dikaai.config import (
 print("    All imports OK!")
 
 # ============================================================
+# LIVE STATS DISPLAY (Colab real-time cell output)
+# ============================================================
+from IPython.display import display, HTML, clear_output
+import threading as _threading
+
+# Shared state for live stats
+_live_stats = {
+    'phase': 'init',
+    'messages': 0,
+    'step': 0,
+    'vocab': 0,
+    'loss': 0,
+    'episodes': 0,
+    'facts': 0,
+    'redis_syncs': 0,
+    'replies': 0,
+    'web_new': 0,
+    'telegram_connected': False,
+    'threads': {},
+}
+
+def _update_live_stats():
+    """Collect current stats into _live_stats dict."""
+    try:
+        s = db.get_stats()
+        _live_stats['messages'] = s.get('total', 0)
+    except Exception:
+        pass
+    try:
+        _live_stats['step'] = model.step
+        _live_stats['vocab'] = getattr(model, 'vocab_size', 0) or getattr(tokenizer, 'vocab_size', 0)
+    except Exception:
+        pass
+    try:
+        _live_stats['loss'] = getattr(model, 'last_loss', 0)
+    except Exception:
+        pass
+    try:
+        _live_stats['replies'] = bot.stats.get('replies', 0)
+        _live_stats['web_new'] = bot.stats.get('new', 0)
+    except Exception:
+        pass
+
+def _render_stats_html():
+    """Render live stats as an HTML widget."""
+    _update_live_stats()
+    elapsed = time.time() - start_time
+    remaining = max(0, (max_runtime - elapsed) / 3600)
+    elapsed_h = elapsed / 3600
+
+    phase = _live_stats['phase']
+    phase_colors = {
+        'init': '#94a3b8', 'web_scrape': '#f59e0b',
+        'training': '#3b82f6', 'benchmark': '#a855f7',
+        'telegram': '#10b981', 'done': '#6b7280',
+    }
+    phase_labels = {
+        'init': 'Initializing', 'web_scrape': 'Web Scraping',
+        'training': 'Training Model', 'benchmark': 'Benchmarking',
+        'telegram': 'Telegram Live', 'done': 'Completed',
+    }
+    pc = phase_colors.get(phase, '#94a3b8')
+    pl = phase_labels.get(phase, phase)
+
+    # Thread status dots
+    threads = _live_stats.get('threads', {})
+    def dot(name):
+        status = threads.get(name, 'off')
+        color = '#10b981' if status == 'on' else '#6b7280'
+        return f'<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:{color};margin-right:4px"></span>{name}'
+
+    html = f"""<div style="font-family:monospace;background:#0c0c14;color:#e0e0e8;border:2px solid #2d2d40;border-radius:16px;padding:20px;margin:8px 0;max-width:600px">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+    <div style="width:12px;height:12px;border-radius:50%;background:{pc};box-shadow:0 0 8px {pc};animation:pulse 2s infinite"></div>
+    <span style="font-size:16px;font-weight:800;color:#a78bfa">DikaAI Live</span>
+    <span style="font-size:11px;color:{pc};font-weight:600;background:{pc}22;padding:2px 8px;border-radius:6px;border:1px solid {pc}44">{pl}</span>
+    <span style="margin-left:auto;font-size:11px;color:#606078">{elapsed_h:.1f}h / 12h</span>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
+    <div style="background:#16161f;border:2px solid #2d2d40;border-radius:10px;padding:12px;text-align:center">
+      <div style="font-size:10px;color:#606078;text-transform:uppercase;letter-spacing:0.5px">Messages</div>
+      <div style="font-size:22px;font-weight:800;color:#10b981">{_live_stats['messages']}</div>
+    </div>
+    <div style="background:#16161f;border:2px solid #2d2d40;border-radius:10px;padding:12px;text-align:center">
+      <div style="font-size:10px;color:#606078;text-transform:uppercase;letter-spacing:0.5px">Model Step</div>
+      <div style="font-size:22px;font-weight:800;color:#3b82f6">{_live_stats['step']}</div>
+    </div>
+    <div style="background:#16161f;border:2px solid #2d2d40;border-radius:10px;padding:12px;text-align:center">
+      <div style="font-size:10px;color:#606078;text-transform:uppercase;letter-spacing:0.5px">Vocab</div>
+      <div style="font-size:22px;font-weight:800;color:#a855f7">{_live_stats['vocab']}</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+    <div style="background:#16161f;border:2px solid #2d2d40;border-radius:10px;padding:10px">
+      <div style="font-size:10px;color:#606078;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Stats</div>
+      <div style="font-size:12px;color:#94a3b8;line-height:1.8">
+        Replies: <span style="color:#10b981;font-weight:700">{_live_stats['replies']}</span><br>
+        Web New: <span style="color:#f59e0b;font-weight:700">{_live_stats['web_new']}</span><br>
+        Redis Syncs: <span style="color:#06b6d4;font-weight:700">{_live_stats['redis_syncs']}</span>
+      </div>
+    </div>
+    <div style="background:#16161f;border:2px solid #2d2d40;border-radius:10px;padding:10px">
+      <div style="font-size:10px;color:#606078;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Threads</div>
+      <div style="font-size:12px;color:#94a3b8;line-height:1.8">
+        {dot('redis')}<br>
+        {dot('training')}<br>
+        {dot('web_scrape')}<br>
+        {dot('telegram')}
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:2px solid #2d2d40">
+    <span style="font-size:11px;color:#606078">Remaining: <span style="color:#f59e0b;font-weight:700">{remaining:.1f}h</span></span>
+    <a href="https://dikaai.vercel.app" target="_blank" style="font-size:11px;color:#a78bfa;text-decoration:none">Dashboard</a>
+  </div>
+</div>
+<style>
+@keyframes pulse {{ 0%,100%{{opacity:1}} 50%{{opacity:0.4}} }}
+</style>"""
+    return html
+
+# Stats display thread
+def _stats_display_thread():
+    """Update Colab cell output every 5 seconds."""
+    # Wait a bit for phases to start
+    time.sleep(2)
+    while running:
+        try:
+            html = _render_stats_html()
+            clear_output(wait=True)
+            display(HTML(html))
+        except Exception:
+            pass
+        time.sleep(5)
+    # Final display
+    try:
+        _live_stats['phase'] = 'done'
+        _live_stats['threads'] = {}
+        html = _render_stats_html()
+        clear_output(wait=True)
+        display(HTML(html))
+    except Exception:
+        pass
+
+# Start stats display
+_stats_t = _threading.Thread(target=_stats_display_thread, daemon=True)
+_stats_t.start()
+print("  Live stats display started!")
+
+# ============================================================
 # STEP 4: BANNER
 # ============================================================
 print("\n" + "=" * 60)
@@ -221,6 +374,7 @@ def redis_sync_thread():
                 sync_training_history(r)
                 sync_engine_state(r)
                 n += 1
+                _live_stats['redis_syncs'] = n
                 if n % 5 == 0:
                     stats = db.get_stats()
                     print(f"  [REDIS] Sync #{n} | {stats['total']} msgs -> Vercel")
@@ -240,6 +394,8 @@ def training_thread():
         try:
             ep += 1
             loss, count = trainer.train_one_epoch()
+            if count > 0:
+                _live_stats['loss'] = loss
             if count > 0 and ep % 50 == 0:
                 print(f"  [TRAIN] Ep {ep} | loss={loss:.4f} | step={model.step}")
             if model.step % 100 == 0:
@@ -274,6 +430,7 @@ def web_scrape_thread():
 # ============================================================
 # PHASE 1: WEB SCRAPE (BLOCKING - priority!)
 # ============================================================
+_live_stats['phase'] = 'web_scrape'
 print("\n" + "=" * 60)
 print("  PHASE 1: Web Scrape (from internet)")
 print("=" * 60)
@@ -281,6 +438,7 @@ print("=" * 60)
 # Start Redis sync immediately (so dashboard updates ASAP)
 redis_t = threading.Thread(target=redis_sync_thread, daemon=True)
 redis_t.start()
+_live_stats['threads']['redis'] = 'on'
 print("  Redis sync thread started!")
 
 # Do web scrape FIRST (blocking - get data before training)
@@ -296,6 +454,7 @@ print(f"\n  Web scrape result: {stats['total']} total messages")
 # ============================================================
 # PHASE 2: TRAINING (from web data)
 # ============================================================
+_live_stats['phase'] = 'training'
 print("\n" + "=" * 60)
 print("  PHASE 2: Training dari Web Data")
 print("=" * 60)
@@ -330,6 +489,7 @@ else:
 # ============================================================
 # PHASE 3: BENCHMARK (quick test)
 # ============================================================
+_live_stats['phase'] = 'benchmark'
 print("\n" + "=" * 60)
 print("  PHASE 3: Benchmark")
 print("=" * 60)
@@ -351,6 +511,7 @@ except Exception as e:
 # ============================================================
 # PHASE 4: TELEGRAM LOOP (blocking until 12h)
 # ============================================================
+_live_stats['phase'] = 'telegram'
 print("\n" + "=" * 60)
 print("  PHASE 4: Telegram Loop (all features running)")
 print("  Auto-reply + scrape + training + Redis sync")
@@ -360,10 +521,12 @@ print("=" * 60)
 # Start background threads
 train_t = threading.Thread(target=training_thread, daemon=True)
 train_t.start()
+_live_stats['threads']['training'] = 'on'
 print("  Training thread started (background)")
 
 web_t = threading.Thread(target=web_scrape_thread, daemon=True)
 web_t.start()
+_live_stats['threads']['web_scrape'] = 'on'
 print("  Web scrape thread started (every 2h)")
 
 # Telegram loop (main blocking loop)
@@ -376,6 +539,8 @@ async def telegram_loop():
         return
 
     print("Telegram connected!")
+    _live_stats['telegram_connected'] = True
+    _live_stats['threads']['telegram'] = 'on'
 
     # Initial scrape of ALL chats
     print("\nScraping ALL Telegram chats...")
