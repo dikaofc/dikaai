@@ -354,9 +354,10 @@ if not USE_REDIS:
 print("\n[5] Initializing components...")
 
 db = DikaDB()
-tokenizer = DikaTokenizer()
-model = DikaModel()
 trainer = DikaTrainer(db)
+# Use trainer's model/tokenizer (they load saved state)
+model = trainer.model
+tokenizer = trainer.tokenizer
 bot = DikaBot(db, model=model, tokenizer=tokenizer)
 
 running = True
