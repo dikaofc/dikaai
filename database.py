@@ -196,9 +196,9 @@ class RedisDB:
         # Add to sorted set (by timestamp)
         self.r.zadd(self._key('msgs'), timestamp, msg_hash)
 
-        # Add to training list (keep last 500 for fast training access)
-        self.r.lpush(self._key('training'), msg_hash)
-        self.r.ltrim(self._key('training'), 0, 499)
+        # Add to msg cache list (keep last 500 for fast training access)
+        self.r.lpush(self._key('msgcache'), msg_hash)
+        self.r.ltrim(self._key('msgcache'), 0, 499)
 
         # Add to recent list (keep last 100)
         self.r.lpush(self._key('recent'), json.dumps({

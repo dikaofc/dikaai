@@ -648,8 +648,31 @@ class handler(BaseHTTPRequestHandler):
             redis_recent = _redis_get_recent(15)
 
             if redis_stats:
-                # Redis mode (Vercel)
-                history = _read_history()
+                # Redis mode (Vercel) - read history from Redis
+                history = _read_history()  # local CSV fallback
+                # Also try Redis training history
+                try:
+                    r = _get_redis()
+                    if r:
+                        redis_history = r.lrange('dikaai:training', 0, -1)
+                        if redis_history:
+                            history = []
+                            for h in redis_history:
+                                try:
+                                    entry = json.loads(h) if isinstance(h, str) else h
+                                    if isinstance(entry, dict) and 'loss' in entry:
+                                        history.append({
+                                            'timestamp': float(entry.get('ts', 0)),
+                                            'loss': float(entry.get('loss', 0)),
+                                            'steps': int(entry.get('steps', 0)),
+                                            'total_steps': int(entry.get('total_steps', 0)),
+                                            'avg_loss': float(entry.get('avg_loss', 0)),
+                                            'total_messages': int(entry.get('total_messages', 0)),
+                                        })
+                                except Exception:
+                                    pass
+                except Exception:
+                    pass
                 losses = [h['loss'] for h in history]
                 timestamps = [h['timestamp'] for h in history]
 
