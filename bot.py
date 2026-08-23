@@ -307,34 +307,23 @@ class DikaBot:
                 pass
 
     def _generate_reply(self, text):
-        """Generate a reply using the model."""
-        if self.model is None or self.tokenizer is None:
-            return None
+        """Generate a smart reply - model + fallback system."""
+        from smart_reply import get_smart_reply
 
-        try:
-            from config import CONTEXT_LEN
-            tokens = self.tokenizer.encode(text, max_length=CONTEXT_LEN)
-            if len(tokens) < 1:
-                return None
+        model_reply = None
+        if self.model and self.tokenizer and self.tokenizer._loaded:
+            try:
+                from config import CONTEXT_LEN
+                tokens = self.tokenizer.encode(text, max_length=CONTEXT_LEN)
+                if len(tokens) >= 1:
+                    generated = self.model.generate(
+                        tokens, max_len=25, temperature=0.75, tokenizer=self.tokenizer
+                    )
+                    model_reply = self.tokenizer.decode(generated)
+            except Exception:
+                pass
 
-            generated = self.model.generate(
-                tokens,
-                max_len=25,
-                temperature=0.75,
-                tokenizer=self.tokenizer
-            )
-            response = self.tokenizer.decode(generated)
-
-            if not response or len(response.strip()) < 3:
-                return None
-
-            if response.strip().lower() == text.strip().lower():
-                return None
-
-            return response.strip()
-
-        except Exception as e:
-            return None
+        return get_smart_reply(text, model_reply)
 
     def close(self):
         """Disconnect."""

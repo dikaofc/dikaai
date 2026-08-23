@@ -200,39 +200,30 @@ def _get_recent_messages(limit=15):
 
 
 def _generate_reply(text):
-    """Generate a reply using the model."""
+    """Generate a smart reply - model + fallback system."""
+    sys.path.insert(0, str(BASE_DIR))
+    from smart_reply import get_smart_reply
+
+    model_reply = None
     try:
         model_file = MODEL_DIR / "dikaai_latest.json"
-        if not model_file.exists():
-            return "Model belum trained. Jalankan training dulu di server."
+        if model_file.exists():
+            from model import DikaModel
+            from tokenizer import DikaTokenizer
+            from config import CONTEXT_LEN
 
-        sys.path.insert(0, str(BASE_DIR))
-        from model import DikaModel
-        from tokenizer import DikaTokenizer
-        from config import CONTEXT_LEN
+            model = DikaModel()
+            if model.load(model_file):
+                tokenizer = DikaTokenizer()
+                if tokenizer.load():
+                    tokens = tokenizer.encode(text, max_length=CONTEXT_LEN)
+                    if len(tokens) >= 1:
+                        generated = model.generate(tokens, max_len=25, temperature=0.75)
+                        model_reply = tokenizer.decode(generated)
+    except Exception:
+        pass
 
-        model = DikaModel()
-        if not model.load(model_file):
-            return "Gagal load model."
-
-        tokenizer = DikaTokenizer()
-        if not tokenizer.load():
-            return "Tokenizer belum ready."
-
-        tokens = tokenizer.encode(text, max_length=CONTEXT_LEN)
-        if len(tokens) < 1:
-            return "Input terlalu pendek."
-
-        generated = model.generate(tokens, max_len=25, temperature=0.75)
-        response = tokenizer.decode(generated)
-
-        if not response or len(response.strip()) < 2:
-            return "(model masih belajar...)"
-
-        return response.strip()
-
-    except Exception as e:
-        return f"Error: {str(e)[:50]}"
+    return get_smart_reply(text, model_reply)
 
 
 # ============================================================

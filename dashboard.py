@@ -229,32 +229,24 @@ def _generate_csv():
 
 
 def _handle_chat(text):
-    """Generate a reply using the model."""
+    """Generate a smart reply - model + fallback system."""
+    from smart_reply import get_smart_reply
+
+    model_reply = None
     model = _state.get('model')
     tokenizer = _state.get('tokenizer')
 
-    if not model or not tokenizer:
-        return "Model belum loaded. Tunggu training selesai."
+    if model and tokenizer and tokenizer._loaded:
+        try:
+            from config import CONTEXT_LEN
+            tokens = tokenizer.encode(text, max_length=CONTEXT_LEN)
+            if len(tokens) >= 1:
+                generated = model.generate(tokens, max_len=25, temperature=0.75)
+                model_reply = tokenizer.decode(generated)
+        except Exception:
+            pass
 
-    if not tokenizer._loaded:
-        return "Tokenizer belum ready. Training sedang berjalan."
-
-    try:
-        from config import CONTEXT_LEN
-        tokens = tokenizer.encode(text, max_length=CONTEXT_LEN)
-        if len(tokens) < 1:
-            return "Input terlalu pendek."
-
-        generated = model.generate(tokens, max_len=25, temperature=0.75)
-        response = tokenizer.decode(generated)
-
-        if not response or len(response.strip()) < 2:
-            return "(model masih belajar...)"
-
-        return response.strip()
-
-    except Exception as e:
-        return f"Error: {str(e)[:50]}"
+    return get_smart_reply(text, model_reply)
 
 
 # ============================================================
