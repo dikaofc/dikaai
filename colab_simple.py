@@ -490,6 +490,66 @@ def web_scrape_thread():
             print("  [WEB] Periodic error: " + str(e))
 
 # ============================================================
+# BACKGROUND THREAD: Chat Queue (dashboard -> Colab model -> response)
+# ============================================================
+def chat_queue_thread():
+    """Poll Redis for dashboard chat requests, run model inference, write response back."""
+    if not USE_REDIS:
+        print("  [CHAT-Q] Skipped (Redis not configured)")
+        return
+    try:
+        from sync_to_redis import UpstashRedis
+        from dikaai.coding.smart_reply import get_smart_reply
+        r = UpstashRedis(UPSTASH_REDIS_URL, UPSTASH_REDIS_TOKEN)
+        print("  [CHAT-Q] Polling dikaai:chat:requests for dashboard chat...")
+        _chat_n = 0
+        while running:
+            time.sleep(2)
+            if not running:
+                break
+            try:
+                raw = r.lrange('dikaai:chat:requests', -1, -1)
+                if not raw or len(raw) == 0:
+                    continue
+                item = raw[-1]
+                req = json.loads(item) if isinstance(item, str) else item
+                req_id = req.get('id', '')
+                message = req.get('message', '')
+                if not req_id or not message:
+                    continue
+                # Pop the processed request
+                try:
+                    r._command('ltrim', 'dikaai:chat:requests', 0, -2)
+                except Exception:
+                    pass
+                # Generate reply with model
+                model_reply = None
+                try:
+                    tokens = tokenizer.encode(message, max_length=CONTEXT_LEN)
+                    if len(tokens) >= 1:
+                        generated = model.generate(
+                            tokens, max_len=25, temperature=0.75, tokenizer=tokenizer
+                        )
+                        model_reply = tokenizer.decode(generated)
+                except Exception:
+                    pass
+                reply = get_smart_reply(message, model_reply)
+                # Write response to Redis (TTL 60s)
+                resp = json.dumps({
+                    'id': req_id,
+                    'response': reply,
+                    'ts': time.time()
+                })
+                r.set('dikaai:chat:response:' + req_id, resp, ex=60)
+                _chat_n += 1
+                if _chat_n % 10 == 0:
+                    print("  [CHAT-Q] Processed " + str(_chat_n) + " requests")
+            except Exception as e:
+                print("  [CHAT-Q] Error: " + str(e))
+    except Exception as e:
+        print("  [CHAT-Q] Connection failed: " + str(e))
+
+# ============================================================
 # PHASE 1: WEB SCRAPE (ALL 180+ SOURCES PARALLEL)
 # ============================================================
 _live_stats['phase'] = 'web_scrape'
@@ -502,6 +562,11 @@ redis_t = threading.Thread(target=redis_sync_thread, daemon=True)
 redis_t.start()
 _live_stats['threads']['redis'] = 'on'
 print("  Redis sync thread started!")
+
+# Start chat queue handler for dashboard
+chat_q_t = threading.Thread(target=chat_queue_thread, daemon=True)
+chat_q_t.start()
+print("  Chat queue thread started!")
 
 # Web scrape ALL 180+ sources in parallel.
 # Be robust to the clone having an OLD DikaWebScraper (no max_workers kwarg).

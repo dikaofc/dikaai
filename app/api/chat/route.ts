@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { redisGet, redisHgetall } from '@/lib/redis';
+import { redisGet, redisSet, redisLpush, redisLtrim } from '@/lib/redis';
 import { getSmartReply } from '@/lib/smart_reply';
 
 export const dynamic = 'force-dynamic';
@@ -13,18 +13,36 @@ export async function POST(req: NextRequest) {
     }
 
     const start = Date.now();
+    const reqId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
-    // Try to get model-generated reply from Redis (Colab may have written one)
-    let modelReply: string | undefined;
+    // 1. Write query to Redis queue for Colab to process
+    let reply = '';
+    let modelSourced = false;
     try {
-      const engineState = await redisHgetall('dikaai:engine');
-      if (engineState && engineState.response) {
-        modelReply = engineState.response;
-      }
-    } catch { /* engine not available */ }
+      const request = JSON.stringify({ id: reqId, message, ts: Date.now() });
+      await redisLpush('dikaai:chat:requests', request);
+      await redisLtrim('dikaai:chat:requests', 0, 9);
 
-    // Use real smart reply system (same as Colab bot uses)
-    const reply = getSmartReply(message, modelReply);
+      // 2. Poll for Colab response (max 8 seconds)
+      const deadline = Date.now() + 8000;
+      while (Date.now() < deadline) {
+        await new Promise((r) => setTimeout(r, 500));
+        const respRaw = await redisGet('dikaai:chat:response:' + reqId);
+        if (respRaw) {
+          const resp = typeof respRaw === 'string' ? JSON.parse(respRaw) : respRaw;
+          if (resp && resp.response) {
+            reply = resp.response;
+            modelSourced = true;
+            break;
+          }
+        }
+      }
+    } catch { /* Redis unavailable, fall through to local reply */ }
+
+    // 3. Fallback: local smart reply (same system as Colab bot)
+    if (!reply) {
+      reply = getSmartReply(message);
+    }
 
     const elapsed = ((Date.now() - start) / 1000).toFixed(1);
 
@@ -34,6 +52,7 @@ export async function POST(req: NextRequest) {
       route: 'chat',
       topic: 'general',
       time: `${elapsed}s`,
+      model: modelSourced,
       success: true,
     });
   } catch (err: unknown) {
