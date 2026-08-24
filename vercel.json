@@ -1,15 +1,5 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/next"
-    },
-    {
-      "src": "api/server.py",
-      "use": "@vercel/python@4.7.2"
-    }
-  ],
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/server" },
     { "source": "/v1/(.*)", "destination": "/api/server" }
