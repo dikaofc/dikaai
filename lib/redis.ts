@@ -3,8 +3,8 @@
  * No external dependencies; uses native fetch.
  */
 
-const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL || 'https://touched-rat-161428.upstash.io';
-const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || 'gQAAAAAAAnaUAAIgcDE4YTNmYTljNWZkNTg0YTU5ODY2MjA5YmNhOWQ0Mzg4ZQ';
+const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL || '';
+const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || '';
 
 function requireRedis() {
   if (!REDIS_URL || !REDIS_TOKEN) {
