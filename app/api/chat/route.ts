@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { redisGet, redisHgetall } from '@/lib/redis';
+import { getSmartReply } from '@/lib/smart_reply';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,20 +14,17 @@ export async function POST(req: NextRequest) {
 
     const start = Date.now();
 
-    // Try to get the latest response from the engine stored in Redis
-    let reply = '';
+    // Try to get model-generated reply from Redis (Colab may have written one)
+    let modelReply: string | undefined;
     try {
       const engineState = await redisHgetall('dikaai:engine');
       if (engineState && engineState.response) {
-        reply = engineState.response;
+        modelReply = engineState.response;
       }
     } catch { /* engine not available */ }
 
-    // The AI runs remotely on Colab — Vercel is just the dashboard.
-    // No fake replies. Return what we have.
-    if (!reply) {
-      reply = '🧠 DikaAI sedang memproses di remote server. Model sedang training — balasan cerdas akan tersedia setelah training selesai.';
-    }
+    // Use real smart reply system (same as Colab bot uses)
+    const reply = getSmartReply(message, modelReply);
 
     const elapsed = ((Date.now() - start) / 1000).toFixed(1);
 
