@@ -44,7 +44,7 @@ export async function GET() {
         losses,
         steps: history.map((h) => Number(h.steps || 0)),
       },
-      recent_messages: (recent || []).map((m) => {
+      recent_messages: (recent || []).map((m: string) => {
         try {
           const d = typeof m === 'string' ? JSON.parse(m) : m;
           return d?.m || d?.message || String(m || '');
