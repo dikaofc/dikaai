@@ -11,22 +11,42 @@ export async function GET() {
     const model = await redisHgetall('dikaai:model');
     const recent = await redisLrange('dikaai:recent', 0, 14);
 
-    // Training history
-    let history: any[] = [];
+    // Training history — lpush means index 0 = newest, last = oldest
+    let history: { ts: number; loss: number; steps: number }[] = [];
     try {
       const raw = await redisLrange('dikaai:training', 0, -1);
       for (const h of raw || []) {
         try {
           const e = typeof h === 'string' ? JSON.parse(h) : h;
-          if (e && typeof e === 'object' && 'loss' in e) history.push(e);
-        } catch { /* skip */ }
+          if (e && typeof e === 'object' && 'loss' in e) {
+            history.push({
+              ts: Number(e.ts || 0),
+              loss: Number(e.loss || 0),
+              steps: Number(e.steps || 0),
+            });
+          }
+        } catch { /* skip corrupt entry */ }
       }
     } catch { /* skip */ }
 
-    const losses = history.map((h) => Number(h.loss || 0));
-    const uptime = history.length > 0
-      ? Math.max(0, Math.floor(Date.now() / 1000 - Number(history[0].ts || 0)))
-      : 0;
+    // history[0] = newest (lpush order), history[last] = oldest
+    const losses = history.map((h) => h.loss);
+
+    // Uptime = now - oldest training timestamp
+    const oldestTs = history.length > 0 ? history[history.length - 1].ts : 0;
+    const uptime = oldestTs > 0 ? Math.max(0, Math.floor(Date.now() / 1000 - oldestTs)) : 0;
+
+    // Total accumulated loss = sum of (loss * steps) for each epoch
+    const totalLoss = history.reduce(
+      (sum, h) => sum + h.loss * h.steps,
+      0,
+    );
+    const totalSteps = history.reduce((sum, h) => sum + h.steps, 0);
+
+    // Read toggles from Redis
+    const toggleAutoReply = await redisGet('dikaai:toggle:auto_reply');
+    const toggleTraining = await redisGet('dikaai:toggle:training');
+    const toggleScraping = await redisGet('dikaai:toggle:scraping');
 
     return NextResponse.json({
       db: { total, processed, unprocessed: total - processed, unique_chats: uniqueChats },
@@ -38,11 +58,16 @@ export async function GET() {
       vocab_tokens: Number(model.vocab_size || 0),
       status: Number(model.step || 0) > 0 ? 'ready' : 'idle',
       uptime,
-      toggles: { auto_reply: true, training: true, scraping: true },
+      toggles: {
+        auto_reply: toggleAutoReply !== '0',
+        training: toggleTraining !== '0',
+        scraping: toggleScraping !== '0',
+      },
       loss_chart: {
-        timestamps: history.map((h) => Number(h.ts || 0)),
-        losses,
-        steps: history.map((h) => Number(h.steps || 0)),
+        // Reverse so chart shows chronological (oldest first)
+        timestamps: history.map((h) => h.ts).reverse(),
+        losses: losses.reverse(),
+        steps: history.map((h) => h.steps).reverse(),
       },
       recent_messages: (recent || []).map((m: string) => {
         try {
@@ -52,14 +77,15 @@ export async function GET() {
           return String(m || '');
         }
       }),
-      total_loss: history.reduce((sum, h) => sum + (Number(h.avg_loss || 0) * Number(h.steps || 0)), 0),
-      total_steps: history.reduce((sum, h) => sum + Number(h.steps || 0), 0),
+      total_loss: totalLoss,
+      total_steps: totalSteps,
       source: 'redis',
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Failed to load stats';
     return NextResponse.json(
-      { error: err?.message || 'Failed to load stats', source: 'error' },
-      { status: 500 }
+      { error: message, source: 'error' },
+      { status: 500 },
     );
   }
 }

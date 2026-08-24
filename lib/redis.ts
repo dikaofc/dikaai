@@ -1,19 +1,30 @@
 /**
- * Upstash Redis REST API client — Node.js version of the Python _lib.py Redis client.
- * No external dependencies needed; uses native fetch.
+ * Upstash Redis REST API client — Node.js version.
+ * No external dependencies; uses native fetch.
  */
 
 const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL || '';
 const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || '';
 
+function requireRedis() {
+  if (!REDIS_URL || !REDIS_TOKEN) {
+    throw new Error(
+      'UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN must be set in Vercel Environment Variables'
+    );
+  }
+}
+
 async function redisApi(cmd: string, ...args: string[]): Promise<any> {
-  if (!REDIS_URL || !REDIS_TOKEN) return null;
+  requireRedis();
   const parts = args.map((a) => encodeURIComponent(a));
   const path = [cmd, ...parts].join('/');
   const res = await fetch(`${REDIS_URL}/${path}`, {
     headers: { Authorization: `Bearer ${REDIS_TOKEN}` },
   });
-  if (!res.ok) throw new Error(`Redis ${cmd} failed: ${res.status}`);
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new Error(`Redis ${cmd} failed (${res.status}): ${body}`);
+  }
   const data = await res.json();
   return data.result ?? data;
 }
@@ -40,6 +51,11 @@ export async function redisHgetall(key: string): Promise<Record<string, string>>
   return typeof result === 'object' ? result : {};
 }
 
+export async function redisHget(key: string, field: string): Promise<string | null> {
+  const result = await redisApi('hget', key, field);
+  return result ?? null;
+}
+
 export async function redisHset(key: string, ...args: string[]) {
   return redisApi('hset', key, ...args);
 }
@@ -49,9 +65,11 @@ export async function redisLrange(key: string, start: number, end: number) {
 }
 
 export async function redisLpush(key: string, ...values: string[]) {
+  let result = 0;
   for (const v of values) {
-    await redisApi('lpush', key, v);
+    result = await redisApi('lpush', key, v);
   }
+  return result;
 }
 
 export async function redisLtrim(key: string, start: number, end: number) {

@@ -225,10 +225,29 @@ export default function DashboardPage() {
                     <div className="toggle-label"><Icon name={tg.icon} />{tg.label}</div>
                     <div className="toggle-desc">{tg.desc}</div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--success)', boxShadow: '0 0 8px var(--success)' }} />
-                    <span style={{ fontSize: 11, color: 'var(--success)', fontWeight: 600 }}>ON</span>
-                  </div>
+                  <button
+                    onClick={async () => {
+                      try {
+                        const enabled = !t[tg.key as keyof typeof t];
+                        await fetch('/api/toggle', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ feature: tg.key, enabled }),
+                        });
+                        fetchStats();
+                      } catch { /* ignore */ }
+                    }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px' }}
+                  >
+                    <div style={{
+                      width: 8, height: 8, borderRadius: '50%',r
+                      background: t[tg.key as keyof typeof t] ? 'var(--success)' : '#6b7280',
+                      boxShadow: t[tg.key as keyof typeof t] ? '0 0 8px var(--success)' : 'none',
+                    }} />
+                    <span style={{ fontSize: 11, color: t[tg.key as keyof typeof t] ? 'var(--success)' : '#6b7280', fontWeight: 600 }}>
+                      {t[tg.key as keyof typeof t] ? 'ON' : 'OFF'}
+                    </span>
+                  </button>
                 </div>
               ))}
             </div>
