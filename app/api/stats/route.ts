@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { redisGet, redisHgetall, redisLrange, REDIS_URL, REDIS_TOKEN } from '@/lib/redis';
+import { redisGet, redisHgetall, redisLrange } from '@/lib/redis';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,11 +48,7 @@ export async function GET() {
     const toggleTraining = await redisGet('dikaai:toggle:training');
     const toggleScraping = await redisGet('dikaai:toggle:scraping');
 
-    // Temporary debug: show Redis env status
-    const urlHost = REDIS_URL ? new URL(REDIS_URL).host : 'not-set';
-
     return NextResponse.json({
-      _debug: { redis_host: urlHost, token_prefix: REDIS_TOKEN.slice(0, 8) },
       db: { total, processed, unprocessed: total - processed, unique_chats: uniqueChats },
       model: {
         params: Number(model.params || 0),
