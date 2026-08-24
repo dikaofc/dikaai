@@ -522,18 +522,20 @@ def chat_queue_thread():
                     r._command('ltrim', 'dikaai:chat:requests', 0, -2)
                 except Exception:
                     pass
-                # Generate reply with model
-                model_reply = None
+                # Generate reply DIRECTLY from model (no filtering)
+                reply = ''
                 try:
                     tokens = tokenizer.encode(message, max_length=CONTEXT_LEN)
                     if len(tokens) >= 1:
                         generated = model.generate(
-                            tokens, max_len=25, temperature=0.75, tokenizer=tokenizer
+                            tokens, max_len=50, temperature=0.8, tokenizer=tokenizer
                         )
-                        model_reply = tokenizer.decode(generated)
+                        reply = tokenizer.decode(generated).strip()
                 except Exception:
                     pass
-                reply = get_smart_reply(message, model_reply)
+                # Only use smart_reply as COMPLETE fallback if model fails entirely
+                if not reply:
+                    reply = get_smart_reply(message)
                 # Write response to Redis (TTL 60s)
                 resp = json.dumps({
                     'id': req_id,
