@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { redisGet, redisSet, redisLpush, redisLtrim } from '@/lib/redis';
+import { redisGet, redisLpush, redisLtrim } from '@/lib/redis';
 import { getSmartReply } from '@/lib/smart_reply';
 
 export const dynamic = 'force-dynamic';
