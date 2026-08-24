@@ -240,7 +240,7 @@ export default function DashboardPage() {
                     style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px' }}
                   >
                     <div style={{
-                      width: 8, height: 8, borderRadius: '50%',r
+                      width: 8, height: 8, borderRadius: '50%',
                       background: t[tg.key as keyof typeof t] ? 'var(--success)' : '#6b7280',
                       boxShadow: t[tg.key as keyof typeof t] ? '0 0 8px var(--success)' : 'none',
                     }} />
